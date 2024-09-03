@@ -25,7 +25,7 @@ class Canvas(Origin):
         assert hasattr(self, 'xmax')
         assert hasattr(self, 'ymin')
         assert hasattr(self, 'ymax')
-        self.parser = argparse.ArgumentParser()
+        self._parser = argparse.ArgumentParser()
         self._new_canvas()
 
     def _new_canvas(self):
@@ -77,10 +77,10 @@ class Canvas(Origin):
         )
 
     def add_param(self, *args, **kwargs):
-        self.parser.add_argument(*args, **kwargs)
+        self._parser.add_argument(*args, **kwargs)
 
     def get_kwargs(self):
-        return vars(self.parser.parse_args())
+        return vars(self._parser.parse_args())
 
     @staticmethod
     def get_cmap(colour_list):
