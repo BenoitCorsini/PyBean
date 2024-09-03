@@ -1,14 +1,9 @@
-import argparse
-import os
 import os.path as osp
 import numpy as np
-import matplotlib.figure as figure
 import matplotlib.patches as patches
-from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.font_manager import FontProperties
 from matplotlib.text import TextPath
 from matplotlib.transforms import Affine2D
-from time import time
 
 from .canvas import Canvas
 
