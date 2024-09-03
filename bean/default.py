@@ -1,10 +1,10 @@
-PARAMS = {
-    'figsize' : (10, 10),
+DEFAULT = {
+    'figsize' : (16, 9),
     'dpi' : 100,
     'xmin' : 0,
     'xmax' : 1,
     'ymin' : 0,
-    'ymax' : 1,
+    'ymax' : 9/16,
     'fps' : 20,
     'image_dir' : '.',
     'video_dir' : '.',
