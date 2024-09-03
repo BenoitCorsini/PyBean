@@ -10,20 +10,36 @@ from matplotlib.textpath import TextPath
 from matplotlib.transforms import Affine2D
 from time import time
 
-from .params import PARAMS
+from .default import DEFAULT
 
 
-class Figure(object):
+class Canvas(object):
 
-    def __init__(self, default_params=PARAMS, **kwargs):
-        for key, value in default_params.items():
+    def __init__(self, **kwargs):
+        for key, value in DEFAULT.items():
             setattr(self, key, value)
         for key, value in kwargs.items():
             setattr(self, key, value)
+        assert hasattr(self, 'figsize')
+        assert hasattr(self, 'dpi')
+        assert hasattr(self, 'xmin')
+        assert hasattr(self, 'xmax')
+        assert hasattr(self, 'ymin')
+        assert hasattr(self, 'ymax')
         self.parser = argparse.ArgumentParser()
         self.reset()
 
-    def new_param(self, *args, **kwargs):
+    def __str__(self):
+        s = 'PyBean Canvas'
+        s += f' (figsize={self.figsize},'
+        s += f' dpi={self.dpi})'
+        if hasattr(self, 'copyright'):
+            if 'text' in self.copyright:
+                s += '\nCopyright: '
+                s += self.copyright['text']
+        return s
+
+    def add_param(self, *args, **kwargs):
         self.parser.add_argument(*args, **kwargs)
 
     def get_kwargs(self):
@@ -43,10 +59,6 @@ class Figure(object):
         self.__copyright__()
 
     @staticmethod
-    def is_patch(obj):
-        return isinstance(obj, patches.Patch)
-
-    @staticmethod
     def shift_from_anchor(bbox, anchor=None):
         if anchor is None:
             return np.array([0, 0])
@@ -60,7 +72,7 @@ class Figure(object):
             return np.array([bbox.size[0]/2, 0])
         elif ' ' in anchor:
             anchor = anchor.strip()
-            return np.sum([Figure.shift_from_anchor(bbox, anc) for anc in anchor.split(' ')], axis=0)
+            return np.sum([Canvas.shift_from_anchor(bbox, anc) for anc in anchor.split(' ')], axis=0)
         else:
             return np.array([0, 0])
 
