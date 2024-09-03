@@ -27,11 +27,8 @@ class Canvas(object):
         assert hasattr(self, 'ymin')
         assert hasattr(self, 'ymax')
         self.parser = argparse.ArgumentParser()
-        self.reset()
-
-    def reset(self):
         self.start_time = time()
-        return self.canvas()
+        self.canvas()
 
     def canvas(self):
         self.fig = figure.Figure(figsize=self.figsize, dpi=self.dpi)
@@ -52,11 +49,9 @@ class Canvas(object):
                 s += self.copyright['text']
         return s
 
-    def add_param(self, *args, **kwargs):
-        self.parser.add_argument(*args, **kwargs)
-
-    def get_kwargs(self):
-        return vars(self.parser.parse_args())
+    def reset(self):
+        self.start_time = time()
+        return self.canvas()
 
     def save(self, name='image', image_dir=None, transparent=False):
         if image_dir is None:
@@ -68,9 +63,15 @@ class Canvas(object):
             transparent=transparent
         )
 
+    def add_param(self, *args, **kwargs):
+        self.parser.add_argument(*args, **kwargs)
+
+    def get_kwargs(self):
+        return vars(self.parser.parse_args())
+
     @staticmethod
     def get_cmap(colour_list):
-        return LinearSegmentedColormap.from_list(f'pybean', colour_list)
+        return LinearSegmentedColormap.from_list('pybean cmap', colour_list)
 
     @staticmethod
     def get_greyscale(start_with_white=True):
@@ -78,10 +79,10 @@ class Canvas(object):
             colour_list = ['white', 'black']
         else:
             colour_list = ['black', 'white']
-        return LinearSegmentedColormap.from_list(f'pybean', colour_list)
+        return LinearSegmentedColormap.from_list('pybean greyscale', colour_list)
 
     @staticmethod
-    def get_cmap_from_colour(colour='grey', start_with='white', end_with='black'):
+    def get_cscale(colour='grey', start_with='white', end_with='black'):
         if (start_with == 'same') & (end_with == 'same'):
             raise UserWarning(f'The cmap is uniformly coloured!')
             colour_list = [colour]*2
@@ -91,7 +92,7 @@ class Canvas(object):
             colour_list = [start_with, colour]
         else:
             colour_list = [start_with, colour, end_with]
-        return LinearSegmentedColormap.from_list(f'pybean', colour_list)
+        return LinearSegmentedColormap.from_list('pybean cscale', colour_list)
 
     @staticmethod
     def time_to_string(time):
@@ -111,3 +112,9 @@ class Canvas(object):
     def main(self):
         print(self)
         self.save()
+        self.add_param('--colour', type=str, default='royalblue')
+        cmap = self.get_cscale(**self.get_kwargs())
+        print(cmap(0.2))
+        cmap = Canvas.get_cscale(**self.get_kwargs())
+        print(cmap(0.2))
+        print(self.time())
