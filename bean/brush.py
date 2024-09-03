@@ -17,6 +17,12 @@ class Brush(Canvas):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.add_copyright()
+
+    def reset(self):
+        super().reset()
+        self.add_copyright()
+        return self
 
     def add_copyright(self):
         x = self.xmin + (self.xmax - self.xmin)*self.copyright.get('margin', 0)*self.figsize[1]/self.figsize[0]
@@ -74,7 +80,7 @@ class Brush(Canvas):
             return np.array([bbox.size[0]/2, 0])
         elif ' ' in anchor:
             anchor = anchor.strip()
-            return np.sum([Canvas.shift_from_anchor(bbox, anc) for anc in anchor.split(' ')], axis=0)
+            return np.sum([Brush.shift_from_anchor(bbox, anc) for anc in anchor.split(' ')], axis=0)
         else:
             return np.array([0, 0])
 
