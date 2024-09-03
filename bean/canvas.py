@@ -29,66 +29,23 @@ class Canvas(object):
         self.parser = argparse.ArgumentParser()
         self.reset()
 
-    def __str__(self):
-        s = 'PyBean Canvas'
-        s += f' (figsize={self.figsize},'
-        s += f' dpi={self.dpi})'
-        if hasattr(self, 'copyright'):
-            if 'text' in self.copyright:
-                s += '\nCopyright: '
-                s += self.copyright['text']
-        return s
-
-    def add_param(self, *args, **kwargs):
-        self.parser.add_argument(*args, **kwargs)
-
-    def get_kwargs(self):
-        return vars(self.parser.parse_args())
-
     def reset(self):
         self.start_time = time()
-        self.__figure__()
+        self.canvas()
+        if hasattr(self, 'copyright'):
+            self.add_copyright()
+        return self
 
-    def __figure__(self):
+    def canvas(self):
         self.fig = figure.Figure(figsize=self.figsize, dpi=self.dpi)
         self.fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
         self.ax = self.fig.add_subplot()
         self.ax.set_xlim(self.xmin, self.xmax)
         self.ax.set_ylim(self.ymin, self.ymax)
         self.ax.set_axis_off()
-        self.__copyright__()
+        return self
 
-    @staticmethod
-    def shift_from_anchor(bbox, anchor=None):
-        if anchor is None:
-            return np.array([0, 0])
-        elif anchor == 'north':
-            return np.array([0, - bbox.size[1]/2])
-        elif anchor == 'south':
-            return np.array([0, bbox.size[1]/2])
-        elif anchor == 'east':
-            return np.array([- bbox.size[0]/2, 0])
-        elif anchor == 'west':
-            return np.array([bbox.size[0]/2, 0])
-        elif ' ' in anchor:
-            anchor = anchor.strip()
-            return np.sum([Canvas.shift_from_anchor(bbox, anc) for anc in anchor.split(' ')], axis=0)
-        else:
-            return np.array([0, 0])
-
-    # https://www.rapidtables.com/code/text/unicode-characters.html
-    def path_from_string(self, s, x=0, y=0, height=1, prop=None, anchor=None):
-        path = TextPath((0, 0), s, prop=prop)
-        bbox = path.get_extents()
-        transform = Affine2D()
-        transform.translate(*(-(bbox.size/2 + bbox.p0)))
-        transform.translate(*self.shift_from_anchor(bbox=bbox, anchor=anchor))
-        transform.scale(height/bbox.size[1])
-        transform.scale(self.figsize[1]/self.figsize[0]*(self.xmax - self.xmin)/(self.ymax - self.ymin), 1)
-        transform.translate(x, y)
-        return path.transformed(transform)
-
-    def __copyright__(self):
+    def add_copyright(self):
         x = self.xmin + (self.xmax - self.xmin)*self.copyright.get('margin', 0)*self.figsize[1]/self.figsize[0]
         y = self.ymin + (self.ymax - self.ymin)*self.copyright.get('margin', 0)
         height = (self.ymax - self.ymin)*self.copyright.get('ratio', 1)
@@ -117,6 +74,52 @@ class Canvas(object):
             fill=False,
             **self.copyright.get('params', {})
         ))
+
+    # https://www.rapidtables.com/code/text/unicode-characters.html
+    def path_from_string(self, s, x=0, y=0, height=1, prop=None, anchor=None):
+        path = TextPath((0, 0), s, prop=prop)
+        bbox = path.get_extents()
+        transform = Affine2D()
+        transform.translate(*(-(bbox.size/2 + bbox.p0)))
+        transform.translate(*self.shift_from_anchor(bbox=bbox, anchor=anchor))
+        transform.scale(height/bbox.size[1])
+        transform.scale(self.figsize[1]/self.figsize[0]*(self.xmax - self.xmin)/(self.ymax - self.ymin), 1)
+        transform.translate(x, y)
+        return path.transformed(transform)
+
+    def __str__(self):
+        s = 'PyBean Canvas'
+        s += f' (figsize={self.figsize},'
+        s += f' dpi={self.dpi})'
+        if hasattr(self, 'copyright'):
+            if 'text' in self.copyright:
+                s += '\nCopyright: '
+                s += self.copyright['text']
+        return s
+
+    def add_param(self, *args, **kwargs):
+        self.parser.add_argument(*args, **kwargs)
+
+    def get_kwargs(self):
+        return vars(self.parser.parse_args())
+
+    @staticmethod
+    def shift_from_anchor(bbox, anchor=None):
+        if anchor is None:
+            return np.array([0, 0])
+        elif anchor == 'north':
+            return np.array([0, - bbox.size[1]/2])
+        elif anchor == 'south':
+            return np.array([0, bbox.size[1]/2])
+        elif anchor == 'east':
+            return np.array([- bbox.size[0]/2, 0])
+        elif anchor == 'west':
+            return np.array([bbox.size[0]/2, 0])
+        elif ' ' in anchor:
+            anchor = anchor.strip()
+            return np.sum([Canvas.shift_from_anchor(bbox, anc) for anc in anchor.split(' ')], axis=0)
+        else:
+            return np.array([0, 0])
 
     def save(self, name='image', image_dir=None, transparent=False):
         if image_dir is None:
@@ -170,3 +173,6 @@ class Canvas(object):
 
     def time(self):
         return self.time_to_string(time() - self.start_time)
+
+    def main(self):
+        print(self)
