@@ -1,13 +1,8 @@
 import argparse
 import os
 import os.path as osp
-import numpy as np
 import matplotlib.figure as figure
-import matplotlib.patches as patches
-from matplotlib.colors import LinearSegmentedColormap
-from matplotlib.font_manager import FontProperties
-from matplotlib.text import TextPath
-from matplotlib.transforms import Affine2D
+from matplotlib.colors import LinearSegmentedColormap as LSC
 from time import time
 
 from .default import DEFAULT
@@ -71,7 +66,7 @@ class Canvas(object):
 
     @staticmethod
     def get_cmap(colour_list):
-        return LinearSegmentedColormap.from_list('pybean cmap', colour_list)
+        return LSC.from_list('pybean cmap', colour_list)
 
     @staticmethod
     def get_greyscale(start_with_white=True):
@@ -79,7 +74,7 @@ class Canvas(object):
             colour_list = ['white', 'black']
         else:
             colour_list = ['black', 'white']
-        return LinearSegmentedColormap.from_list('pybean greyscale', colour_list)
+        return LSC.from_list('pybean greyscale', colour_list)
 
     @staticmethod
     def get_cscale(colour='grey', start_with='white', end_with='black'):
@@ -92,7 +87,7 @@ class Canvas(object):
             colour_list = [start_with, colour]
         else:
             colour_list = [start_with, colour, end_with]
-        return LinearSegmentedColormap.from_list('pybean cscale', colour_list)
+        return LSC.from_list('pybean cscale', colour_list)
 
     @staticmethod
     def time_to_string(time):
@@ -114,7 +109,5 @@ class Canvas(object):
         self.save()
         self.add_param('--colour', type=str, default='royalblue')
         cmap = self.get_cscale(**self.get_kwargs())
-        print(cmap(0.2))
-        cmap = Canvas.get_cscale(**self.get_kwargs())
-        print(cmap(0.2))
+        print(cmap == Canvas.get_cscale(**self.get_kwargs()))
         print(self.time())
