@@ -2,10 +2,10 @@ import matplotlib.patches as patches
 from matplotlib.transforms import Affine2D
 from matplotlib.textpath import TextPath
 
-from .figure import Figure
+from .canvas import Canvas
 
 
-class Image(Figure):
+class Volume(Canvas):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

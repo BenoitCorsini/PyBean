@@ -4,10 +4,10 @@ import os.path as osp
 import cv2
 from shutil import rmtree
 
-from .image import Image
+from .volume import Volume
 
 
-class Video(Image):
+class Motion(Volume):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
