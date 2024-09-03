@@ -8,7 +8,11 @@ from time import time
 from .default import DEFAULT
 
 
-class Canvas(object):
+class Origin(object):
+    pass
+
+
+class Canvas(Origin):
 
     def __init__(self, **kwargs):
         for key, value in DEFAULT.items():
@@ -22,8 +26,26 @@ class Canvas(object):
         assert hasattr(self, 'ymin')
         assert hasattr(self, 'ymax')
         self.parser = argparse.ArgumentParser()
+        self._new_canvas()
+
+    def _new_canvas(self):
         self.start_time = time()
-        self.canvas()
+        return self.canvas()
+
+    def _get_new_methods(self):
+        new_methods = []
+        classes = [self.__class__]
+        while classes:
+            current_class = classes.pop()
+            for method in sorted(current_class.__dict__, reverse=True):
+                if method.startswith('_new'):
+                    new_methods.append(method)
+            classes += list(current_class.__bases__)
+        return new_methods[::-1]
+
+    def reset(self):
+        for method in self._get_new_methods():
+            getattr(self, method)()
 
     def canvas(self):
         self.fig = figure.Figure(figsize=self.figsize, dpi=self.dpi)
@@ -43,10 +65,6 @@ class Canvas(object):
                 s += '\nCopyright: '
                 s += self.copyright['text']
         return s
-
-    def reset(self):
-        self.start_time = time()
-        return self.canvas()
 
     def save(self, name='image', image_dir=None, transparent=False):
         if image_dir is None:
@@ -107,6 +125,8 @@ class Canvas(object):
     def main(self):
         print(self)
         self.save()
+        print(self._get_new_methods())
+        self.reset()
         self.add_param('--colour', type=str, default='royalblue')
         cmap = self.get_cscale(**self.get_kwargs())
         print(cmap == Canvas.get_cscale(**self.get_kwargs()))
