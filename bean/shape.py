@@ -16,13 +16,29 @@ class Shape(Canvas):
 
     def _new_shape(self):
         self._shapes = {}
+        self._key_index = 0
         if hasattr(self, 'copyright'):
             self.add_copyright()
 
-    def add_shape(self, shape_name, *args, **kwargs):
-        return self.ax.add_patch(
+    def add_shape(self, shape_name, key=None, *args, **kwargs):
+        shape = self.ax.add_patch(
             getattr(patches, shape_name)(*args, **kwargs)
         )
+        if key is None:
+            key = f'shape{self._key_index}'
+            self._key_index += 1
+        if key in self._shapes:
+            raise UserWarning(f'key \'{key}\' already used for a new shape.')
+            self._shapes[key].set_visible(False)
+        self._shapes[key] = shape
+        return shape
+
+    def apply_to_shape(self, method, key, *args, **kwargs):
+        shape = self._shapes[key]
+        return getattr(shape, method)(*args, **kwargs)
+
+    def set_shape(self, key, *args, **kwargs):
+        return self.apply_to_shape('set', key, *args, **kwargs)
 
     def add_copyright(self):
         x = self.xmin + (self.xmax - self.xmin)*self.copyright.get('margin', 0)*self.figsize[1]/self.figsize[0]
@@ -33,7 +49,7 @@ class Shape(Canvas):
             self.copyright.get('fname', '@BC.otf')
         ))
         path = self.path_from_string(
-            s=self.copyright.get('text', 'Benoit Corsini'),
+            s=self.copyright.get('text', 'PyBean'),
             x=x,
             y=y,
             height=height,
@@ -80,13 +96,14 @@ class Shape(Canvas):
             return np.array([bbox.size[0]/2, 0])
         elif ' ' in anchor:
             anchor = anchor.strip()
-            return np.sum([Brush.shift_from_anchor(bbox, anc) for anc in anchor.split(' ')], axis=0)
+            return np.sum([Shape.shift_from_anchor(bbox, anc) for anc in anchor.split(' ')], axis=0)
         else:
             return np.array([0, 0])
 
     def main(self):
         print(self)
         print(self._get_new_methods())
+        self.add_shape(shape_name='Circle', key='test', xy=(0, 0), radius=0.5)
+        self.add_shape(shape_name='Circle', key='test', xy=(0, 0), radius=0.5)
         self.save()
         self.reset()
-        self.save('other')
