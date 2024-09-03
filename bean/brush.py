@@ -12,12 +12,15 @@ class Brush(Canvas):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.add_copyright()
+        self._new_brush()
 
-    def reset(self):
-        super().reset()
-        self.add_copyright()
-        return self
+    def _new_brush(self):
+        self.brushes = {}
+        if hasattr(self, 'copyright'):
+            self.add_copyright()
+
+    def add_shape(self):
+        pass
 
     def add_copyright(self):
         x = self.xmin + (self.xmax - self.xmin)*self.copyright.get('margin', 0)*self.figsize[1]/self.figsize[0]
@@ -81,4 +84,7 @@ class Brush(Canvas):
 
     def main(self):
         print(self)
+        print(self._get_new_methods())
         self.save()
+        self.reset()
+        self.save('other')
