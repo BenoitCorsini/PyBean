@@ -6,7 +6,7 @@ import matplotlib.figure as figure
 import matplotlib.patches as patches
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.font_manager import FontProperties
-from matplotlib.textpath import TextPath
+from matplotlib.text import TextPath
 from matplotlib.transforms import Affine2D
 from time import time
 
@@ -159,20 +159,19 @@ class Canvas(object):
 
     @staticmethod
     def time_to_string(time):
-        s = ''
         hours = int(time/3600)
         minutes = int((time - 60*hours)/60)
         seconds = int(time - 3600*hours - 60*minutes)
         if hours:
-            s = f'{hours}h{minutes}m{seconds}s'
+            return f'{hours}h{minutes}m{seconds}s'
         elif minutes:
-            s = f'{minutes}m{seconds}s'
+            return f'{minutes}m{seconds}s'
         else:
-            s = f'{seconds}s'
-        return s
+            return f'{seconds}s'
 
     def time(self):
         return self.time_to_string(time() - self.start_time)
 
     def main(self):
         print(self)
+        self.save()
