@@ -8,19 +8,21 @@ from matplotlib.transforms import Affine2D
 from .canvas import Canvas
 
 
-class Brush(Canvas):
+class Shape(Canvas):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._new_brush()
+        self._new_shape()
 
-    def _new_brush(self):
-        self.brushes = {}
+    def _new_shape(self):
+        self._shapes = {}
         if hasattr(self, 'copyright'):
             self.add_copyright()
 
-    def add_shape(self):
-        pass
+    def add_shape(self, shape_name, *args, **kwargs):
+        return self.ax.add_patch(
+            getattr(patches, shape_name)(*args, **kwargs)
+        )
 
     def add_copyright(self):
         x = self.xmin + (self.xmax - self.xmin)*self.copyright.get('margin', 0)*self.figsize[1]/self.figsize[0]
