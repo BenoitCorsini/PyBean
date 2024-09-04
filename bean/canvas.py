@@ -9,20 +9,20 @@ from typing_extensions import Self
 from .default import DEFAULT
 
 
-canvas_params = {
-    'figsize' : int,
-    'dpi' : int,
-    'xmin' : float,
-    'xmax' : float,
-    'ymin' : float,
-    'ymax' : float,
-}
-canvas_nargs = {
-    'figsize' : 2,
-}
-
-
 class Canvas(object):
+
+    _canvas_params = {
+        'figsize' : int,
+        'dpi' : int,
+        'xmin' : float,
+        'xmax' : float,
+        'ymin' : float,
+        'ymax' : float,
+    }
+
+    _canvas_nargs = {
+        'figsize' : 2,
+    }
 
     def __init__(
             self: Self,
@@ -32,39 +32,54 @@ class Canvas(object):
         for key, value in DEFAULT.items():
             setattr(self, key, value)
         self._parser = argparse.ArgumentParser()
-        self._canvas_params(**kwargs)
-        self._new_canvas()
+        self._set_params(**kwargs)
+        self.reset()
 
-    def _canvas_params(
+    def __str__(
+            self: Self,
+        ) -> str:
+        # string representation of self
+        s = f'PyBean {self.__class__.__name__}'
+        s += f' (figsize=({self.figsize[0]}, {self.figsize[1]}),'
+        s += f' dpi={self.dpi})'
+        if hasattr(self, 'copyright'):
+            if 'text' in self.copyright:
+                s += '\nCopyright: '
+                s += self.copyright['text']
+        return s
+
+    def _get_classes(
+            self: Self,
+        ) -> list:
+        # lists all parents classes from most fundamental to current
+        classes = []
+        classes_to_explore = [self.__class__]
+        while classes_to_explore:
+            current_class = classes_to_explore.pop()
+            classes.append(current_class)
+            classes_to_explore += list(current_class.__bases__)
+        return classes[::-1]
+
+    def _set_params(
             self: Self,
             **kwargs,
         ) -> None:
-        # collect and setup the parameters of a canvas
-        for param, param_type in canvas_params.items():
-            assert hasattr(self, param)
-            self.add_param(
-                f'--{param}',
-                nargs=canvas_nargs.get(param, None),
-                type=param_type,
-                default=getattr(self, param),
-            )
+        # collect and setup the parameters of the class and its parents
+        for current_class in self._get_classes():
+            class_name = current_class.__name__.lower()
+            class_params = getattr(self, f'_{class_name}_params', {})
+            class_nargs = getattr(self, f'_{class_name}_nargs', {})
+            for param, param_type in class_params.items():
+                assert hasattr(self, param)
+                self.add_param(
+                    f'--{param}',
+                    nargs=class_nargs.get(param, None),
+                    type=param_type,
+                    default=getattr(self, param),
+                )
         kwargs.update(self.get_kwargs())
         for key, value in kwargs.items():
             setattr(self, key, value)
-
-    def add_param(
-            self: Self,
-            *args,
-            **kwargs,
-        ) -> None:
-        # add a parameter to the parser
-        self._parser.add_argument(*args, **kwargs)
-
-    def get_kwargs(
-            self: Self,
-        ) -> dict:
-        # return the arguments of the parser as a dictionnary
-        return vars(self._parser.parse_args())
 
     def _new_canvas(
             self: Self,
@@ -78,14 +93,28 @@ class Canvas(object):
         ) -> list[str]:
         # get _new methods in order of depth
         new_methods = []
-        classes = [self.__class__]
-        while classes:
-            current_class = classes.pop()
-            for method in sorted(current_class.__dict__, reverse=True):
+        for current_class in self._get_classes():
+            for method in sorted(current_class.__dict__):
                 if method.startswith('_new'):
                     new_methods.append(method)
-            classes += list(current_class.__bases__)
-        return new_methods[::-1]
+        return new_methods
+
+    def add_param(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> None:
+        # add a parameter to the parser
+        self._parser.add_argument(*args, **kwargs)
+
+    def get_kwargs(
+            self: Self,
+            **kwargs
+        ) -> dict:
+        # return the arguments of the parser as a dictionnary
+        parser_kwargs = vars(self._parser.parse_args())
+        parser_kwargs.update(kwargs)
+        return parser_kwargs.copy()
 
     def reset(
             self: Self,
@@ -107,19 +136,6 @@ class Canvas(object):
         self.ax.set_axis_off()
         return self
 
-    def __str__(
-            self: Self,
-        ) -> str:
-        # string representation of self
-        s = f'PyBean {self.__class__.__name__}'
-        s += f' (figsize=({self.figsize[0]}, {self.figsize[1]}),'
-        s += f' dpi={self.dpi})'
-        if hasattr(self, 'copyright'):
-            if 'text' in self.copyright:
-                s += '\nCopyright: '
-                s += self.copyright['text']
-        return s
-
     def save(
             self: Self,
             name: str = 'image',
@@ -135,6 +151,25 @@ class Canvas(object):
             osp.join(image_dir, name + '.png'),
             transparent=transparent
         )
+
+    def time(
+            self: Self,
+        ) -> str:
+        # compute the current time duration of the algorithm
+        return self.time_to_string(time() - self.start_time)
+
+    def help(
+            self: Self,
+        ) -> None:
+        # print helpful tips
+        doc_page = 'NOT READY YET'
+        github_page = 'https://github.com/BenoitCorsini/PyBean'
+        symbol_page = 'https://www.rapidtables.com'
+        symbol_page += '/code/text/unicode-characters.html'
+        print('Using the PyBean library \u2714')
+        print(f'\u279E Take a look at the documentation: {doc_page}')
+        print(f'\u279E Take a look at the Github page: {github_page}')
+        print(f'\u279E Take a look at common symbols: {symbol_page}')
 
     @staticmethod
     def get_cmap(
@@ -187,34 +222,17 @@ class Canvas(object):
         else:
             return f'{seconds}s'
 
-    def time(
-            self: Self,
-        ) -> str:
-        # compute the current time duration of the algorithm
-        return self.time_to_string(time() - self.start_time)
-
-    def help(
-            self: Self,
-        ) -> None:
-        # print helpful tips
-        doc_page = 'www.benoitcorsini.com'
-        github_page = 'https://github.com/BenoitCorsini/PyBean'
-        symbol_page = 'https://www.rapidtables.com'
-        symbol_page += '/code/text/unicode-characters.html'
-        print('Using the PyBean library \u2714')
-        print(f'\u279E Take a look at the documentation: {doc_page}')
-        print(f'\u279E Take a look at the Github page: {github_page}')
-        print(f'\u279E Take a look at common symbol codes: {symbol_page}')
-
-    def main(
+    def test(
             self: Self,
         ) -> None:
         # the main testing function
         print(self)
-        self.save()
+        print(self._get_classes())
         print(self._get_new_methods())
+        print(self.get_kwargs())
+        self.save()
         self.reset()
         cmap = self.get_cscale()
         print(cmap == Canvas.get_cscale())
-        self.help()
         print(self.time())
+        self.help()
