@@ -193,6 +193,19 @@ class Canvas(object):
         # compute the current time duration of the algorithm
         return self.time_to_string(time() - self.start_time)
 
+    def help(
+            self: Self,
+        ) -> None:
+        # print helpful tips
+        doc_page = 'www.benoitcorsini.com'
+        github_page = 'https://github.com/BenoitCorsini/PyBean'
+        symbol_page = 'https://www.rapidtables.com'
+        symbol_page += '/code/text/unicode-characters.html'
+        print('Using the PyBean library \u2714')
+        print(f'\u279E Take a look at the documentation: {doc_page}')
+        print(f'\u279E Take a look at the Github page: {github_page}')
+        print(f'\u279E Take a look at common symbol codes: {symbol_page}')
+
     def main(
             self: Self,
         ) -> None:
@@ -203,4 +216,5 @@ class Canvas(object):
         self.reset()
         cmap = self.get_cscale()
         print(cmap == Canvas.get_cscale())
+        self.help()
         print(self.time())
