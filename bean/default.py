@@ -11,12 +11,14 @@ DEFAULT = {
     'frames_dir' : 'frames',
     'copyright' : {
         'text' : '@B.Corsini',
-        'fname' : '@BC.otf',
         'ratio' : 0.05,
         'margin' : 0.02,
         'lw' : 2,
         'ec' : 'grey',
         'fc' : 'black',
+        'font_properties' : {
+            'fname' : 'bean/font.otf',
+        },
         'params' : {
             'zorder' : 1000,
             'alpha' : 0.05,
