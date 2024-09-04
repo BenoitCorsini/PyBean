@@ -9,6 +9,19 @@ from typing_extensions import Self
 from .default import DEFAULT
 
 
+canvas_params = {
+    'figsize' : int,
+    'dpi' : int,
+    'xmin' : float,
+    'xmax' : float,
+    'ymin' : float,
+    'ymax' : float,
+}
+canvas_nargs = {
+    'figsize' : 2,
+}
+
+
 class Canvas(object):
 
     def __init__(
@@ -18,16 +31,40 @@ class Canvas(object):
         # initiate class
         for key, value in DEFAULT.items():
             setattr(self, key, value)
+        self._parser = argparse.ArgumentParser()
+        self._canvas_params(**kwargs)
+        self._new_canvas()
+
+    def _canvas_params(
+            self: Self,
+            **kwargs,
+        ) -> None:
+        # collect and setup the parameters of a canvas
+        for param, param_type in canvas_params.items():
+            assert hasattr(self, param)
+            self.add_param(
+                f'--{param}',
+                nargs=canvas_nargs.get(param, '?'),
+                type=param_type,
+                default=getattr(self, param),
+            )
+        kwargs.update(self.get_kwargs())
         for key, value in kwargs.items():
             setattr(self, key, value)
-        assert hasattr(self, 'figsize')
-        assert hasattr(self, 'dpi')
-        assert hasattr(self, 'xmin')
-        assert hasattr(self, 'xmax')
-        assert hasattr(self, 'ymin')
-        assert hasattr(self, 'ymax')
-        self._parser = argparse.ArgumentParser()
-        self._new_canvas()
+
+    def add_param(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> None:
+        # add a parameter to the parser
+        self._parser.add_argument(*args, **kwargs)
+
+    def get_kwargs(
+            self: Self,
+        ) -> dict:
+        # return the arguments of the parser as a dictionnary
+        return vars(self._parser.parse_args())
 
     def _new_canvas(
             self: Self,
@@ -75,7 +112,7 @@ class Canvas(object):
         ) -> str:
         # string representation of self
         s = f'PyBean {self.__class__.__name__}'
-        s += f' (figsize={self.figsize},'
+        s += f' (figsize=({self.figsize[0]}, {self.figsize[1]}),'
         s += f' dpi={self.dpi})'
         if hasattr(self, 'copyright'):
             if 'text' in self.copyright:
@@ -98,20 +135,6 @@ class Canvas(object):
             osp.join(image_dir, name + '.png'),
             transparent=transparent
         )
-
-    def add_param(
-            self: Self,
-            *args,
-            **kwargs,
-        ) -> None:
-        # add a parameter to the parser
-        self._parser.add_argument(*args, **kwargs)
-
-    def get_kwargs(
-            self: Self,
-        ) -> dict:
-        # return the arguments of the parser as a dictionnary
-        return vars(self._parser.parse_args())
 
     @staticmethod
     def get_cmap(
@@ -178,7 +201,6 @@ class Canvas(object):
         self.save()
         print(self._get_new_methods())
         self.reset()
-        self.add_param('--colour', type=str, default='royalblue')
-        cmap = self.get_cscale(**self.get_kwargs())
-        print(cmap == Canvas.get_cscale(**self.get_kwargs()))
+        cmap = self.get_cscale()
+        print(cmap == Canvas.get_cscale())
         print(self.time())
