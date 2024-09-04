@@ -163,7 +163,6 @@ class Shape(Canvas):
             **self.copyright.get('params', {})
         )
 
-    # https://www.rapidtables.com/code/text/unicode-characters.html
     def path_from_string(
             self: Self,
             s: str,
@@ -357,8 +356,8 @@ class Shape(Canvas):
         self.set_shape(color='red')
         self.save()
         self.reset()
-        self.add_path(vertices=[(0, 0), (1, 1)], color='green', lw=10)
-        self.grid(n_lines=(3, 5), color='red', lw=5)
+        self.add_raw_path(vertices=[(0, 0), (1, 1)], color='green', lw=10)
+        self.grid(left=0.5, right=0.6, bottom=0.1, top=0.4, n_lines=(3, 5), color='red', lw=5)
         self.grid(steps=0.1, color='darkblue', zorder=-1)
         self.grid(color='orange', zorder=-2, lw=30)
         self.save()
