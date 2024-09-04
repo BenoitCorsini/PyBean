@@ -41,45 +41,49 @@ class Shape(Canvas):
         return self.apply_to_shape('set', key, *args, **kwargs)
 
     def add_copyright(self):
-        x = self.xmin + (self.xmax - self.xmin)*self.copyright.get('margin', 0)*self.figsize[1]/self.figsize[0]
-        y = self.ymin + (self.ymax - self.ymin)*self.copyright.get('margin', 0)
-        height = (self.ymax - self.ymin)*self.copyright.get('ratio', 1)
-        prop = FontProperties(fname=osp.join(
-            osp.dirname(osp.realpath(__file__)),
-            self.copyright.get('fname', '@BC.otf')
-        ))
+        margin = self.copyright.get('margin', 0)
+        xscale = (self.xmax - self.xmin)*self.figsize[1]/self.figsize[0]
+        yscale = (self.ymax - self.ymin)
+        xy = (
+            self.xmin + margin*xscale,
+            self.ymin + margin*yscale,
+        )
+        height = yscale*self.copyright.get('ratio', 1)
         path = self.path_from_string(
             s=self.copyright.get('text', 'PyBean'),
-            x=x,
-            y=y,
+            xy=xy,
             height=height,
-            prop=prop,
             anchor='south west',
+            font_properties=self.copyright.get('font_properties', {}),
         )
-        self.ax.add_patch(patches.PathPatch(
+        self.add_shape(
+            key='copyright_fill',
+            shape_name='PathPatch',
             path=path,
             lw=0,
             color=self.copyright.get('fc', 'black'),
             **self.copyright.get('params', {})
-        ))
-        self.ax.add_patch(patches.PathPatch(
+        )
+        self.add_shape(
+            key='copyright_line',
+            shape_name='PathPatch',
             path=path,
             lw=self.copyright.get('lw', 0),
             color=self.copyright.get('ec', 'black'),
             fill=False,
             **self.copyright.get('params', {})
-        ))
+        )
 
     # https://www.rapidtables.com/code/text/unicode-characters.html
-    def path_from_string(self, s, x=0, y=0, height=1, prop=None, anchor=None):
-        path = TextPath((0, 0), s, prop=prop)
+    def path_from_string(self, s, xy=(0, 0), height=1, anchor=None, font_properties={}):
+        path = TextPath((0, 0), s, prop=FontProperties(**font_properties))
         bbox = path.get_extents()
         transform = Affine2D()
         transform.translate(*(-(bbox.size/2 + bbox.p0)))
         transform.translate(*self.shift_from_anchor(bbox=bbox, anchor=anchor))
         transform.scale(height/bbox.size[1])
         transform.scale(self.figsize[1]/self.figsize[0]*(self.xmax - self.xmin)/(self.ymax - self.ymin), 1)
-        transform.translate(x, y)
+        transform.translate(*xy)
         return path.transformed(transform)
 
     @staticmethod
@@ -104,6 +108,6 @@ class Shape(Canvas):
         print(self)
         print(self._get_new_methods())
         self.add_shape(shape_name='Circle', key='test', xy=(0, 0), radius=0.5)
-        self.add_shape(shape_name='Circle', key='test', xy=(0, 0), radius=0.5)
+        self.add_shape(shape_name='Circle', xy=(1, 0), radius=0.5)
         self.save()
         self.reset()
