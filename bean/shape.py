@@ -54,6 +54,62 @@ class Shape(Canvas):
             height=height,
         )
 
+    def _axis_grid(
+            self: Self,
+            step: float,
+        ) -> None:
+        # represents the grid of the axis
+        self.grid(
+            key='_subaxis',
+            steps=step/self.lines_per_axis,
+            **getattr(self, 'axis_params', {})
+        )
+        self.grid(
+            key='_axis',
+            steps=step,
+            **getattr(self, 'axis_params', {})
+        )
+
+    def _axis_ticks(
+            self: Self,
+            step: float,
+        ) -> None:
+        # represents the ticks of the axis
+        paths = []
+        margin = (1 - self.axis_tick_ratio)*step/self.lines_per_axis/2
+        height = self.axis_tick_ratio*step/self.lines_per_axis
+        xticks = self.get_ticks(axis='x', step=step)
+        yticks = self.get_ticks(axis='y', step=step)
+        for tick in xticks[1:]:
+            paths.append(self.path_from_string(
+                s=f'{tick:0.2f}',
+                xy=(tick - margin, self.ymin + margin),
+                anchor='south east',
+                height=height,
+            ))
+        for tick in yticks[1:-1]:
+            paths.append(self.path_from_string(
+                s=f'{tick:0.2f}',
+                xy=(self.xmin + margin, tick - margin),
+                anchor='north west',
+                height=height,
+            ))
+        self.add_paths(
+            paths=paths,
+            key='_ticks',
+            **getattr(self, 'axis_params', {})
+        )
+
+    def _axis_visible(
+            self: Self,
+            visible: bool,
+        ) -> None:
+        # makes the axis visible or not along with default parameters
+        params = getattr(self, 'axis_params', {})
+        params['visible'] = visible
+        for key in ['_axis', '_subaxis', '_ticks']:
+            self.set_shape(key=key, **params)
+
     @staticmethod
     def _ticks_to_grid_path(
             xticks: np.array,
@@ -296,52 +352,6 @@ class Shape(Canvas):
             **kwargs
         )
 
-    def _axis_grid(
-            self: Self,
-            step: float,
-        ) -> None:
-        # represents the grid of the axis
-        self.grid(
-            key='_subaxis',
-            steps=step/self.lines_per_axis,
-            **getattr(self, 'axis_params', {})
-        )
-        self.grid(
-            key='_axis',
-            steps=step,
-            **getattr(self, 'axis_params', {})
-        )
-
-    def _axis_ticks(
-            self: Self,
-            step: float,
-        ) -> None:
-        # represents the ticks of the axis
-        paths = []
-        margin = (1 - self.axis_tick_ratio)*step/self.lines_per_axis/2
-        height = self.axis_tick_ratio*step/self.lines_per_axis
-        xticks = self.get_ticks(axis='x', step=step)
-        yticks = self.get_ticks(axis='y', step=step)
-        for tick in xticks[1:]:
-            paths.append(self.path_from_string(
-                s=f'{tick:0.2f}',
-                xy=(tick - margin, self.ymin + margin),
-                anchor='south east',
-                height=height,
-            ))
-        for tick in yticks[1:-1]:
-            paths.append(self.path_from_string(
-                s=f'{tick:0.2f}',
-                xy=(self.xmin + margin, tick - margin),
-                anchor='north west',
-                height=height,
-            ))
-        self.add_paths(
-            paths=paths,
-            key='_ticks',
-            **getattr(self, 'axis_params', {})
-        )
-
     def add_axis(
             self: Self,
         ) -> None:
@@ -352,16 +362,6 @@ class Shape(Canvas):
         )/max(self.figsize)
         self._axis_grid(step)
         self._axis_ticks(step)
-
-    def _axis_visible(
-            self: Self,
-            visible: bool,
-        ) -> None:
-        # makes the axis visible or not along with default parameters
-        params = getattr(self, 'axis_params', {})
-        params['visible'] = visible
-        for key in ['_axis', '_subaxis', '_ticks']:
-            self.set_shape(key=key, **params)
 
     def show_axis(
             self: Self,
