@@ -45,7 +45,7 @@ class Shape(Canvas):
             key = f'shape{self._key_index}'
             self._key_index += 1
         if key in self._shapes:
-            raise UserWarning(f'key \'{key}\' already used for a new shape.')
+            raise UserWarning(f'key \'{key}\' already used for a shape.')
             self._shapes[key].set_visible(False)
         self._shapes[key] = shape
         return shape
@@ -230,23 +230,23 @@ class Shape(Canvas):
 
     @staticmethod
     def _xy_to_path_params(
-            X: np.array,
-            Y: np.array,
+            xticks: np.array,
+            yticks: np.array,
         ) -> dict:
         # transform x and y ticks into a grid path
         xmin, xmax = np.min(X), np.max(X)
         ymin, ymax = np.min(Y), np.max(Y)
         vertices = []
         codes = []
-        for x in X:
-            vertices.append((x, ymin))
+        for xtick in xticks:
+            vertices.append((xtick, ymin))
             codes.append(1)
-            vertices.append((x, ymax))
+            vertices.append((xtick, ymax))
             codes.append(2)
-        for y in Y:
-            vertices.append((xmin, y))
+        for ytick in yticks:
+            vertices.append((xmin, ytick))
             codes.append(1)
-            vertices.append((xmax, y))
+            vertices.append((xmax, ytick))
             codes.append(2)
         return {'vertices' : vertices, 'codes' : codes, 'closed' : False}
 
@@ -271,21 +271,21 @@ class Shape(Canvas):
             n_lines = (None, None)
         elif isinstance(n_lines, int):
             n_lines = (n_lines, n_lines)
-        X = self.get_ticks(
+        xticks = self.get_ticks(
             axis='x',
             start=left,
             stop=right,
             step=steps[0],
             n_line=n_lines[0],
         )
-        Y = self.get_ticks(
+        yticks = self.get_ticks(
             axis='y',
             start=bottom,
             stop=top,
             step=steps[1],
             n_line=n_lines[1],
         )
-        kwargs.update(self._xy_to_path_params(X, Y))
+        kwargs.update(self._xy_to_path_params(xticks, yticks))
         self.add_path(key=key, *args, **kwargs)
 
     def main(
