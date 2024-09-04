@@ -50,16 +50,16 @@ class Shape(Canvas):
         self._shapes[key] = shape
         return shape
 
-    def add_path(
+    def add_raw_path(
             self: Self,
-            vertices: list,
+            vertices: list = None,
             codes: list = None,
             closed: bool = False,
             key: Any = None,
             *args,
             **kwargs,
         ) -> patches.PathPatch:
-        # add a path patch to the class
+        # add a path patch from raw path parameters to the class
         return self.add_shape(
             shape_name='PathPatch',
             key=key,
@@ -68,6 +68,38 @@ class Shape(Canvas):
                 codes=codes,
                 closed=closed,
             ),
+            *args,
+            **kwargs
+        )
+
+    def add_path(
+            self: Self,
+            path: Path,
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.PathPatch:
+        # add a path patch to the class
+        return self.add_shape(
+            shape_name='PathPatch',
+            key=key,
+            path=path,
+            *args,
+            **kwargs
+        )
+
+    def add_paths(
+            self: Self,
+            paths: list[Path],
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.PathPatch:
+        # add a path patch to the class
+        return self.add_shape(
+            shape_name='PathPatch',
+            key=key,
+            path=Path.make_compound_path(*paths),
             *args,
             **kwargs
         )
@@ -229,13 +261,13 @@ class Shape(Canvas):
         return np.arange(start, stop + step, step)
 
     @staticmethod
-    def _xy_to_path_params(
+    def _ticks_to_grid_path(
             xticks: np.array,
             yticks: np.array,
         ) -> dict:
         # transform x and y ticks into a grid path
-        xmin, xmax = np.min(X), np.max(X)
-        ymin, ymax = np.min(Y), np.max(Y)
+        xmin, xmax = np.min(xticks), np.max(xticks)
+        ymin, ymax = np.min(yticks), np.max(yticks)
         vertices = []
         codes = []
         for xtick in xticks:
@@ -248,7 +280,7 @@ class Shape(Canvas):
             codes.append(1)
             vertices.append((xmax, ytick))
             codes.append(2)
-        return {'vertices' : vertices, 'codes' : codes, 'closed' : False}
+        return Path(vertices=vertices, codes=codes, closed=False)
 
     def grid(
             self: Self,
@@ -285,8 +317,32 @@ class Shape(Canvas):
             step=steps[1],
             n_line=n_lines[1],
         )
-        kwargs.update(self._xy_to_path_params(xticks, yticks))
-        self.add_path(key=key, *args, **kwargs)
+        return self.add_path(
+            key=key,
+            path=self._ticks_to_grid_path(xticks, yticks),
+            *args,
+            **kwargs
+        )
+
+    def add_axis(
+            self: Self,
+            boldness_freq: int = 5,
+        ) -> None:
+        # represents the axis along with the coordinates
+        steps = max(
+            (self.xmax - self.xmin),
+            (self.ymax - self.ymin),
+        )/max(self.figsize)
+        self.grid(
+            key='subaxis',
+            steps=steps/boldness_freq,
+            **getattr(self, 'axis_params', {})
+        )
+        self.grid(
+            key='axis',
+            steps=steps,
+            **getattr(self, 'axis_params', {})
+        )
 
     def main(
             self: Self,

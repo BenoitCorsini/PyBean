@@ -5,10 +5,6 @@ DEFAULT = {
     'xmax' : 1,
     'ymin' : 0,
     'ymax' : 9/16,
-    'fps' : 20,
-    'image_dir' : '.',
-    'video_dir' : '.',
-    'frames_dir' : 'frames',
     'copyright' : {
         'text' : '@B.Corsini',
         'height' : 0.05,
@@ -26,4 +22,15 @@ DEFAULT = {
             'capstyle' : 'round',
         },
     },
+    'axis_params' : {
+        'color' : 'black',
+        'lw' : 2,
+        'alpha' : 0.1,
+        'zorder' : 100,
+        'joinstyle' : 'round',
+        'capstyle' : 'round',
+    },
+    'draft' : False,
+    'fps' : 20,
+    'frames_dir' : 'frames',
 }
