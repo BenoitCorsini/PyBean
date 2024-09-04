@@ -103,6 +103,15 @@ class Shape(Canvas):
             **getattr(self, 'axis_params', {})
         )
 
+    def _copyright_visible(
+            self: Self,
+            visible: bool,
+        ) -> None:
+        # makes the copyright visible or not
+        if hasattr(self, 'copyright'):
+            for key in ['_copyright_fill', '_copyright_line']:
+                self.set_shape(key=key, visible=visible)
+
     def _axis_visible(
             self: Self,
             visible: bool,
@@ -167,29 +176,6 @@ class Shape(Canvas):
         )
         self._shapes[key] = shape
         return shape
-
-    def add_copyright(
-            self: Self,
-        ) -> None:
-        # add a copyright stamp to the canvas
-        path = self._copyright_path()
-        self.add_shape(
-            shape_name='PathPatch',
-            key='_copyright_fill',
-            path=path,
-            lw=0,
-            color=self.copyright.get('fc', 'black'),
-            **self.copyright.get('params', {})
-        )
-        self.add_shape(
-            shape_name='PathPatch',
-            key='_copyright_line',
-            path=path,
-            lw=self.copyright.get('lw', 0),
-            color=self.copyright.get('ec', 'black'),
-            fill=False,
-            **self.copyright.get('params', {})
-        )
 
     def add_raw_path(
             self: Self,
@@ -304,6 +290,41 @@ class Shape(Canvas):
         transform.scale(height/bbox.size[1])
         transform.scale(xy_ratio/figsize_ratio, 1)
         return transform
+
+    def add_copyright(
+            self: Self,
+        ) -> None:
+        # add a copyright stamp to the canvas
+        path = self._copyright_path()
+        self.add_shape(
+            shape_name='PathPatch',
+            key='_copyright_fill',
+            path=path,
+            lw=0,
+            color=self.copyright.get('fc', 'black'),
+            **self.copyright.get('params', {})
+        )
+        self.add_shape(
+            shape_name='PathPatch',
+            key='_copyright_line',
+            path=path,
+            lw=self.copyright.get('lw', 0),
+            color=self.copyright.get('ec', 'black'),
+            fill=False,
+            **self.copyright.get('params', {})
+        )
+
+    def show_copyright(
+            self: Self,
+        ) -> None:
+        # make the copyright visible
+        self._copyright_visible(True)
+
+    def hide_copyright(
+            self: Self,
+        ) -> None:
+        # make the copyright invisible
+        self._copyright_visible(False)
 
     def get_ticks(
             self: Self,
@@ -448,4 +469,5 @@ class Shape(Canvas):
         self.set_shape(key='_axis', alpha=1)
         self.add_axis()
         self.show_axis()
+        self.hide_copyright()
         self.save()
