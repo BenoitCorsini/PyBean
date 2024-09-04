@@ -156,7 +156,8 @@ class Shape(Canvas):
             **kwargs,
         ) -> patches.Patch:
         # add a patch to the class
-        if self.available_key(key=key, category='shape'):
+        key, available = self.key_checker(key=key, category='shape')
+        if available:
             shape = self.ax.add_patch(
                 getattr(patches, shape_name)(*args, **kwargs)
             )
@@ -459,3 +460,4 @@ class Shape(Canvas):
         self.show_axis()
         self.hide_copyright()
         self.save()
+        print(self._shapes)

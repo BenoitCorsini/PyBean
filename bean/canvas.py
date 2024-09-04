@@ -158,11 +158,11 @@ class Canvas(object):
         # compute the current time duration of the algorithm
         return self.time_to_string(time() - self.start_time)
 
-    def available_key(
+    def key_checker(
             self: Self,
             category: str,
             key: Any = None,
-        ) -> bool:
+        ) -> (Any, bool):
         # check whether the key is available from the category
         if key is None:
             index = getattr(self, f'_{category}_index')
@@ -170,13 +170,13 @@ class Canvas(object):
             setattr(self, f'_{category}_index', index + 1)
         if key in getattr(self, f'_{category}s'):
             if key.startswith('_'):
-                return False
+                return key, False
             else:
                 raise UserWarning(
                     f'key \'{key}\' already used for a {category}.'
                 )
-                return False
-        return True
+                return key, False
+        return key, True
 
     def help(
             self: Self,
