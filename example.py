@@ -3,10 +3,10 @@ import bean
 
 if __name__ == '__main__':
 	# B = bean.Canvas()
-	# B.main()
+	# B.test()
 	# print()
 	# B = bean.Shape()
-	# B.main()
+	# B.test()
 	# print()
 	B = bean.Volume()
-	B.main()
+	B.test()

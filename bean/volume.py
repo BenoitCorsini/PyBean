@@ -12,7 +12,6 @@ class Volume(Shape):
         ) -> None:
         # initiate class
         super().__init__(**kwargs)
-        self._new_volume()
 
     def _new_volume(
             self: Self,
@@ -21,10 +20,12 @@ class Volume(Shape):
         self.add_axis()
         return self
 
-    def main(
+    def test(
             self: Self,
         ) -> None:
         # the main testing function
         print(self)
+        print(self._get_classes())
         print(self._get_new_methods())
+        print(self.get_kwargs())
         self.save()
