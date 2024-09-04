@@ -4,24 +4,40 @@ import matplotlib.patches as patches
 from matplotlib.path import Path
 from matplotlib.font_manager import FontProperties
 from matplotlib.text import TextPath
-from matplotlib.transforms import Affine2D
+from matplotlib.transforms import Affine2D, Bbox
+from typing_extensions import Any, Self
 
 from .canvas import Canvas
 
 
 class Shape(Canvas):
 
-    def __init__(self, **kwargs):
+    def __init__(
+            self: Self,
+            **kwargs,
+        ) -> None:
+        # initiate class
         super().__init__(**kwargs)
         self._new_shape()
 
-    def _new_shape(self):
+    def _new_shape(
+            self: Self,
+        ) -> Self:
+        # new shape instance
         self._shapes = {}
         self._key_index = 0
         if hasattr(self, 'copyright'):
             self.add_copyright()
+        return self
 
-    def add_shape(self, shape_name, key=None, *args, **kwargs):
+    def add_shape(
+            self: Self,
+            shape_name: str,
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.Patch:
+        # add a patch to the class
         shape = self.ax.add_patch(
             getattr(patches, shape_name)(*args, **kwargs)
         )
@@ -34,13 +50,16 @@ class Shape(Canvas):
         self._shapes[key] = shape
         return shape
 
-    def add_path(self,
-                 vertices,
-                 codes=None,
-                 closed=False,
-                 key=None,
-                 *args,
-                 **kwargs):
+    def add_path(
+            self: Self,
+            vertices: list,
+            codes: list = None,
+            closed: bool = False,
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.PathPatch:
+        # add a path patch to the class
         return self.add_shape(
             shape_name='PathPatch',
             key=key,
@@ -53,16 +72,32 @@ class Shape(Canvas):
             **kwargs
         )
 
-    def apply_to_shape(self, method, key=None, *args, **kwargs):
+    def apply_to_shape(
+            self: Self,
+            method: str,
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.Patch:
+        # apply a given method to a patch
         if key is None:
             key = f'shape{self._key_index - 1}'
         shape = self._shapes[key]
         return getattr(shape, method)(*args, **kwargs)
 
-    def set_shape(self, key=None, *args, **kwargs):
+    def set_shape(
+            self: Self,
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.Patch:
+        # set parameters to a patch
         return self.apply_to_shape('set', key, *args, **kwargs)
 
-    def add_copyright(self):
+    def add_copyright(
+            self: Self,
+        ) -> None:
+        # add a copyright stamp to the canvas
         margin = self.copyright.get('margin', 0)
         xscale = (self.xmax - self.xmin)*self.figsize[1]/self.figsize[0]
         yscale = self.ymax - self.ymin
@@ -97,13 +132,16 @@ class Shape(Canvas):
         )
 
     # https://www.rapidtables.com/code/text/unicode-characters.html
-    def path_from_string(self,
-                         s,
-                         xy=(0, 0),
-                         size=None,
-                         font_properties={},
-                         anchor=None,
-                         height=None):
+    def path_from_string(
+            self: Self,
+            s: str,
+            xy: tuple = (0, 0),
+            size: float = None,
+            font_properties: dict = {},
+            anchor: str = None,
+            height: float = None,
+        ) -> Path:
+        # get the path from a string
         path = TextPath(
             xy=xy,
             s=s,
@@ -120,7 +158,12 @@ class Shape(Canvas):
         return path
 
     @staticmethod
-    def shift_transform(transform, bbox, anchor):
+    def shift_transform(
+            transform: Affine2D,
+            bbox: Bbox,
+            anchor: str = None,
+        ) -> Affine2D:
+        # shift the transform to move the bbox according to the anchor
         transform.translate(*(-(bbox.size/2 + bbox.p0)))
         transform.translate(*Shape.shift_from_anchor(
             bbox=bbox,
@@ -129,7 +172,11 @@ class Shape(Canvas):
         return transform
 
     @staticmethod
-    def shift_from_anchor(bbox, anchor=None):
+    def shift_from_anchor(
+            bbox: Bbox,
+            anchor: str = None,
+        ) -> np.array:
+        # returns a shifting vector moving the bbox according to the anchor
         if anchor is None:
             return np.array([0, 0])
         elif anchor == 'north':
@@ -149,14 +196,23 @@ class Shape(Canvas):
         else:
             return np.array([0, 0])
 
-    def scale_transform(self, transform, bbox, height):
+    def scale_transform(
+            self: Self,
+            transform: Affine2D,
+            bbox: Bbox,
+            height: float = 1,
+        ) -> Affine2D:
+        # scale the transform to straighthen the text with given height
         xy_ratio = (self.xmax - self.xmin)/(self.ymax - self.ymin)
         figsize_ratio = self.figsize[0]/self.figsize[1]
         transform.scale(height/bbox.size[1])
         transform.scale(xy_ratio/figsize_ratio, 1)
         return transform
 
-    def main(self):
+    def main(
+            self: Self,
+        ) -> None:
+        # the main testing function
         print(self)
         print(self._get_new_methods())
         self.add_shape(shape_name='Circle', key='test', xy=(0, 1), radius=0.5)
