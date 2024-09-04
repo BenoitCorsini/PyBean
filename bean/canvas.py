@@ -4,17 +4,18 @@ import os.path as osp
 import matplotlib.figure as figure
 from matplotlib.colors import LinearSegmentedColormap as LSC
 from time import time
+from typing_extensions import Self
 
 from .default import DEFAULT
 
 
-class Origin(object):
-    pass
+class Canvas(object):
 
-
-class Canvas(Origin):
-
-    def __init__(self, **kwargs):
+    def __init__(
+            self: Self,
+            **kwargs,
+        ) -> None:
+        # initiate class
         for key, value in DEFAULT.items():
             setattr(self, key, value)
         for key, value in kwargs.items():
@@ -28,11 +29,17 @@ class Canvas(Origin):
         self._parser = argparse.ArgumentParser()
         self._new_canvas()
 
-    def _new_canvas(self):
+    def _new_canvas(
+            self: Self,
+        ) -> Self:
+        # new canvas instance
         self.start_time = time()
         return self.canvas()
 
-    def _get_new_methods(self):
+    def _get_new_methods(
+            self: Self,
+        ) -> list[str]:
+        # get _new methods in order of depth
         new_methods = []
         classes = [self.__class__]
         while classes:
@@ -43,11 +50,18 @@ class Canvas(Origin):
             classes += list(current_class.__bases__)
         return new_methods[::-1]
 
-    def reset(self):
+    def reset(
+            self: Self,
+        ) -> Self:
+        # reset self using _new methods in order of depth
         for method in self._get_new_methods():
             getattr(self, method)()
+        return self
 
-    def canvas(self):
+    def canvas(
+            self: Self,
+        ) -> Self:
+        # create a figure and axes, used as canvas
         self.fig = figure.Figure(figsize=self.figsize, dpi=self.dpi)
         self.fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
         self.ax = self.fig.add_subplot()
@@ -56,7 +70,10 @@ class Canvas(Origin):
         self.ax.set_axis_off()
         return self
 
-    def __str__(self):
+    def __str__(
+            self: Self,
+        ) -> str:
+        # string representation of self
         s = f'PyBean {self.__class__.__name__}'
         s += f' (figsize={self.figsize},'
         s += f' dpi={self.dpi})'
@@ -66,7 +83,13 @@ class Canvas(Origin):
                 s += self.copyright['text']
         return s
 
-    def save(self, name='image', image_dir=None, transparent=False):
+    def save(
+            self: Self,
+            name: str = 'image',
+            image_dir: str = None,
+            transparent: bool = False,
+        ) -> None:
+        # save the current state of the figure
         if image_dir is None:
             image_dir = '.'
         if not osp.exists(image_dir):
@@ -76,18 +99,32 @@ class Canvas(Origin):
             transparent=transparent
         )
 
-    def add_param(self, *args, **kwargs):
+    def add_param(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> None:
+        # add a parameter to the parser
         self._parser.add_argument(*args, **kwargs)
 
-    def get_kwargs(self):
+    def get_kwargs(
+            self: Self,
+        ) -> dict:
+        # return the arguments of the parser as a dictionnary
         return vars(self._parser.parse_args())
 
     @staticmethod
-    def get_cmap(colour_list):
+    def get_cmap(
+            colour_list: list,
+        ) -> LSC:
+        # creates a cmap using the list of colours
         return LSC.from_list('pybean cmap', colour_list)
 
     @staticmethod
-    def get_greyscale(start_with_white=True):
+    def get_greyscale(
+            start_with_white: bool = True,
+        ) -> LSC:
+        # creates a grayscale from white to black
         if start_with_white:
             colour_list = ['white', 'black']
         else:
@@ -95,7 +132,12 @@ class Canvas(Origin):
         return LSC.from_list('pybean greyscale', colour_list)
 
     @staticmethod
-    def get_cscale(colour='grey', start_with='white', end_with='black'):
+    def get_cscale(
+            colour: str = 'grey',
+            start_with: str = 'white',
+            end_with: str = 'black',
+        ) -> LSC:
+        # creates a cmap scaling around a given colour
         if (start_with == 'same') & (end_with == 'same'):
             raise UserWarning(f'The cmap is uniformly coloured!')
             colour_list = [colour]*2
@@ -108,7 +150,10 @@ class Canvas(Origin):
         return LSC.from_list('pybean cscale', colour_list)
 
     @staticmethod
-    def time_to_string(time):
+    def time_to_string(
+            time: float,
+        ) -> str:
+        # transform a time in (hours, minutes, seconds) string format
         hours = int(time/3600)
         minutes = int((time - 60*hours)/60)
         seconds = int(time - 3600*hours - 60*minutes)
@@ -119,10 +164,16 @@ class Canvas(Origin):
         else:
             return f'{seconds}s'
 
-    def time(self):
+    def time(
+            self: Self,
+        ) -> str:
+        # compute the current time duration of the algorithm
         return self.time_to_string(time() - self.start_time)
 
-    def main(self):
+    def main(
+            self: Self,
+        ) -> None:
+        # the main testing function
         print(self)
         self.save()
         print(self._get_new_methods())
