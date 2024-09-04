@@ -44,7 +44,7 @@ class Canvas(object):
             assert hasattr(self, param)
             self.add_param(
                 f'--{param}',
-                nargs=canvas_nargs.get(param, '?'),
+                nargs=canvas_nargs.get(param, None),
                 type=param_type,
                 default=getattr(self, param),
             )
