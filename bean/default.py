@@ -11,7 +11,7 @@ DEFAULT = {
     'frames_dir' : 'frames',
     'copyright' : {
         'text' : '@B.Corsini',
-        'ratio' : 0.05,
+        'height' : 0.05,
         'margin' : 0.02,
         'lw' : 2,
         'ec' : 'grey',
