@@ -1,6 +1,7 @@
 import os.path as osp
 import numpy as np
 import matplotlib.patches as patches
+from matplotlib.path import Path
 from matplotlib.font_manager import FontProperties
 from matplotlib.text import TextPath
 from matplotlib.transforms import Affine2D
@@ -33,11 +34,32 @@ class Shape(Canvas):
         self._shapes[key] = shape
         return shape
 
-    def apply_to_shape(self, method, key, *args, **kwargs):
+    def add_path(self,
+                 vertices,
+                 codes=None,
+                 closed=False,
+                 key=None,
+                 *args,
+                 **kwargs):
+        return self.add_shape(
+            shape_name='PathPatch',
+            key=key,
+            path=Path(
+                vertices=vertices,
+                codes=codes,
+                closed=closed,
+            ),
+            *args,
+            **kwargs
+        )
+
+    def apply_to_shape(self, method, key=None, *args, **kwargs):
+        if key is None:
+            key = f'shape{self._key_index - 1}'
         shape = self._shapes[key]
         return getattr(shape, method)(*args, **kwargs)
 
-    def set_shape(self, key, *args, **kwargs):
+    def set_shape(self, key=None, *args, **kwargs):
         return self.apply_to_shape('set', key, *args, **kwargs)
 
     def add_copyright(self):
@@ -57,16 +79,16 @@ class Shape(Canvas):
             height=height,
         )
         self.add_shape(
-            key='copyright_fill',
             shape_name='PathPatch',
+            key='copyright_fill',
             path=path,
             lw=0,
             color=self.copyright.get('fc', 'black'),
             **self.copyright.get('params', {})
         )
         self.add_shape(
-            key='copyright_line',
             shape_name='PathPatch',
+            key='copyright_line',
             path=path,
             lw=self.copyright.get('lw', 0),
             color=self.copyright.get('ec', 'black'),
@@ -140,4 +162,9 @@ class Shape(Canvas):
         self.add_shape(shape_name='Circle', key='test', xy=(0, 1), radius=0.5)
         self.add_shape(shape_name='Circle', xy=(1, 0), radius=0.5)
         self.save()
+        self.set_shape(key='test', color='red')
+        self.set_shape(color='red')
+        self.save()
         self.reset()
+        self.add_path(vertices=[(0, 0), (1, 1)], color='green', lw=10)
+        self.save()
