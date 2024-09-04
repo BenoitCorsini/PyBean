@@ -12,13 +12,17 @@ from .canvas import Canvas
 
 class Shape(Canvas):
 
+    _shape_params = {
+        'lines_per_axis' : int,
+        'axis_tick_ratio' : float,
+    }
+
     def __init__(
             self: Self,
             **kwargs,
         ) -> None:
         # initiate class
         super().__init__(**kwargs)
-        self._new_shape()
 
     def _new_shape(
             self: Self,
@@ -30,6 +34,48 @@ class Shape(Canvas):
             self.add_copyright()
         return self
 
+    def _copyright_path(
+            self: Self,
+        ) -> Path:
+        # gets the path of the copyright
+        margin = self.copyright.get('margin', 0)
+        xscale = (self.xmax - self.xmin)*self.figsize[1]/self.figsize[0]
+        yscale = self.ymax - self.ymin
+        xy = (
+            self.xmin + margin*xscale,
+            self.ymin + margin*yscale,
+        )
+        height = yscale*self.copyright.get('height', 1)
+        return self.path_from_string(
+            s=self.copyright.get('text', 'PyBean'),
+            xy=xy,
+            font_properties=self.copyright.get('font_properties', {}),
+            anchor='south west',
+            height=height,
+        )
+
+    @staticmethod
+    def _ticks_to_grid_path(
+            xticks: np.array,
+            yticks: np.array,
+        ) -> dict:
+        # transform x and y ticks into a grid path
+        xmin, xmax = np.min(xticks), np.max(xticks)
+        ymin, ymax = np.min(yticks), np.max(yticks)
+        vertices = []
+        codes = []
+        for xtick in xticks:
+            vertices.append((xtick, ymin))
+            codes.append(1)
+            vertices.append((xtick, ymax))
+            codes.append(2)
+        for ytick in yticks:
+            vertices.append((xmin, ytick))
+            codes.append(1)
+            vertices.append((xmax, ytick))
+            codes.append(2)
+        return Path(vertices=vertices, codes=codes, closed=False)
+
     def add_shape(
             self: Self,
             shape_name: str,
@@ -38,17 +84,42 @@ class Shape(Canvas):
             **kwargs,
         ) -> patches.Patch:
         # add a patch to the class
-        shape = self.ax.add_patch(
-            getattr(patches, shape_name)(*args, **kwargs)
-        )
         if key is None:
             key = f'shape{self._key_index}'
             self._key_index += 1
         if key in self._shapes:
+            if key.startswith('_'):
+                return self._shapes[key]
             raise UserWarning(f'key \'{key}\' already used for a shape.')
             self._shapes[key].set_visible(False)
+        shape = self.ax.add_patch(
+            getattr(patches, shape_name)(*args, **kwargs)
+        )
         self._shapes[key] = shape
         return shape
+
+    def add_copyright(
+            self: Self,
+        ) -> None:
+        # add a copyright stamp to the canvas
+        path = self._copyright_path()
+        self.add_shape(
+            shape_name='PathPatch',
+            key='_copyright_fill',
+            path=path,
+            lw=0,
+            color=self.copyright.get('fc', 'black'),
+            **self.copyright.get('params', {})
+        )
+        self.add_shape(
+            shape_name='PathPatch',
+            key='_copyright_line',
+            path=path,
+            lw=self.copyright.get('lw', 0),
+            color=self.copyright.get('ec', 'black'),
+            fill=False,
+            **self.copyright.get('params', {})
+        )
 
     def add_raw_path(
             self: Self,
@@ -126,43 +197,6 @@ class Shape(Canvas):
         # set parameters to a patch
         return self.apply_to_shape('set', key, *args, **kwargs)
 
-    def add_copyright(
-            self: Self,
-        ) -> None:
-        # add a copyright stamp to the canvas
-        margin = self.copyright.get('margin', 0)
-        xscale = (self.xmax - self.xmin)*self.figsize[1]/self.figsize[0]
-        yscale = self.ymax - self.ymin
-        xy = (
-            self.xmin + margin*xscale,
-            self.ymin + margin*yscale,
-        )
-        height = yscale*self.copyright.get('height', 1)
-        path = self.path_from_string(
-            s=self.copyright.get('text', 'PyBean'),
-            xy=xy,
-            font_properties=self.copyright.get('font_properties', {}),
-            anchor='south west',
-            height=height,
-        )
-        self.add_shape(
-            shape_name='PathPatch',
-            key='copyright_fill',
-            path=path,
-            lw=0,
-            color=self.copyright.get('fc', 'black'),
-            **self.copyright.get('params', {})
-        )
-        self.add_shape(
-            shape_name='PathPatch',
-            key='copyright_line',
-            path=path,
-            lw=self.copyright.get('lw', 0),
-            color=self.copyright.get('ec', 'black'),
-            fill=False,
-            **self.copyright.get('params', {})
-        )
-
     def path_from_string(
             self: Self,
             s: str,
@@ -187,45 +221,6 @@ class Shape(Canvas):
             transform.translate(*xy)
             path = path.transformed(transform)
         return path
-
-    @staticmethod
-    def shift_transform(
-            transform: Affine2D,
-            bbox: Bbox,
-            anchor: str = None,
-        ) -> Affine2D:
-        # shift the transform to move the bbox according to the anchor
-        transform.translate(*(-(bbox.size/2 + bbox.p0)))
-        transform.translate(*Shape.shift_from_anchor(
-            bbox=bbox,
-            anchor=anchor
-        ))
-        return transform
-
-    @staticmethod
-    def shift_from_anchor(
-            bbox: Bbox,
-            anchor: str = None,
-        ) -> np.array:
-        # returns a shifting vector moving the bbox according to the anchor
-        if anchor is None:
-            return np.array([0, 0])
-        elif anchor == 'north':
-            return np.array([0, - bbox.size[1]/2])
-        elif anchor == 'south':
-            return np.array([0, bbox.size[1]/2])
-        elif anchor == 'east':
-            return np.array([- bbox.size[0]/2, 0])
-        elif anchor == 'west':
-            return np.array([bbox.size[0]/2, 0])
-        elif ' ' in anchor:
-            anchors = anchor.strip().split(' ')
-            shifts = [
-                Shape.shift_from_anchor(bbox, anchor) for anchor in anchors
-            ]
-            return np.sum(shifts, axis=0)
-        else:
-            return np.array([0, 0])
 
     def scale_transform(
             self: Self,
@@ -258,28 +253,6 @@ class Shape(Canvas):
                 n_line = 1
             step = (stop - start)/n_line
         return np.arange(start, stop + step, step)
-
-    @staticmethod
-    def _ticks_to_grid_path(
-            xticks: np.array,
-            yticks: np.array,
-        ) -> dict:
-        # transform x and y ticks into a grid path
-        xmin, xmax = np.min(xticks), np.max(xticks)
-        ymin, ymax = np.min(yticks), np.max(yticks)
-        vertices = []
-        codes = []
-        for xtick in xticks:
-            vertices.append((xtick, ymin))
-            codes.append(1)
-            vertices.append((xtick, ymax))
-            codes.append(2)
-        for ytick in yticks:
-            vertices.append((xmin, ytick))
-            codes.append(1)
-            vertices.append((xmax, ytick))
-            codes.append(2)
-        return Path(vertices=vertices, codes=codes, closed=False)
 
     def grid(
             self: Self,
@@ -323,41 +296,142 @@ class Shape(Canvas):
             **kwargs
         )
 
-    def add_axis(
+    def _axis_grid(
             self: Self,
-            boldness_freq: int = 5,
+            step: float,
         ) -> None:
-        # represents the axis along with the coordinates
-        steps = max(
-            (self.xmax - self.xmin),
-            (self.ymax - self.ymin),
-        )/max(self.figsize)
+        # represents the grid of the axis
         self.grid(
-            key='subaxis',
-            steps=steps/boldness_freq,
+            key='_subaxis',
+            steps=step/self.lines_per_axis,
             **getattr(self, 'axis_params', {})
         )
         self.grid(
-            key='axis',
-            steps=steps,
+            key='_axis',
+            steps=step,
             **getattr(self, 'axis_params', {})
         )
 
-    def main(
+    def _axis_ticks(
+            self: Self,
+            step: float,
+        ) -> None:
+        # represents the ticks of the axis
+        paths = []
+        margin = (1 - self.axis_tick_ratio)*step/self.lines_per_axis/2
+        height = self.axis_tick_ratio*step/self.lines_per_axis
+        xticks = self.get_ticks(axis='x', step=step)
+        yticks = self.get_ticks(axis='y', step=step)
+        for tick in xticks[1:]:
+            paths.append(self.path_from_string(
+                s=f'{tick:0.2f}',
+                xy=(tick - margin, self.ymin + margin),
+                anchor='south east',
+                height=height,
+            ))
+        for tick in yticks[1:-1]:
+            paths.append(self.path_from_string(
+                s=f'{tick:0.2f}',
+                xy=(self.xmin + margin, tick - margin),
+                anchor='north west',
+                height=height,
+            ))
+        self.add_paths(
+            paths=paths,
+            key='_ticks',
+            **getattr(self, 'axis_params', {})
+        )
+
+    def add_axis(
+            self: Self,
+        ) -> None:
+        # represents the axis along with the coordinates
+        step = max(
+            (self.xmax - self.xmin),
+            (self.ymax - self.ymin),
+        )/max(self.figsize)
+        self._axis_grid(step)
+        self._axis_ticks(step)
+
+    def _axis_visible(
+            self: Self,
+            visible: bool,
+        ) -> None:
+        # makes the axis visible or not along with default parameters
+        params = getattr(self, 'axis_params', {})
+        params['visible'] = visible
+        for key in ['_axis', '_subaxis', '_ticks']:
+            self.set_shape(key=key, **params)
+
+    def show_axis(
+            self: Self,
+        ) -> None:
+        # make the axis visible along with the default parameters
+        self._axis_visible(True)
+
+    def hide_axis(
+            self: Self,
+        ) -> None:
+        # make the axis invisible along with the default parameters
+        self._axis_visible(False)
+
+    @staticmethod
+    def shift_transform(
+            transform: Affine2D,
+            bbox: Bbox,
+            anchor: str = None,
+        ) -> Affine2D:
+        # shift the transform to move the bbox according to the anchor
+        transform.translate(*(-(bbox.size/2 + bbox.p0)))
+        transform.translate(*Shape.shift_from_anchor(
+            bbox=bbox,
+            anchor=anchor
+        ))
+        return transform
+
+    @staticmethod
+    def shift_from_anchor(
+            bbox: Bbox,
+            anchor: str = None,
+        ) -> np.array:
+        # returns a shifting vector moving the bbox according to the anchor
+        if anchor is None:
+            return np.array([0, 0])
+        elif anchor == 'north':
+            return np.array([0, - bbox.size[1]/2])
+        elif anchor == 'south':
+            return np.array([0, bbox.size[1]/2])
+        elif anchor == 'east':
+            return np.array([- bbox.size[0]/2, 0])
+        elif anchor == 'west':
+            return np.array([bbox.size[0]/2, 0])
+        elif ' ' in anchor:
+            anchors = anchor.strip().split(' ')
+            shifts = [
+                Shape.shift_from_anchor(bbox, anchor) for anchor in anchors
+            ]
+            return np.sum(shifts, axis=0)
+        else:
+            return np.array([0, 0])
+
+    def test(
             self: Self,
         ) -> None:
         # the main testing function
         print(self)
+        print(self._get_classes())
         print(self._get_new_methods())
-        self.add_shape(shape_name='Circle', key='test', xy=(0, 1), radius=0.5)
+        print(self.get_kwargs())
+        self.add_shape(shape_name='Circle', key='test', xy=(0, 1), radius=0.2)
         self.add_shape(shape_name='Circle', xy=(1, 0), radius=0.5)
-        self.save()
         self.set_shape(key='test', color='red')
-        self.set_shape(color='red')
-        self.save()
-        self.reset()
+        self.apply_to_shape(key='test', method='set_center', xy=(0.2, 0.5))
         self.add_raw_path(vertices=[(0, 0), (1, 1)], color='green', lw=10)
         self.grid(left=0.5, right=0.6, bottom=0.1, top=0.4, n_lines=(3, 5), color='red', lw=5)
         self.grid(steps=0.1, color='darkblue', zorder=-1)
         self.grid(color='orange', zorder=-2, lw=30)
+        self.add_axis()
+        self.set_shape(key='_axis', alpha=1)
+        self.add_axis()
+        self.show_axis()
         self.save()

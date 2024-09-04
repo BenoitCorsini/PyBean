@@ -7,7 +7,6 @@ DEFAULT = {
     'ymin' : 0,
     'ymax' : 9/16,
     # shape
-    'lines_per_axis' : 5,
     'copyright' : {
         'text' : '@B.Corsini',
         'height' : 0.05,
@@ -25,6 +24,8 @@ DEFAULT = {
             'capstyle' : 'round',
         },
     },
+    'lines_per_axis' : 5,
+    'axis_tick_ratio' : 0.6,
     'axis_params' : {
         'color' : 'black',
         'lw' : 1,
