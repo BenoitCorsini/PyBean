@@ -209,6 +209,85 @@ class Shape(Canvas):
         transform.scale(xy_ratio/figsize_ratio, 1)
         return transform
 
+    def get_ticks(
+            self: Self,
+            axis: str = 'x',
+            start: float = None,
+            stop: float = None,
+            step: float = None,
+            n_line: int = None,
+        ) -> list[float]:
+        # return the ticks given an axis
+        if start is None:
+            start = getattr(self, axis + 'min')
+        if stop is None:
+            stop = getattr(self, axis + 'max')
+        if step is None:
+            if n_line is None:
+                n_line = 1
+            step = (stop - start)/n_line
+        return np.arange(start, stop + step, step)
+
+    @staticmethod
+    def _xy_to_path_params(
+            X: np.array,
+            Y: np.array,
+        ) -> dict:
+        # transform x and y ticks into a grid path
+        xmin, xmax = np.min(X), np.max(X)
+        ymin, ymax = np.min(Y), np.max(Y)
+        vertices = []
+        codes = []
+        for x in X:
+            vertices.append((x, ymin))
+            codes.append(1)
+            vertices.append((x, ymax))
+            codes.append(2)
+        for y in Y:
+            vertices.append((xmin, y))
+            codes.append(1)
+            vertices.append((xmax, y))
+            codes.append(2)
+        return {'vertices' : vertices, 'codes' : codes, 'closed' : False}
+
+    def grid(
+            self: Self,
+            key: Any = None,
+            left: float = None,
+            right: float = None,
+            top: float = None,
+            bottom: float = None,
+            steps: tuple[float] = None,
+            n_lines: tuple[int] = None,
+            *args,
+            **kwargs,
+        ) -> patches.PathPatch:
+        # creates a grid
+        if steps is None:
+            steps = (None, None)
+        elif isinstance(steps, float):
+            steps = (steps, steps)
+        if n_lines is None:
+            n_lines = (None, None)
+        elif isinstance(n_lines, int):
+            n_lines = (n_lines, n_lines)
+        X = self.get_ticks(
+            axis='x',
+            start=left,
+            stop=right,
+            step=steps[0],
+            n_line=n_lines[0],
+        )
+        Y = self.get_ticks(
+            axis='y',
+            start=bottom,
+            stop=top,
+            step=steps[1],
+            n_line=n_lines[1],
+        )
+        kwargs.update(self._xy_to_path_params(X, Y))
+        self.add_path(key=key, *args, **kwargs)
+
     def main(
             self: Self,
         ) -> None:
@@ -223,4 +302,7 @@ class Shape(Canvas):
         self.save()
         self.reset()
         self.add_path(vertices=[(0, 0), (1, 1)], color='green', lw=10)
+        self.grid(n_lines=(3, 5), color='red', lw=5)
+        self.grid(steps=0.1, color='darkblue', zorder=-1)
+        self.grid(color='orange', zorder=-2, lw=30)
         self.save()
