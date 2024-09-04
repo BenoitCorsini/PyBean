@@ -17,19 +17,12 @@ class Shape(Canvas):
         'axis_tick_ratio' : float,
     }
 
-    def __init__(
-            self: Self,
-            **kwargs,
-        ) -> None:
-        # initiate class
-        super().__init__(**kwargs)
-
     def _new_shape(
             self: Self,
         ) -> Self:
         # new shape instance
         self._shapes = {}
-        self._key_index = 0
+        self._shape_index = 0
         if hasattr(self, 'copyright'):
             self.add_copyright()
         return self
@@ -163,18 +156,13 @@ class Shape(Canvas):
             **kwargs,
         ) -> patches.Patch:
         # add a patch to the class
-        if key is None:
-            key = f'shape{self._key_index}'
-            self._key_index += 1
-        if key in self._shapes:
-            if key.startswith('_'):
-                return self._shapes[key]
-            raise UserWarning(f'key \'{key}\' already used for a shape.')
-            self._shapes[key].set_visible(False)
-        shape = self.ax.add_patch(
-            getattr(patches, shape_name)(*args, **kwargs)
-        )
-        self._shapes[key] = shape
+        if self.available_key(key=key, category='shape'):
+            shape = self.ax.add_patch(
+                getattr(patches, shape_name)(*args, **kwargs)
+            )
+            self._shapes[key] = shape
+        else:
+            shape = self._shapes[key]
         return shape
 
     def add_raw_path(

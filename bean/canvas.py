@@ -4,7 +4,7 @@ import os.path as osp
 import matplotlib.figure as figure
 from matplotlib.colors import LinearSegmentedColormap as LSC
 from time import time
-from typing_extensions import Self
+from typing_extensions import Any, Self
 
 from .default import DEFAULT
 
@@ -157,6 +157,26 @@ class Canvas(object):
         ) -> str:
         # compute the current time duration of the algorithm
         return self.time_to_string(time() - self.start_time)
+
+    def available_key(
+            self: Self,
+            category: str,
+            key: Any = None,
+        ) -> bool:
+        # check whether the key is available from the category
+        if key is None:
+            index = getattr(self, f'_{category}_index')
+            key = f'{category}{index}'
+            setattr(self, f'_{category}_index', index + 1)
+        if key in getattr(self, f'_{category}s'):
+            if key.startswith('_'):
+                return False
+            else:
+                raise UserWarning(
+                    f'key \'{key}\' already used for a {category}.'
+                )
+                return False
+        return True
 
     def help(
             self: Self,
