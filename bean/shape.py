@@ -80,16 +80,19 @@ class Shape(Canvas):
         height = self.axis_tick_ratio*step/self.lines_per_axis
         xticks = self.get_ticks(axis='x', step=step)
         yticks = self.get_ticks(axis='y', step=step)
+        is_integer = step == int(step)
+        is_integer = is_integer and self.xmin == int(self.xmin)
+        is_integer = is_integer and self.ymin == int(self.ymin)
         for tick in xticks[1:]:
             paths.append(self.path_from_string(
-                s=f'{tick:0.2f}',
+                s=self._tick_to_string(tick, is_integer),
                 xy=(tick - margin, self.ymin + margin),
                 anchor='south east',
                 height=height,
             ))
-        for tick in yticks[1:-1]:
+        for tick in yticks[1:]:
             paths.append(self.path_from_string(
-                s=f'{tick:0.2f}',
+                s=self._tick_to_string(tick, is_integer),
                 xy=(self.xmin + margin, tick - margin),
                 anchor='north west',
                 height=height,
@@ -131,6 +134,17 @@ class Shape(Canvas):
             vertices.append((xmax, ytick))
             codes.append(2)
         return Path(vertices=vertices, codes=codes, closed=False)
+
+    @staticmethod
+    def _tick_to_string(
+            tick: float,
+            is_integer: bool,
+        ) -> str:
+        # transforms a tick into a string
+        if is_integer:
+            return f'{tick:0.0f}'
+        else:
+            return f'{tick:0.2f}'
 
     def add_shape(
             self: Self,
