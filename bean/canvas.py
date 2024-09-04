@@ -48,6 +48,13 @@ class Canvas(object):
                 s += self.copyright['text']
         return s
 
+    def _new_canvas(
+            self: Self,
+        ) -> Self:
+        # new canvas instance
+        self.start_time = time()
+        return self.canvas()
+
     def _get_classes(
             self: Self,
         ) -> list:
@@ -80,13 +87,6 @@ class Canvas(object):
         kwargs.update(self.get_kwargs())
         for key, value in kwargs.items():
             setattr(self, key, value)
-
-    def _new_canvas(
-            self: Self,
-        ) -> Self:
-        # new canvas instance
-        self.start_time = time()
-        return self.canvas()
 
     def _get_new_methods(
             self: Self,
