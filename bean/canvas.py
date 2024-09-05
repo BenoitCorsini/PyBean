@@ -35,13 +35,20 @@ class Canvas(object):
         self._set_params(**kwargs)
         self.reset()
 
+    def __repr__(
+            self: Self,
+        ) -> str:
+        # string representation of self
+        s = f'{self.__class__.__name__}'
+        s += f' (figsize=({self.figsize[0]}, {self.figsize[1]}),'
+        s += f' dpi={self.dpi})'
+        return s
+
     def __str__(
             self: Self,
         ) -> str:
         # string representation of self
-        s = f'PyBean {self.__class__.__name__}'
-        s += f' (figsize=({self.figsize[0]}, {self.figsize[1]}),'
-        s += f' dpi={self.dpi})'
+        s = 'PyBean ' + self.__repr__()
         if hasattr(self, 'copyright'):
             if 'text' in self.copyright:
                 s += '\nCopyright: '

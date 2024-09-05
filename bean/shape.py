@@ -15,6 +15,8 @@ class Shape(Canvas):
     _shape_params = {
         'lines_per_axis' : int,
         'axis_tick_ratio' : float,
+        'info_margin' : float,
+        'info_height' : float,
     }
 
     def _new_shape(
@@ -109,11 +111,35 @@ class Shape(Canvas):
             self: Self,
             visible: bool,
         ) -> None:
-        # makes the axis visible or not along with default parameters
-        params = getattr(self, 'axis_params', {})
-        params['visible'] = visible
+        # makes the axis visible or not
         for key in ['_axis', '_subaxis', '_ticks']:
-            self.set_shape(key=key, **params)
+            self.set_shape(key=key, visible=visible)
+
+    def _info_visible(
+            self: Self,
+            visible: bool,
+        ) -> None:
+        # makes the info visible or not
+        self.set_shape(key='_info', visible=visible)
+
+    def _info_text(
+            self: Self,
+            s: str,
+        ) -> None:
+        # modifies the text of the info
+        self.apply_to_shape(
+            key='_info',
+            method='set_path',
+            path=self.path_from_string(
+                s=s,
+                xy=(
+                    self.xmax - self.info_margin,
+                    self.ymax - self.info_margin,
+                ),
+                height=self.info_height,
+                anchor='north east',
+            )
+        )
 
     @staticmethod
     def _ticks_to_grid_path(
@@ -390,14 +416,42 @@ class Shape(Canvas):
     def show_axis(
             self: Self,
         ) -> None:
-        # make the axis visible along with the default parameters
+        # make the axis visible
         self._axis_visible(True)
 
     def hide_axis(
             self: Self,
         ) -> None:
-        # make the axis invisible along with the default parameters
+        # make the axis invisible
         self._axis_visible(False)
+
+    def add_info(
+            self: Self,
+        ) -> None:
+        # represents the desired info
+        self.add_path(
+            path=Path([(0, 0)]),
+            key='_info',
+            **self.info_params
+        )
+
+    def show_info(
+            self: Self,
+            s: str = None,
+        ) -> None:
+        # make the info visible and possibly update the text
+        self._info_visible(True)
+        if s is not None:
+            self._info_text(s)
+
+    def hide_info(
+            self: Self,
+            s: str = None,
+        ) -> None:
+        # make the info visible and possibly update the text
+        self._info_visible(False)
+        if s is not None:
+            self._info_text(s)
 
     @staticmethod
     def shift_transform(
@@ -459,5 +513,7 @@ class Shape(Canvas):
         self.add_axis()
         self.show_axis()
         self.hide_copyright()
+        self.add_info()
+        self.show_info(repr(self))
         self.save()
         print(self._shapes)
