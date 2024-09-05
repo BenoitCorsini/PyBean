@@ -13,8 +13,11 @@ from .canvas import Canvas
 class Shape(Canvas):
 
     _shape_params = {
+        'copyright_on' : bool,
+        'axis_on' : bool,
         'lines_per_axis' : int,
         'axis_tick_ratio' : float,
+        'info_on' : bool,
         'info_margin' : float,
         'info_height' : float,
     }
@@ -57,11 +60,13 @@ class Shape(Canvas):
         self.grid(
             key='_subaxis',
             steps=step/self.lines_per_axis,
+            visible=self.axis_on,
             **getattr(self, 'axis_params', {})
         )
         self.grid(
             key='_axis',
             steps=step,
+            visible=self.axis_on,
             **getattr(self, 'axis_params', {})
         )
 
@@ -95,6 +100,7 @@ class Shape(Canvas):
         self.add_paths(
             paths=paths,
             key='_ticks',
+            visible=self.axis_on,
             **getattr(self, 'axis_params', {})
         )
 
@@ -103,7 +109,7 @@ class Shape(Canvas):
             visible: bool,
         ) -> None:
         # makes the copyright visible or not
-        if hasattr(self, 'copyright'):
+        if hasattr(self, 'copyright') and self.copyright_on is None:
             for key in ['_copyright_fill', '_copyright_line']:
                 self.set_shape(key=key, visible=visible)
 
@@ -112,15 +118,17 @@ class Shape(Canvas):
             visible: bool,
         ) -> None:
         # makes the axis visible or not
-        for key in ['_axis', '_subaxis', '_ticks']:
-            self.set_shape(key=key, visible=visible)
+        if self.axis_on is None:
+            for key in ['_axis', '_subaxis', '_ticks']:
+                self.set_shape(key=key, visible=visible)
 
     def _info_visible(
             self: Self,
             visible: bool,
         ) -> None:
         # makes the info visible or not
-        self.set_shape(key='_info', visible=visible)
+        if self.info_on is None:
+            self.set_shape(key='_info', visible=visible)
 
     def _info_text(
             self: Self,
@@ -317,6 +325,7 @@ class Shape(Canvas):
             path=path,
             lw=0,
             color=self.copyright.get('fc', 'black'),
+            visible=self.copyright_on,
             **self.copyright.get('params', {})
         )
         self.add_shape(
@@ -326,6 +335,7 @@ class Shape(Canvas):
             lw=self.copyright.get('lw', 0),
             color=self.copyright.get('ec', 'black'),
             fill=False,
+            visible=self.copyright_on,
             **self.copyright.get('params', {})
         )
 
@@ -432,6 +442,7 @@ class Shape(Canvas):
         self.add_path(
             path=Path([(0, 0)]),
             key='_info',
+            visible=self.info_on,
             **self.info_params
         )
 

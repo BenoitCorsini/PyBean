@@ -7,10 +7,7 @@ DEFAULT = {
     'ymin' : 0,
     'ymax' : 9/16,
     # shape
-    'lines_per_axis' : 5,
-    'axis_tick_ratio' : 0.6,
-    'info_margin' : 1e-2,
-    'info_height' : 2e-2,
+    'copyright_on' : None,
     'copyright' : {
         'text' : '@B.Corsini',
         'height' : 0.05,
@@ -28,6 +25,9 @@ DEFAULT = {
             'capstyle' : 'round',
         },
     },
+    'axis_on' : None,
+    'lines_per_axis' : 5,
+    'axis_tick_ratio' : 0.6,
     'axis_params' : {
         'color' : 'black',
         'lw' : 1,
@@ -36,6 +36,9 @@ DEFAULT = {
         'joinstyle' : 'round',
         'capstyle' : 'round',
     },
+    'info_on' : None,
+    'info_margin' : 1e-2,
+    'info_height' : 2e-2,
     'info_params' : {
         'fc' : [0.4]*3,
         'ec' : [0.3]*3,
