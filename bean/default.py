@@ -40,15 +40,16 @@ DEFAULT = {
     'info_margin' : 1e-2,
     'info_height' : 2e-2,
     'info_params' : {
-        'fc' : [0.4]*3,
-        'ec' : [0.3]*3,
+        'color' : 'black',
         'lw' : 1,
+        'alpha' : 0.5,
         'zorder' : 99,
         'joinstyle' : 'round',
         'capstyle' : 'round',
     },
     # volume
     'draft' : False,
+    'scale' : 1,
     'shade_angle' : -60,
     'shade_delta_height' : 0.1,
     'fps' : 20,
