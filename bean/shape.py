@@ -83,16 +83,19 @@ class Shape(Canvas):
         is_integer = step == int(step)
         is_integer = is_integer and self.xmin == int(self.xmin)
         is_integer = is_integer and self.ymin == int(self.ymin)
+        single_decimal = 10*step == int(10*step)
+        single_decimal = single_decimal and 10*self.xmin == int(10*self.xmin)
+        single_decimal = single_decimal and 10*self.ymin == int(10*self.ymin)
         for tick in xticks[1:]:
             paths.append(self.path_from_string(
-                s=self._tick_to_string(tick, is_integer),
+                s=self._tick_to_string(tick, is_integer, single_decimal),
                 xy=(tick - margin, self.ymin + margin),
                 anchor='south east',
                 height=height,
             ))
         for tick in yticks[1:]:
             paths.append(self.path_from_string(
-                s=self._tick_to_string(tick, is_integer),
+                s=self._tick_to_string(tick, is_integer, single_decimal),
                 xy=(self.xmin + margin, tick - margin),
                 anchor='north west',
                 height=height,
@@ -175,10 +178,13 @@ class Shape(Canvas):
     def _tick_to_string(
             tick: float,
             is_integer: bool,
+            single_decimal: bool,
         ) -> str:
         # transforms a tick into a string
         if is_integer:
             return f'{tick:0.0f}'
+        elif single_decimal:
+            return f'{tick:0.1f}'
         else:
             return f'{tick:0.2f}'
 
@@ -279,7 +285,7 @@ class Shape(Canvas):
     def path_from_string(
             self: Self,
             s: str,
-            xy: tuple = (0, 0),
+            xy: (float, float) = (0, 0),
             size: float = None,
             font_properties: dict = {},
             anchor: str = None,
@@ -457,12 +463,9 @@ class Shape(Canvas):
 
     def hide_info(
             self: Self,
-            s: str = None,
         ) -> None:
-        # make the info visible and possibly update the text
+        # make the info visible
         self._info_visible(False)
-        if s is not None:
-            self._info_text(s)
 
     @staticmethod
     def shift_transform(
