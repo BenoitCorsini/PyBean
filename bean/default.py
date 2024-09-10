@@ -52,6 +52,12 @@ DEFAULT = {
     'scale' : 1,
     'shade_angle' : -60,
     'shade_delta_height' : 0.1,
+    'sphere_side' : {
+        '0.5' : 0.1,
+        '0.3' : 0.1,
+        '0.1' : 0.2,
+    },
+    # other
     'fps' : 20,
     'frames_dir' : 'frames',
 }
