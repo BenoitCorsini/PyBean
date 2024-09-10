@@ -271,7 +271,8 @@ class Shape(Canvas):
         if key is None:
             key = f'shape{self._key_index - 1}'
         shape = self._shapes[key]
-        return getattr(shape, method)(*args, **kwargs)
+        getattr(shape, method)(*args, **kwargs)
+        return shape
 
     def set_shape(
             self: Self,
@@ -505,6 +506,76 @@ class Shape(Canvas):
             return np.sum(shifts, axis=0)
         else:
             return np.array([0, 0])
+
+    @staticmethod
+    def arc_path(
+            theta1: float,
+            theta2: float,
+        ) -> Path:
+        # creates an arc path
+        return Path.arc(theta1, theta2)
+
+    @staticmethod
+    def curve_path(
+            xy: (float, float) = (0, 0),
+            a: float = 1,
+            b: float = None,
+            theta1: float = 0,
+            theta2: float = 360,
+            angle: float = 0,
+        ) -> Path:
+        # creates a partial ellipse
+        if b is None:
+            b = a
+        path = Shape.arc_path(theta1, theta2)
+        transform = Affine2D()
+        transform.scale(a, b)
+        transform.rotate(np.pi*angle/180)
+        transform.translate(*xy)
+        path = path.transformed(transform)
+        return path
+
+    @staticmethod
+    def crescent_path(
+            xy: (float, float) = (0, 0),
+            a: float = 1,
+            b: float = None,
+            theta1: float = 0,
+            theta2: float = 360,
+            angle: float = 0,
+            ratio: float = 0,
+        ) -> Path:
+        # creates a partial ellipse
+        if b is None:
+            b = a
+        inner = Shape.curve_path(
+            xy=xy,
+            a=a*(ratio - 1),
+            b=b,
+            theta1=180 - theta2,
+            theta2=180 - theta1,
+            angle=angle,
+        )
+        outer = Shape.curve_path(
+            xy=xy,
+            a=a,
+            b=b,
+            theta1=theta1,
+            theta2=theta2,
+            angle=angle,
+        )
+        return Path(
+            vertices=np.concatenate([
+                inner.vertices,
+                outer.vertices,
+                [[0, 0]],
+            ]),
+            codes=np.concatenate([
+                inner.codes,
+                outer.codes + (outer.codes == 1),
+                [79],
+            ]),
+        )
 
     def test(
             self: Self,

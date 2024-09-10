@@ -1,6 +1,7 @@
 import argparse
 import os
 import os.path as osp
+import numpy as np
 import matplotlib.figure as figure
 from matplotlib.colors import LinearSegmentedColormap as LSC
 from time import time
@@ -248,6 +249,20 @@ class Canvas(object):
             return f'{minutes}m{seconds}s'
         else:
             return f'{seconds}s'
+
+    @staticmethod
+    def angle_shift(
+            angle: float = 0,
+            two_dim: bool = False,
+        ) -> np.array:
+        # return a vector for shifting in the angle direction
+        shift = np.array([
+            np.cos(np.pi*angle/180),
+            np.sin(np.pi*angle/180),
+        ])
+        if two_dim:
+            shift = shift.reshape((1, 2))
+        return shift
 
     def test(
             self: Self,
