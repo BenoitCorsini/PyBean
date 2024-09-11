@@ -264,6 +264,32 @@ class Canvas(object):
             shift = shift.reshape((1, 2))
         return shift
 
+    @staticmethod
+    def angle_from_xy(
+            xy1: (float, float),
+            xy2: (float, float),
+        ) -> float:
+        # computes the angle formed by the two positions
+        vector = np.array(xy2) - np.array(xy1)
+        norm = np.sum(vector**2)**0.5
+        if not norm:
+            return 0.
+        vector /= norm
+        angle = np.arccos(vector[0])
+        if vector[1] < 0:
+            angle *= -1
+        return angle*180/np.pi
+
+    @staticmethod
+    def distance_from_xy(
+            xy1: (float, float),
+            xy2: (float, float),
+        ) -> float:
+        # computes the angle formed by the two positions
+        distance = np.array(xy2) - np.array(xy1)
+        distance = np.sum(distance**2)**0.5
+        return distance
+
     def test(
             self: Self,
         ) -> None:
