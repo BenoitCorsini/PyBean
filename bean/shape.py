@@ -536,43 +536,20 @@ class Shape(Canvas):
         return path
 
     @staticmethod
-    def crescent_path(
-            xy: (float, float) = (0, 0),
-            a: float = 1,
-            b: float = None,
-            theta1: float = 0,
-            theta2: float = 360,
-            angle: float = 0,
-            ratio: float = 0,
+    def merge_curves(
+            curve1: Path,
+            curve2: Path,
         ) -> Path:
-        # creates a partial ellipse
-        if b is None:
-            b = a
-        inner = Shape.curve_path(
-            xy=xy,
-            a=a*(ratio - 1),
-            b=b,
-            theta1=180 - theta2,
-            theta2=180 - theta1,
-            angle=angle,
-        )
-        outer = Shape.curve_path(
-            xy=xy,
-            a=a,
-            b=b,
-            theta1=theta1,
-            theta2=theta2,
-            angle=angle,
-        )
+        # combines two curves
         return Path(
             vertices=np.concatenate([
-                inner.vertices,
-                outer.vertices,
+                curve1.vertices,
+                curve2.vertices,
                 [[0, 0]],
             ]),
             codes=np.concatenate([
-                inner.codes,
-                outer.codes + (outer.codes == 1),
+                curve1.codes,
+                curve2.codes + (curve2.codes == 1),
                 [79],
             ]),
         )

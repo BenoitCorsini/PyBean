@@ -110,21 +110,31 @@ class Volume(Shape):
         # update the sphere
         if pos is not None:
             xy = self._pos_to_xy(pos)
+            shade_xy = np.array(xy) + self.shade_delta_height*self._shade_shift()
+        else:
+            shade_xy = xy
         radius *= self.scale
-        shade_xy = np.array(xy) + self.shade_delta_height*self._shade_shift()
         self.apply_to_shape('set_center', key=main, xy=xy)
         self.apply_to_shape('set_radius', key=main, radius=radius)
         clipper = self.set_shape(key=main, color=colour)
         if not self.draft:
             for key, ratio in zip(side, self.sphere_side):
-                path = self.crescent_path(
+                inner = Shape.curve_path(
+                    xy=xy,
+                    a=radius*(ratio - 1),
+                    b=radius,
+                    theta1=90,
+                    theta2=270,
+                    angle=self.shade_angle,
+                )
+                outer = Shape.curve_path(
                     xy=xy,
                     a=radius,
                     theta1=-90,
                     theta2=90,
                     angle=self.shade_angle,
-                    ratio=ratio,
                 )
+                path = self.merge_curves(inner, outer)
                 self.apply_to_shape('set_path', key=key, path=path)
                 self.set_shape(key=key, clip_path=clipper)
             self.apply_to_shape('set_center', key=shade, xy=shade_xy)
@@ -134,17 +144,18 @@ class Volume(Shape):
             )
             self.set_shape(key=shade, color=shade_colour)
 
-    def new_sphere(
+    def new_volume(
             self: Self,
+            name: str,
             key: Any = None,
             **kwargs,
         ) -> None:
         # create the basis for a new sphere
         key, available = self.key_checker(key=key, category='volume')
         if available:
-            volume = {'name' : 'sphere'}
+            volume = {'name' : name}
             volume.update(kwargs)
-            volume.update(self._create_sphere(name=key))
+            volume.update(getattr(self, f'_create_{name}')(name=key))
             self.update_volume(**volume)
             self._volumes[key] = volume
         else:
@@ -167,10 +178,23 @@ class Volume(Shape):
         print(self._get_classes())
         print(self._get_new_methods())
         print(self.get_kwargs())
-        self.new_sphere(
+        self.new_volume(
+            name='sphere',
             colour='crimson',
             xy=(0.25, 0.25),
-            radius=0.2,
+            radius=0.05,
+        )
+        self.new_volume(
+            name='sphere',
+            colour='royalblue',
+            xy=(0.15, 0.45),
+            radius=0.1,
+        )
+        self.new_volume(
+            name='sphere',
+            colour='forestgreen',
+            xy=(0.8, 0.1),
+            radius=0.05,
         )
         self.save()
         print(self._volumes)
