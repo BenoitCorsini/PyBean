@@ -123,23 +123,14 @@ class Volume(Shape):
         clipper = self.set_shape(key=main, color=colour)
         if not self.draft:
             for key, ratio in zip(side, self.round_sides):
-                inner = self.curve_path(
+                path = self.merge_curves(*self.crescent_paths(
                     xy=xy,
-                    a=radius*(1 - ratio),
-                    b=radius,
-                    theta1=270,
-                    theta2=90,
-                    reverse=True,
-                    angle=self.shade_angle,
-                )
-                outer = self.curve_path(
-                    xy=xy,
-                    a=radius,
+                    radius=radius,
+                    ratio=ratio,
                     theta1=270,
                     theta2=90,
                     angle=self.shade_angle,
-                )
-                path = self.merge_curves(inner, outer)
+                ))
                 self.apply_to_shape('set_path', key=key, path=path)
                 self.set_shape(key=key, clip_path=clipper)
             path = self.curve_path(xy=xy, a=radius)
@@ -217,211 +208,139 @@ class Volume(Shape):
         if not self.draft:
             effective_angle = angle - self.shade_angle
             for key, ratio in zip(side, self.round_sides):
-                outers = []
                 inners = []
+                outers = []
                 theta1 = self.normalize_angle(90 + around_angle + effective_angle)
                 theta2 = self.normalize_angle(270 - around_angle + effective_angle)
                 if abs(theta1) < 90 and abs(theta2) >= 90:
-                    inners.append(self.curve_path(
+                    inner, outer = self.crescent_paths(
                         xy=xy1,
-                        a=radius1*(1 - ratio),
-                        b=radius1,
-                        theta1=theta1,
-                        theta2=90,
-                        reverse=True,
-                        angle=self.shade_angle,
-                    ))
-                    inners.append(self.curve_path(
-                        xy=xy2,
-                        a=radius2*(1 - ratio),
-                        b=radius2,
-                        theta1=270,
-                        theta2=theta1,
-                        reverse=True,
-                        angle=self.shade_angle,
-                    ))
-                    outers.append(self.curve_path(
-                        xy=xy2,
-                        a=radius2,
-                        theta1=270,
-                        theta2=theta1,
-                        angle=self.shade_angle,
-                    ))
-                    outers.append(self.curve_path(
-                        xy=xy1,
-                        a=radius1,
+                        radius=radius1,
+                        ratio=ratio,
                         theta1=theta1,
                         theta2=90,
                         angle=self.shade_angle,
-                    ))
+                    )
+                    inners.append(inner)
+                    outers.append(outer)
+                    inner, outer = self.crescent_paths(
+                        xy=xy2,
+                        radius=radius2,
+                        ratio=ratio,
+                        theta1=270,
+                        theta2=theta1,
+                        angle=self.shade_angle,
+                    )
+                    inners.append(inner)
+                    outers.append(outer)
                 elif abs(theta1) >= 90 and abs(theta2) < 90:
-                    inners.append(self.curve_path(
+                    inner, outer = self.crescent_paths(
                         xy=xy2,
-                        a=radius2*(1 - ratio),
-                        b=radius2,
-                        theta1=theta2,
-                        theta2=90,
-                        reverse=True,
-                        angle=self.shade_angle,
-                    ))
-                    inners.append(self.curve_path(
-                        xy=xy1,
-                        a=radius1*(1 - ratio),
-                        b=radius1,
-                        theta1=270,
-                        theta2=theta2,
-                        reverse=True,
-                        angle=self.shade_angle,
-                    ))
-                    outers.append(self.curve_path(
-                        xy=xy1,
-                        a=radius1,
-                        theta1=270,
-                        theta2=theta2,
-                        angle=self.shade_angle,
-                    ))
-                    outers.append(self.curve_path(
-                        xy=xy2,
-                        a=radius2,
+                        radius=radius2,
+                        ratio=ratio,
                         theta1=theta2,
                         theta2=90,
                         angle=self.shade_angle,
-                    ))
+                    )
+                    inners.append(inner)
+                    outers.append(outer)
+                    inner, outer = self.crescent_paths(
+                        xy=xy1,
+                        radius=radius1,
+                        ratio=ratio,
+                        theta1=270,
+                        theta2=theta2,
+                        angle=self.shade_angle,
+                    )
+                    inners.append(inner)
+                    outers.append(outer)
                 elif abs(theta1) >= 90 and abs(theta2) >= 90:
                     if self.normalize_angle(theta2 - theta1) > 0:
-                        inners.append(self.curve_path(
+                        inner, outer = self.crescent_paths(
                             xy=xy2,
-                            a=radius2*(1 - ratio),
-                            b=radius2,
-                            theta1=270,
-                            theta2=90,
-                            reverse=True,
-                            angle=self.shade_angle,
-                        ))
-                        outers.append(self.curve_path(
-                            xy=xy2,
-                            a=radius2,
+                            radius=radius2,
+                            ratio=ratio,
                             theta1=270,
                             theta2=90,
                             angle=self.shade_angle,
-                        ))
+                        )
+                        inners.append(inner)
+                        outers.append(outer)
                     else:
-                        inners.append(self.curve_path(
+                        inner, outer = self.crescent_paths(
                             xy=xy1,
-                            a=radius1*(1 - ratio),
-                            b=radius1,
-                            theta1=270,
-                            theta2=90,
-                            reverse=True,
-                            angle=self.shade_angle,
-                        ))
-                        outers.append(self.curve_path(
-                            xy=xy1,
-                            a=radius1,
+                            radius=radius1,
+                            ratio=ratio,
                             theta1=270,
                             theta2=90,
                             angle=self.shade_angle,
-                        ))
+                        )
+                        inners.append(inner)
+                        outers.append(outer)
                 else:
                     if self.normalize_angle(theta2 - theta1) > 0:
-                        inners.append(self.curve_path(
+                        inner, outer = self.crescent_paths(
                             xy=xy2,
-                            a=radius2*(1 - ratio),
-                            b=radius2,
-                            theta1=theta2,
-                            theta2=90,
-                            reverse=True,
-                            angle=self.shade_angle,
-                        ))
-                        inners.append(self.curve_path(
-                            xy=xy1,
-                            a=radius1*(1 - ratio),
-                            b=radius1,
-                            theta1=theta1,
-                            theta2=theta2,
-                            reverse=True,
-                            angle=self.shade_angle,
-                        ))
-                        inners.append(self.curve_path(
-                            xy=xy2,
-                            a=radius2*(1 - ratio),
-                            b=radius2,
-                            theta1=270,
-                            theta2=theta1,
-                            reverse=True,
-                            angle=self.shade_angle,
-                        ))
-                        outers.append(self.curve_path(
-                            xy=xy2,
-                            a=radius2,
-                            theta1=270,
-                            theta2=theta1,
-                            angle=self.shade_angle,
-                        ))
-                        outers.append(self.curve_path(
-                            xy=xy1,
-                            a=radius1,
-                            theta1=theta1,
-                            theta2=theta2,
-                            angle=self.shade_angle,
-                        ))
-                        outers.append(self.curve_path(
-                            xy=xy2,
-                            a=radius2,
+                            radius=radius2,
+                            ratio=ratio,
                             theta1=theta2,
                             theta2=90,
                             angle=self.shade_angle,
-                        ))
+                        )
+                        inners.append(inner)
+                        outers.append(outer)
+                        inner, outer = self.crescent_paths(
+                            xy=xy1,
+                            radius=radius1,
+                            ratio=ratio,
+                            theta1=theta1,
+                            theta2=theta2,
+                            angle=self.shade_angle,
+                        )
+                        inners.append(inner)
+                        outers.append(outer)
+                        inner, outer = self.crescent_paths(
+                            xy=xy2,
+                            radius=radius2,
+                            ratio=ratio,
+                            theta1=270,
+                            theta2=theta1,
+                            angle=self.shade_angle,
+                        )
+                        inners.append(inner)
+                        outers.append(outer)
                     else:
-                        inners.append(self.curve_path(
+                        inner, outer = self.crescent_paths(
                             xy=xy1,
-                            a=radius1*(1 - ratio),
-                            b=radius1,
-                            theta1=theta1,
-                            theta2=90,
-                            reverse=True,
-                            angle=self.shade_angle,
-                        ))
-                        inners.append(self.curve_path(
-                            xy=xy2,
-                            a=radius2*(1 - ratio),
-                            b=radius2,
-                            theta1=theta2,
-                            theta2=theta1,
-                            reverse=True,
-                            angle=self.shade_angle,
-                        ))
-                        inners.append(self.curve_path(
-                            xy=xy1,
-                            a=radius1*(1 - ratio),
-                            b=radius1,
-                            theta1=270,
-                            theta2=theta2,
-                            reverse=True,
-                            angle=self.shade_angle,
-                        ))
-                        outers.append(self.curve_path(
-                            xy=xy1,
-                            a=radius1,
-                            theta1=270,
-                            theta2=theta2,
-                            angle=self.shade_angle,
-                        ))
-                        outers.append(self.curve_path(
-                            xy=xy2,
-                            a=radius2,
-                            theta1=theta2,
-                            theta2=theta1,
-                            angle=self.shade_angle,
-                        ))
-                        outers.append(self.curve_path(
-                            xy=xy1,
-                            a=radius1,
+                            radius=radius1,
+                            ratio=ratio,
                             theta1=theta1,
                             theta2=90,
                             angle=self.shade_angle,
-                        ))
-                path = self.merge_curves(*(inners + outers))
+                        )
+                        inners.append(inner)
+                        outers.append(outer)
+                        inner, outer = self.crescent_paths(
+                            xy=xy2,
+                            radius=radius2,
+                            ratio=ratio,
+                            theta1=theta2,
+                            theta2=theta1,
+                            angle=self.shade_angle,
+                        )
+                        inners.append(inner)
+                        outers.append(outer)
+                        inner, outer = self.crescent_paths(
+                            xy=xy1,
+                            radius=radius1,
+                            ratio=ratio,
+                            theta1=270,
+                            theta2=theta2,
+                            angle=self.shade_angle,
+                        )
+                        inners.append(inner)
+                        outers.append(outer)
+                path = self.merge_curves(*(inners + outers[::-1]))
                 self.apply_to_shape('set_path', key=key, path=path)
                 self.set_shape(key=key,
                     clip_path=clipper,

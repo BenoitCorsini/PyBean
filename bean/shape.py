@@ -540,6 +540,34 @@ class Shape(Canvas):
         return path
 
     @staticmethod
+    def crescent_paths(
+            xy: (float, float) = (0, 0),
+            radius: float = 1,
+            ratio: float = 1,
+            theta1: float = 0,
+            theta2: float = 360,
+            angle: float = 0,
+        ) -> Path:
+        # creates the two parts of a crescent
+        outer = Shape.curve_path(
+            xy=xy,
+            a=radius,
+            theta1=theta1,
+            theta2=theta2,
+            angle=angle
+        )
+        inner = Shape.curve_path(
+            xy=xy,
+            a=radius*(1 - ratio),
+            b=radius,
+            theta1=theta1,
+            theta2=theta2,
+            reverse=True,
+            angle=angle
+        )
+        return inner, outer
+
+    @staticmethod
     def merge_curves(
             *curves
         ) -> Path:
