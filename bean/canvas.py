@@ -290,6 +290,18 @@ class Canvas(object):
         distance = np.sum(distance**2)**0.5
         return distance
 
+    @staticmethod
+    def normalize_angle(
+            angle: float,
+            lower_bound: float = -180,
+        ) -> float:
+        # set an angle to (lower_bound, lower_bound + 360]
+        while angle <= lower_bound:
+            angle += 360
+        while angle > lower_bound + 360:
+            angle -= 360
+        return angle
+
     def test(
             self: Self,
         ) -> None:

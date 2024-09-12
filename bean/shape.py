@@ -522,11 +522,15 @@ class Shape(Canvas):
             b: float = None,
             theta1: float = 0,
             theta2: float = 360,
+            reverse: bool = False,
             angle: float = 0,
         ) -> Path:
         # creates a partial ellipse
         if b is None:
             b = a
+        if reverse:
+            theta1, theta2 = 180 - theta2, 180 - theta1
+            a *= -1
         path = Shape.arc_path(theta1, theta2)
         transform = Affine2D()
         transform.scale(a, b)
