@@ -550,18 +550,6 @@ class Shape(Canvas):
         codes = np.concatenate(codes)
         codes[0] = 1
         return Path(vertices=vertices, codes=codes, closed=True)
-        return Path(
-            vertices=np.concatenate([
-                curve1.vertices,
-                curve2.vertices,
-                [[0, 0]],
-            ]),
-            codes=np.concatenate([
-                curve1.codes,
-                curve2.codes + (curve2.codes == 1),
-                [79],
-            ]),
-        )
 
     def test(
             self: Self,

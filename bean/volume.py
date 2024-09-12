@@ -61,37 +61,36 @@ class Volume(Shape):
             name: str,
         ) -> dict:
         # creates the volume dictionary for a rounded object
-        volume = {}
-        key = f'{name}_main'
-        volume['main'] = key
-        patch = self.add_raw_path(
-            key=key,
-            vertices=[(0, 0)],
-            lw=0,
-            zorder=0,
-        )
-        volume['side'] = []
-        for side_index, alpha in enumerate(self.round_sides.values()):
-            key = f'{name}_side{side_index}'
-            volume['side'].append(key)
-            self.add_raw_path(
-                key=key,
-                vertices=[(0, 0)],
-                lw=0,
-                zorder=0,
-                color='black',
-                alpha=alpha,
-                visible=not self.draft,
-            )
-        key = f'{name}_shade'
-        volume['shade'] = key
-        patch = self.add_raw_path(
-            key=key,
-            vertices=[(0, 0)],
-            lw=0,
-            zorder=-1,
-            visible=not self.draft,
-        )
+        volume = {
+            'main' : f'{name}_main',
+            'side' : [
+                f'{name}_side{index}'
+                for index in range(len(self.round_sides))
+            ],
+            'shade' : f'{name}_shade',
+        }
+        for key in volume.values():
+            if isinstance(key, str):
+                keys = [key]
+                alphas = [1]
+            else:
+                keys = key
+                alphas = self.round_sides.values()
+            for key, alpha in zip(keys, alphas):
+                patch = self.add_raw_path(
+                    key=key,
+                    vertices=[(0, 0)],
+                    lw=0,
+                    alpha=alpha,
+                    zorder=0,
+                    visible=not self.draft
+                )
+                if key.endswith('_main'):
+                    patch.set_visible(True)
+                elif key.endswith('_shade'):
+                    patch.set_zorder(-1)
+                else:
+                    patch.set_color('black')
         return volume
 
     def _create_sphere(
