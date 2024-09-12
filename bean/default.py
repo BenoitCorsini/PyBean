@@ -53,13 +53,7 @@ DEFAULT = {
     'shade_angle' : -60,
     'shade_delta_height' : 0.1,
     'shade_cmap_ratio' : 0.05,
-    'sphere_side' : {
-        0.49 : 0.05,
-        0.25 : 0.07,
-        0.09 : 0.12,
-        0.02 : 0.25,
-    },
-    'tube_side' : {
+    'round_sides' : {
         0.49 : 0.05,
         0.25 : 0.07,
         0.09 : 0.12,

@@ -537,10 +537,15 @@ class Shape(Canvas):
 
     @staticmethod
     def merge_curves(
-            curve1: Path,
-            curve2: Path,
+            *curves
         ) -> Path:
-        # combines two curves
+        # combines multiple curves
+        vertices = [curve.vertices for curve in curves]
+        vertices = np.concatenate(vertices)
+        codes = [curve.codes + (curve.codes == 1) for curve in curves]
+        codes = np.concatenate(codes)
+        codes[0] = 1
+        return Path(vertices=vertices, codes=codes, closed=True)
         return Path(
             vertices=np.concatenate([
                 curve1.vertices,

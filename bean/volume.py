@@ -56,23 +56,22 @@ class Volume(Shape):
         side, depth, altitude = pos
         return side, depth
 
-    def _create_sphere(
+    def _create_round(
             self: Self,
             name: str,
         ) -> dict:
-        # creates the voluem dictionary of a sphere
+        # creates the volume dictionary for a rounded object
         volume = {}
         key = f'{name}_main'
         volume['main'] = key
-        patch = self.add_shape(
-            shape_name='Circle',
+        patch = self.add_raw_path(
             key=key,
-            xy=(0, 0),
+            vertices=[(0, 0)],
             lw=0,
             zorder=0,
         )
         volume['side'] = []
-        for side_index, alpha in enumerate(self.sphere_side.values()):
+        for side_index, alpha in enumerate(self.round_sides.values()):
             key = f'{name}_side{side_index}'
             volume['side'].append(key)
             self.add_raw_path(
@@ -86,15 +85,21 @@ class Volume(Shape):
             )
         key = f'{name}_shade'
         volume['shade'] = key
-        self.add_shape(
-            shape_name='Circle',
+        patch = self.add_raw_path(
             key=key,
-            xy=(0, 0),
+            vertices=[(0, 0)],
             lw=0,
             zorder=-1,
             visible=not self.draft,
         )
         return volume
+
+    def _create_sphere(
+            self: Self,
+            name: str,
+        ) -> dict:
+        # creates the volume dictionary of a sphere
+        return self._create_round(name=name)
 
     def _update_sphere(
             self: Self,
@@ -114,11 +119,11 @@ class Volume(Shape):
         else:
             shade_xy = xy
         radius *= self.scale
-        self.apply_to_shape('set_center', key=main, xy=xy)
-        self.apply_to_shape('set_radius', key=main, radius=radius)
+        path = self.curve_path(xy=xy, a=radius)
+        self.apply_to_shape('set_path', key=main, path=path)
         clipper = self.set_shape(key=main, color=colour)
         if not self.draft:
-            for key, ratio in zip(side, self.sphere_side):
+            for key, ratio in zip(side, self.round_sides):
                 inner = self.curve_path(
                     xy=xy,
                     a=radius*(ratio - 1),
@@ -130,15 +135,15 @@ class Volume(Shape):
                 outer = self.curve_path(
                     xy=xy,
                     a=radius,
-                    theta1=-90,
+                    theta1=270,
                     theta2=90,
                     angle=self.shade_angle,
                 )
                 path = self.merge_curves(inner, outer)
                 self.apply_to_shape('set_path', key=key, path=path)
                 self.set_shape(key=key, clip_path=clipper)
-            self.apply_to_shape('set_center', key=shade, xy=shade_xy)
-            self.apply_to_shape('set_radius', key=shade, radius=radius)
+            path = self.curve_path(xy=xy, a=radius)
+            self.apply_to_shape('set_path', key=shade, path=path)
             shade_colour = self.get_cmap(['white', clipper.get_fc()])(
                 self.shade_cmap_ratio
             )
@@ -148,39 +153,8 @@ class Volume(Shape):
             self: Self,
             name: str,
         ) -> dict:
-        # creates the voluem dictionary of a sphere
-        volume = {}
-        key = f'{name}_main'
-        volume['main'] = key
-        patch = self.add_raw_path(
-            key=key,
-            vertices=[(0, 0)],
-            lw=0,
-            zorder=0,
-        )
-        volume['side'] = []
-        for side_index, alpha in enumerate(self.sphere_side.values()):
-            key = f'{name}_side{side_index}'
-            volume['side'].append(key)
-            self.add_raw_path(
-                key=key,
-                vertices=[(0, 0)],
-                lw=0,
-                zorder=0,
-                color='black',
-                alpha=alpha,
-                visible=not self.draft,
-            )
-        key = f'{name}_shade'
-        volume['shade'] = key
-        patch = self.add_raw_path(
-            key=key,
-            vertices=[(0, 0)],
-            lw=0,
-            zorder=-1,
-            visible=not self.draft,
-        )
-        return volume
+        # creates the voluem dictionary of a tube
+        return self._create_round(name=name)
 
     def _update_tube(
             self: Self,
@@ -206,54 +180,80 @@ class Volume(Shape):
         radius1 *= self.scale
         radius2 *= self.scale
         distance = self.distance_from_xy(xy1, xy2)
-        if np.abs(radius2 - radius1) <= distance:
-            around_angle = np.arctan((radius2 - radius1)/distance)*180/np.pi
-            curve1 = self.curve_path(
-                xy=xy1,
-                a=radius1,
-                theta1=90 + around_angle,
-                theta2=270 - around_angle,
-                angle=self.angle_from_xy(xy1, xy2),
+        if np.abs(radius2 - radius1) > distance:
+            if radius2 > radius1:
+                xy = xy2
+                radius = radius2
+            else:
+                xy = xy1
+                radius = radius1
+            return self._update_sphere(
+                main=main,
+                side=side,
+                shade=shade,
+                xy=xy,
+                radius=radius,
+                colour=colour,
             )
-            curve2 = self.curve_path(
-                xy=xy2,
-                a=radius2,
-                theta1=270 - around_angle,
-                theta2=90 + around_angle,
-                angle=self.angle_from_xy(xy1, xy2),
-            )
-            path = self.merge_curves(curve1, curve2)
-            self.apply_to_shape('set_path', key=main, path=path)
-            clipper = self.set_shape(key=main, color=colour)
-        # self.apply_to_shape('set_center', key=main, xy=xy)
-        # self.apply_to_shape('set_radius', key=main, radius=radius)
-        # clipper = self.set_shape(key=main, color=colour)
-        # if not self.draft:
-        #     for key, ratio in zip(side, self.sphere_side):
-        #         inner = self.curve_path(
-        #             xy=xy,
-        #             a=radius*(ratio - 1),
-        #             b=radius,
-        #             theta1=90,
-        #             theta2=270,
-        #             angle=self.shade_angle,
-        #         )
-        #         outer = Shape.curve_path(
-        #             xy=xy,
-        #             a=radius,
-        #             theta1=-90,
-        #             theta2=90,
-        #             angle=self.shade_angle,
-        #         )
-        #         path = self.merge_curves(inner, outer)
-        #         self.apply_to_shape('set_path', key=key, path=path)
-        #         self.set_shape(key=key, clip_path=clipper)
-        #     self.apply_to_shape('set_center', key=shade, xy=shade_xy)
-        #     self.apply_to_shape('set_radius', key=shade, radius=radius)
-        #     shade_colour = self.get_cmap(['white', clipper.get_fc()])(
-        #         self.shade_cmap_ratio
-        #     )
-        #     self.set_shape(key=shade, color=shade_colour)
+        angle = self.angle_from_xy(xy1, xy2)
+        around_angle = np.arctan((radius2 - radius1)/distance)*180/np.pi
+        curve1 = self.curve_path(
+            xy=xy1,
+            a=radius1,
+            theta1=90 + angle + around_angle,
+            theta2=270 + angle - around_angle,
+        )
+        curve2 = self.curve_path(
+            xy=xy2,
+            a=radius2,
+            theta1=270 + angle - around_angle,
+            theta2=90 + angle + around_angle,
+        )
+        path = self.merge_curves(curve1, curve2)
+        self.apply_to_shape('set_path', key=main, path=path)
+        clipper = self.set_shape(key=main, color=colour)
+        if not self.draft:
+            shade_around_angle = around_angle - self.shade_angle/2
+            for key, ratio in zip(side, self.round_sides):
+                inner1 = self.curve_path(
+                    xy=xy1,
+                    a=radius1*(ratio - 1),
+                    b=radius1,
+                    theta1=180 - shade_around_angle,
+                    theta2=270,
+                    angle=self.shade_angle,
+                )
+                outer1 = Shape.curve_path(
+                    xy=xy1,
+                    a=radius1,
+                    theta1=270,
+                    theta2=shade_around_angle,
+                    angle=self.shade_angle,
+                )
+                inner2 = self.curve_path(
+                    xy=xy2,
+                    a=radius2*(ratio - 1),
+                    b=radius2,
+                    theta1=90,
+                    theta2=180 - shade_around_angle,
+                    angle=self.shade_angle,
+                )
+                outer2 = Shape.curve_path(
+                    xy=xy2,
+                    a=radius2,
+                    theta1=shade_around_angle,
+                    theta2=90,
+                    angle=self.shade_angle,
+                )
+                path = self.merge_curves(inner1, outer1, outer2, inner2)
+                self.apply_to_shape('set_path', key=key, path=path)
+                self.set_shape(key=key, clip_path=clipper)
+            # self.apply_to_shape('set_center', key=shade, xy=shade_xy)
+            # self.apply_to_shape('set_radius', key=shade, radius=radius)
+            # shade_colour = self.get_cmap(['white', clipper.get_fc()])(
+            #     self.shade_cmap_ratio
+            # )
+            # self.set_shape(key=shade, color=shade_colour)
 
     def new_volume(
             self: Self,
@@ -311,9 +311,17 @@ class Volume(Shape):
             name='tube',
             colour='gold',
             xy1=(0.4, 0.1),
-            xy2=(0.7, 0.4),
-            radius1=0.02,
-            radius2=0.1,
+            xy2=(0.6, 0.4),
+            radius1=0.06,
+            radius2=0.03,
+        )
+        self.new_volume(
+            name='tube',
+            colour='chocolate',
+            xy1=(0.1, 0.1),
+            xy2=(0.2, 0.1),
+            radius1=0.05,
+            radius2=0.01,
         )
         self.save()
         print(self._volumes)
