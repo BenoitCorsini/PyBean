@@ -172,12 +172,9 @@ class Volume(Shape):
         radius2 *= self.scale
         distance = self.distance_from_xy(xy1, xy2)
         if np.abs(radius2 - radius1) > distance:
-            if radius2 > radius1:
-                xy = xy2
-                radius = radius2
-            else:
-                xy = xy1
-                radius = radius1
+            index = 1 + int(radius2 > radius1)
+            xy = locals()[f'xy{index}']
+            radius = locals()[f'radius{index}']
             return self._update_sphere(
                 main=main,
                 side=side,
@@ -206,146 +203,63 @@ class Volume(Shape):
         self.apply_to_shape('set_path', key=main, path=path)
         clipper = self.set_shape(key=main, color=colour)
         if not self.draft:
-            effective_angle = angle - self.shade_angle
+            theta1 = self.normalize_angle(
+                90 + around_angle + angle - self.shade_angle
+            )
+            theta2 = self.normalize_angle(
+                270 - around_angle + angle - self.shade_angle
+            )
+            index = 1 + int(self.normalize_angle(theta2 - theta1) > 0)
             for key, ratio in zip(side, self.round_sides):
-                inners = []
-                outers = []
-                theta1 = self.normalize_angle(90 + around_angle + effective_angle)
-                theta2 = self.normalize_angle(270 - around_angle + effective_angle)
-                if abs(theta1) < 90 and abs(theta2) >= 90:
-                    inner, outer = self.crescent_paths(
-                        xy=xy1,
-                        radius=radius1,
-                        ratio=ratio,
-                        theta1=theta1,
-                        theta2=90,
-                        angle=self.shade_angle,
-                    )
-                    inners.append(inner)
-                    outers.append(outer)
-                    inner, outer = self.crescent_paths(
-                        xy=xy2,
-                        radius=radius2,
-                        ratio=ratio,
-                        theta1=270,
-                        theta2=theta1,
-                        angle=self.shade_angle,
-                    )
-                    inners.append(inner)
-                    outers.append(outer)
-                elif abs(theta1) >= 90 and abs(theta2) < 90:
-                    inner, outer = self.crescent_paths(
-                        xy=xy2,
-                        radius=radius2,
-                        ratio=ratio,
-                        theta1=theta2,
-                        theta2=90,
-                        angle=self.shade_angle,
-                    )
-                    inners.append(inner)
-                    outers.append(outer)
-                    inner, outer = self.crescent_paths(
-                        xy=xy1,
-                        radius=radius1,
-                        ratio=ratio,
-                        theta1=270,
-                        theta2=theta2,
-                        angle=self.shade_angle,
-                    )
-                    inners.append(inner)
-                    outers.append(outer)
-                elif abs(theta1) >= 90 and abs(theta2) >= 90:
-                    if self.normalize_angle(theta2 - theta1) > 0:
-                        inner, outer = self.crescent_paths(
-                            xy=xy2,
-                            radius=radius2,
-                            ratio=ratio,
-                            theta1=270,
-                            theta2=90,
-                            angle=self.shade_angle,
-                        )
-                        inners.append(inner)
-                        outers.append(outer)
-                    else:
-                        inner, outer = self.crescent_paths(
-                            xy=xy1,
-                            radius=radius1,
-                            ratio=ratio,
-                            theta1=270,
-                            theta2=90,
-                            angle=self.shade_angle,
-                        )
-                        inners.append(inner)
-                        outers.append(outer)
+                crescents = []
+                if abs(theta1) >= 90 and abs(theta2) >= 90:
+                    crescents.append({
+                        'theta1' : 270,
+                        'theta2' : 90,
+                        'index' : index,
+                    })
+                elif abs(theta1) < 90 and abs(theta2) < 90:
+                    crescents.append({
+                        'theta1' : 270,
+                        'theta2' : locals()[f'theta{3 - index}'],
+                        'index' : index,
+                    })
+                    crescents.append({
+                        'theta1' : locals()[f'theta{3 - index}'],
+                        'theta2' : locals()[f'theta{index}'],
+                        'index' : 3 - index,
+                    })
+                    crescents.append({
+                        'theta1' : locals()[f'theta{index}'],
+                        'theta2' : 90,
+                        'index' : index,
+                    })
                 else:
-                    if self.normalize_angle(theta2 - theta1) > 0:
-                        inner, outer = self.crescent_paths(
-                            xy=xy2,
-                            radius=radius2,
-                            ratio=ratio,
-                            theta1=theta2,
-                            theta2=90,
-                            angle=self.shade_angle,
-                        )
-                        inners.append(inner)
-                        outers.append(outer)
-                        inner, outer = self.crescent_paths(
-                            xy=xy1,
-                            radius=radius1,
-                            ratio=ratio,
-                            theta1=theta1,
-                            theta2=theta2,
-                            angle=self.shade_angle,
-                        )
-                        inners.append(inner)
-                        outers.append(outer)
-                        inner, outer = self.crescent_paths(
-                            xy=xy2,
-                            radius=radius2,
-                            ratio=ratio,
-                            theta1=270,
-                            theta2=theta1,
-                            angle=self.shade_angle,
-                        )
-                        inners.append(inner)
-                        outers.append(outer)
-                    else:
-                        inner, outer = self.crescent_paths(
-                            xy=xy1,
-                            radius=radius1,
-                            ratio=ratio,
-                            theta1=theta1,
-                            theta2=90,
-                            angle=self.shade_angle,
-                        )
-                        inners.append(inner)
-                        outers.append(outer)
-                        inner, outer = self.crescent_paths(
-                            xy=xy2,
-                            radius=radius2,
-                            ratio=ratio,
-                            theta1=theta2,
-                            theta2=theta1,
-                            angle=self.shade_angle,
-                        )
-                        inners.append(inner)
-                        outers.append(outer)
-                        inner, outer = self.crescent_paths(
-                            xy=xy1,
-                            radius=radius1,
-                            ratio=ratio,
-                            theta1=270,
-                            theta2=theta2,
-                            angle=self.shade_angle,
-                        )
-                        inners.append(inner)
-                        outers.append(outer)
-                path = self.merge_curves(*(inners + outers[::-1]))
+                    index = 1 + int(abs(theta1) >= 90)
+                    crescents.append({
+                        'theta1' : 270,
+                        'theta2' : locals()[f'theta{index}'],
+                        'index' : 3 - index,
+                    })
+                    crescents.append({
+                        'theta1' : locals()[f'theta{index}'],
+                        'theta2' : 90,
+                        'index' : index,
+                    })
+                paths = []
+                for crescent in crescents:
+                    index = crescent.pop('index')
+                    for s in ['xy', 'radius']:
+                        crescent[s] = locals()[f'{s}{index}']
+                    paths.append(self.crescent_paths(
+                        ratio=ratio,
+                        angle=self.shade_angle,
+                        **crescent
+                    ))
+                inners, outers = zip(*paths)
+                path = self.merge_curves(*(inners[::-1] + outers))
                 self.apply_to_shape('set_path', key=key, path=path)
-                self.set_shape(key=key,
-                    clip_path=clipper,
-                    # fill=False, lw=2
-                    )
+                self.set_shape(key=key, clip_path=clipper)
             # self.apply_to_shape('set_center', key=shade, xy=shade_xy)
             # self.apply_to_shape('set_radius', key=shade, radius=radius)
             # shade_colour = self.get_cmap(['white', clipper.get_fc()])(
@@ -479,3 +393,12 @@ class Volume(Shape):
         )
         self.save()
         print(self._volumes)
+        i, o = [], []
+        p = [(0, 1), (2, 3), (4, 5)]
+        for x, y in p:
+            i.append(x)
+            o.append(y)
+        print(i, o)
+        i, o = zip(*p)
+        print(list(zip(*p)))
+        print(i, o[::-1])
