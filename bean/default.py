@@ -51,7 +51,7 @@ DEFAULT = {
     'draft' : False,
     'scale' : 1,
     'shade_angle' : -60,
-    'shade_delta_height' : 0.1,
+    'shade_delta_height' : 0.05,
     'shade_cmap_ratio' : 0.05,
     'round_sides' : {
         0.49 : 0.05,

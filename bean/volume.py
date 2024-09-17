@@ -56,6 +56,19 @@ class Volume(Shape):
         side, depth, altitude = pos
         return side, depth
 
+    def _pos_to_shade_pos(
+            self: Self,
+            pos: (float, float, float),
+        ) -> (float, float):
+        # transforms a 3D position into a 2D coordinate
+        side, depth, altitude = pos
+        shade_shift = altitude*self.shade_delta_height*self.scale*self._shade_shift()
+        return (
+            side + shade_shift[0],
+            depth + shade_shift[1],
+            0,
+        )
+
     def _create_round(
             self: Self,
             name: str,
@@ -114,7 +127,7 @@ class Volume(Shape):
         # update the sphere
         if pos is not None:
             xy = self._pos_to_xy(pos)
-            shade_xy = np.array(xy) + self.shade_delta_height*self._shade_shift()
+            shade_xy = self._pos_to_xy(self._pos_to_shade_pos(pos))
         else:
             shade_xy = xy
         radius *= self.scale
@@ -133,7 +146,7 @@ class Volume(Shape):
                 ))
                 self.apply_to_shape('set_path', key=key, path=path)
                 self.set_shape(key=key, clip_path=clipper)
-            path = self.curve_path(xy=xy, a=radius)
+            path = self.curve_path(xy=shade_xy, a=radius)
             self.apply_to_shape('set_path', key=shade, path=path)
             shade_colour = self.get_cmap(['white', clipper.get_fc()])(
                 self.shade_cmap_ratio
@@ -162,45 +175,46 @@ class Volume(Shape):
 
         ) -> None:
         # update the sphere
-        if pos1 is not None:
-            xy1 = self._pos_to_xy(pos1)
-        if pos2 is not None:
-            xy2 = self._pos_to_xy(pos2)
         if radius2 is None:
             radius2 = radius1
-        radius1 *= self.scale
-        radius2 *= self.scale
-        distance = self.distance_from_xy(xy1, xy2)
-        if np.abs(radius2 - radius1) > distance:
-            index = 1 + int(radius2 > radius1)
-            xy = locals()[f'xy{index}']
-            radius = locals()[f'radius{index}']
-            return self._update_sphere(
-                main=main,
-                side=side,
-                shade=shade,
-                xy=xy,
-                radius=radius,
-                colour=colour,
-            )
-        angle = self.angle_from_xy(xy1, xy2)
-        around_angle = np.arctan((radius2 - radius1)/distance)*180/np.pi
-        curve1 = self.curve_path(
-            xy=xy1,
-            a=radius1,
-            theta1=90 + around_angle,
-            theta2=270 - around_angle,
-            angle=angle,
-        )
-        curve2 = self.curve_path(
-            xy=xy2,
-            a=radius2,
-            theta1=270 - around_angle,
-            theta2=90 + around_angle,
-            angle=angle,
-        )
-        path = self.merge_curves(curve1, curve2)
-        self.apply_to_shape('set_path', key=main, path=path)
+        variables = {}
+        for index in [1, 2]:
+            scaled_radius = self.scale*locals()[f'radius{index}']
+            variables[f'radius{index}'] = scaled_radius
+            variables[f'shade_radius{index}'] = scaled_radius
+            pos = locals()[f'pos{index}']
+            if pos is not None:
+                shade_pos = self._pos_to_shade_pos(pos)
+                variables[f'radius{index}'] *= self._pos_to_scale(pos)
+                variables[f'shade_radius{index}'] *= self._pos_to_scale(shade_pos)
+                variables[f'xy{index}'] = self._pos_to_xy(pos)
+                variables[f'shade_xy{index}'] = self._pos_to_xy(shade_pos)
+            else:
+                variables[f'xy{index}'] = locals()[f'xy{index}']
+                variables[f'shade_xy{index}'] = locals()[f'xy{index}']
+        distance = self.distance_from_xy(variables['xy1'], variables['xy2'])
+        delta_radius = variables['radius2'] - variables['radius1']
+        is_sphere = np.abs(delta_radius) > distance
+        if is_sphere:
+            sphere_index = 1 + int(delta_radius > 0)
+            self.apply_to_shape('set_path', key=main, path=self.curve_path(
+                xy=variables[f'xy{sphere_index}'],
+                a=variables[f'radius{sphere_index}'],
+            ))
+            clipper = self.set_shape(key=main, color=colour)
+            angle = 0
+            around_angle = 0
+        else:
+            angle = self.angle_from_xy(variables['xy1'], variables['xy2'])
+            around_angle = np.arcsin(delta_radius/distance)*180/np.pi
+            path = self.merge_curves(*[self.curve_path(
+                xy=variables[f'xy{index}'],
+                a=variables[f'radius{index}'],
+                angle=angle,
+                theta1=(3 - 2*index)*(90 + around_angle),
+                theta2=(2*index - 3)*(90 + around_angle),
+            ) for index in [1, 2]])
+            self.apply_to_shape('set_path', key=main, path=path)
         clipper = self.set_shape(key=main, color=colour)
         if not self.draft:
             theta1 = self.normalize_angle(
@@ -209,30 +223,30 @@ class Volume(Shape):
             theta2 = self.normalize_angle(
                 270 - around_angle + angle - self.shade_angle
             )
-            index = 1 + int(self.normalize_angle(theta2 - theta1) > 0)
+            dark_index = 1 + int(self.normalize_angle(theta2 - theta1) > 0)
             for key, ratio in zip(side, self.round_sides):
                 crescents = []
-                if abs(theta1) >= 90 and abs(theta2) >= 90:
+                if is_sphere or (abs(theta1) >= 90 and abs(theta2) >= 90):
                     crescents.append({
                         'theta1' : 270,
                         'theta2' : 90,
-                        'index' : index,
+                        'index' : sphere_index if is_sphere else dark_index,
                     })
                 elif abs(theta1) < 90 and abs(theta2) < 90:
                     crescents.append({
                         'theta1' : 270,
-                        'theta2' : locals()[f'theta{3 - index}'],
-                        'index' : index,
+                        'theta2' : locals()[f'theta{3 - dark_index}'],
+                        'index' : dark_index,
                     })
                     crescents.append({
-                        'theta1' : locals()[f'theta{3 - index}'],
-                        'theta2' : locals()[f'theta{index}'],
-                        'index' : 3 - index,
+                        'theta1' : locals()[f'theta{3 - dark_index}'],
+                        'theta2' : locals()[f'theta{dark_index}'],
+                        'index' : 3 - dark_index,
                     })
                     crescents.append({
-                        'theta1' : locals()[f'theta{index}'],
+                        'theta1' : locals()[f'theta{dark_index}'],
                         'theta2' : 90,
-                        'index' : index,
+                        'index' : dark_index,
                     })
                 else:
                     index = 1 + int(abs(theta1) >= 90)
@@ -250,7 +264,7 @@ class Volume(Shape):
                 for crescent in crescents:
                     index = crescent.pop('index')
                     for s in ['xy', 'radius']:
-                        crescent[s] = locals()[f'{s}{index}']
+                        crescent[s] = variables[f'{s}{index}']
                     paths.append(self.crescent_paths(
                         ratio=ratio,
                         angle=self.shade_angle,
@@ -260,12 +274,29 @@ class Volume(Shape):
                 path = self.merge_curves(*(inners[::-1] + outers))
                 self.apply_to_shape('set_path', key=key, path=path)
                 self.set_shape(key=key, clip_path=clipper)
-            # self.apply_to_shape('set_center', key=shade, xy=shade_xy)
-            # self.apply_to_shape('set_radius', key=shade, radius=radius)
-            # shade_colour = self.get_cmap(['white', clipper.get_fc()])(
-            #     self.shade_cmap_ratio
-            # )
-            # self.set_shape(key=shade, color=shade_colour)
+            shade_colour = self.get_cmap(['white', clipper.get_fc()])(
+                self.shade_cmap_ratio
+            )
+            self.set_shape(key=shade, color=shade_colour)
+            distance = self.distance_from_xy(variables['shade_xy1'], variables['shade_xy2'])
+            delta_radius = variables['shade_radius2'] - variables['shade_radius1']
+            if np.abs(delta_radius) > distance:
+                index = 1 + int(delta_radius > 0)
+                self.apply_to_shape('set_path', key=shade, path=self.curve_path(
+                    xy=variables[f'shade_xy{index}'],
+                    a=variables[f'shade_radius{index}'],
+                ))
+            else:
+                shade_angle = self.angle_from_xy(variables['shade_xy1'], variables['shade_xy2'])
+                shade_around_angle = np.arcsin(delta_radius/distance)*180/np.pi
+                path = self.merge_curves(*[self.curve_path(
+                    xy=variables[f'shade_xy{index}'],
+                    a=variables[f'shade_radius{index}'],
+                    angle=shade_angle,
+                    theta1=(3 - 2*index)*(90 + shade_around_angle),
+                    theta2=(2*index - 3)*(90 + shade_around_angle),
+                ) for index in [1, 2]])
+                self.apply_to_shape('set_path', key=shade, path=path)
 
     def new_volume(
             self: Self,
@@ -302,103 +333,96 @@ class Volume(Shape):
         print(self._get_new_methods())
         print(self.get_kwargs())
         self.new_volume(
-            name='sphere',
+            name='tube',
             colour='crimson',
-            xy=(0.3, 0.3),
-            radius=0.05,
+            pos1=(0.3, 0.3, 1),
+            pos2=(0.3, 0.3, 1),
+            radius1=0.05,
+            radius2=0.01,
         )
         self.new_volume(
             name='sphere',
             colour='royalblue',
-            xy=(0.15, 0.45),
+            pos=(0.15, 0.45, 1),
             radius=0.1,
         )
         self.new_volume(
             name='sphere',
             colour='forestgreen',
-            xy=(0.85, 0.1),
+            pos=(0.85, 0.1, 1),
             radius=0.05,
         )
         self.new_volume(
             name='tube',
             colour='gold',
-            xy1=(0.4, 0.1),
-            xy2=(0.6, 0.4),
+            pos1=(0.4, 0.1, 1),
+            pos2=(0.6, 0.4, 1),
             radius1=0.03,
             radius2=0.03,
         )
         self.new_volume(
             name='tube',
             colour='chocolate',
-            xy1=(0.1, 0.1),
-            xy2=(0.2, 0.1),
+            pos1=(0.1, 0.1, 1),
+            pos2=(0.2, 0.1, 1),
             radius1=0.05,
             radius2=0.01,
         )
         self.new_volume(
             name='tube',
             colour='chocolate',
-            xy1=(0.1, 0.2),
-            xy2=(0.2, 0.2),
+            pos1=(0.1, 0.2, 1),
+            pos2=(0.2, 0.2, 1),
             radius1=0.01,
             radius2=0.05,
         )
         self.new_volume(
             name='tube',
             colour='hotpink',
-            xy1=(0.8, 0.4),
-            xy2=(0.8, 0.3),
+            pos1=(0.8, 0.4, 1),
+            pos2=(0.8, 0.3, 1),
             radius1=0.05,
             radius2=0.01,
         )
         self.new_volume(
             name='tube',
             colour='hotpink',
-            xy1=(0.9, 0.4),
-            xy2=(0.9, 0.3),
+            pos1=(0.9, 0.4, 1),
+            pos2=(0.9, 0.3, 1),
             radius1=0.01,
             radius2=0.05,
         )
         self.new_volume(
             name='tube',
             colour='teal',
-            xy1=(0.5, 0.5),
-            xy2=(0.4, 0.5),
+            pos1=(0.5, 0.5, 1),
+            pos2=(0.4, 0.5, 1),
             radius1=0.05,
             radius2=0.01,
         )
         self.new_volume(
             name='tube',
             colour='teal',
-            xy1=(0.5, 0.4),
-            xy2=(0.4, 0.4),
+            pos1=(0.5, 0.4, 1),
+            pos2=(0.4, 0.4, 1),
             radius1=0.01,
             radius2=0.05,
         )
         self.new_volume(
             name='tube',
             colour='mediumorchid',
-            xy1=(0.6, 0.1),
-            xy2=(0.6, 0.2),
+            pos1=(0.6, 0.1, 1),
+            pos2=(0.6, 0.2, 1),
             radius1=0.05,
             radius2=0.01,
         )
         self.new_volume(
             name='tube',
             colour='mediumorchid',
-            xy1=(0.7, 0.1),
-            xy2=(0.7, 0.2),
+            pos1=(0.7, 0.1, 1),
+            pos2=(0.7, 0.2, 1),
             radius1=0.01,
             radius2=0.05,
         )
         self.save()
         print(self._volumes)
-        i, o = [], []
-        p = [(0, 1), (2, 3), (4, 5)]
-        for x, y in p:
-            i.append(x)
-            o.append(y)
-        print(i, o)
-        i, o = zip(*p)
-        print(list(zip(*p)))
-        print(i, o[::-1])
