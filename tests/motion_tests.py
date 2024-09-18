@@ -3,10 +3,10 @@ import unittest
 
 sys.path.append('.')
 
-from bean import Motion
+# from bean import Motion
 
 
-class MotionTest(unittest.TestCase):
+class MotionTests(unittest.TestCase):
 
     def test_true(self):
         self.assertTrue(True)

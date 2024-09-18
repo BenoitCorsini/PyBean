@@ -6,7 +6,7 @@ sys.path.append('.')
 from bean import Shape
 
 
-class ShapeTest(unittest.TestCase):
+class ShapeTests(unittest.TestCase):
 
     def test_true(self):
         self.assertTrue(True)

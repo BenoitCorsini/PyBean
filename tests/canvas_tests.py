@@ -6,7 +6,7 @@ sys.path.append('.')
 from bean import Canvas
 
 
-class CanvasTest(unittest.TestCase):
+class CanvasTests(unittest.TestCase):
 
     def test_true(self):
         self.assertTrue(True)

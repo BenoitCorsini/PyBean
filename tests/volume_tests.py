@@ -6,7 +6,7 @@ sys.path.append('.')
 from bean import Volume
 
 
-class VolumeTest(unittest.TestCase):
+class VolumeTests(unittest.TestCase):
 
     def test_true(self):
         self.assertTrue(True)
