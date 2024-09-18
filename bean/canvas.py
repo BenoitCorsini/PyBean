@@ -12,6 +12,10 @@ from .default import DEFAULT
 
 class Canvas(object):
 
+    '''
+    fundamental variables
+    '''
+
     _canvas_params = {
         'figsize' : int,
         'dpi' : int,
@@ -24,6 +28,10 @@ class Canvas(object):
     _canvas_nargs = {
         'figsize' : 2,
     }
+
+    '''
+    dunder methods
+    '''
 
     def __init__(
             self: Self,
@@ -56,12 +64,9 @@ class Canvas(object):
                 s += self.copyright['text']
         return s
 
-    def _new_canvas(
-            self: Self,
-        ) -> Self:
-        # new canvas instance
-        self.start_time = time()
-        return self.canvas()
+    '''
+    hidden methods
+    '''
 
     def _get_classes(
             self: Self,
@@ -74,6 +79,13 @@ class Canvas(object):
             classes.append(current_class)
             classes_to_explore += list(current_class.__bases__)
         return classes[::-1]
+
+    def _new_canvas(
+            self: Self,
+        ) -> Self:
+        # new canvas instance
+        self.start_time = time()
+        return self.canvas()
 
     def _set_params(
             self: Self,
@@ -106,6 +118,115 @@ class Canvas(object):
                 if method.startswith('_new'):
                     new_methods.append(method)
         return new_methods
+
+    '''
+    static methods
+    '''
+
+    @staticmethod
+    def get_cmap(
+            colour_list: list,
+        ) -> LSC:
+        # creates a cmap using the list of colours
+        return LSC.from_list('pybean cmap', colour_list)
+
+    @staticmethod
+    def get_greyscale(
+            start_with_white: bool = True,
+        ) -> LSC:
+        # creates a grayscale from white to black
+        if start_with_white:
+            colour_list = ['white', 'black']
+        else:
+            colour_list = ['black', 'white']
+        return LSC.from_list('pybean greyscale', colour_list)
+
+    @staticmethod
+    def get_cscale(
+            colour: str = 'grey',
+            start_with: str = 'white',
+            end_with: str = 'black',
+        ) -> LSC:
+        # creates a cmap scaling around a given colour
+        colour_list = [colour]
+        if not isinstance(start_with, str) or start_with != 'same':
+            colour_list = [start_with] + colour_list
+        if not isinstance(start_with, str) or end_with != 'same':
+            colour_list = colour_list + [end_with]
+        if len(colour_list) == 1:
+            colour_list = colour_list*2
+        return LSC.from_list('pybean cscale', colour_list)
+
+    @staticmethod
+    def time_to_string(
+            time: float,
+        ) -> str:
+        # transform a time in (hours, minutes, seconds) string format
+        hours = int(time/3600)
+        minutes = int((time - 3600*hours)/60)
+        seconds = int(time - 3600*hours - 60*minutes)
+        if hours:
+            return f'{hours}h{minutes}m{seconds}s'
+        elif minutes:
+            return f'{minutes}m{seconds}s'
+        else:
+            return f'{seconds}s'
+
+    @staticmethod
+    def angle_shift(
+            angle: float = 0,
+            two_dim: bool = False,
+        ) -> np.array:
+        # return a vector for shifting in the angle direction
+        shift = np.array([
+            np.cos(np.pi*angle/180),
+            np.sin(np.pi*angle/180),
+        ])
+        if two_dim:
+            shift = shift.reshape((1, 2))
+        return shift
+
+    @staticmethod
+    def angle_from_xy(
+            xy1: (float, float),
+            xy2: (float, float),
+        ) -> float:
+        # computes the angle formed by the two positions
+        vector = np.array(xy2) - np.array(xy1)
+        norm = np.sum(vector**2)**0.5
+        if not norm:
+            return 0.
+        vector = vector/norm
+        angle = np.arccos(vector[0])
+        if vector[1] < 0:
+            angle *= -1
+        return angle*180/np.pi
+
+    @staticmethod
+    def distance_from_xy(
+            xy1: (float, float),
+            xy2: (float, float),
+        ) -> float:
+        # computes the angle formed by the two positions
+        distance = np.array(xy2) - np.array(xy1)
+        distance = np.sum(distance**2)**0.5
+        return distance
+
+    @staticmethod
+    def normalize_angle(
+            angle: float,
+            lower_bound: float = -180,
+        ) -> float:
+        # set an angle to (lower_bound, lower_bound + 360]
+        while angle <= lower_bound:
+            angle += 360
+        while angle > lower_bound + 360:
+            angle -= 360
+        return angle
+
+    '''
+    general methods
+    '''
 
     def add_param(
             self: Self,
@@ -199,113 +320,14 @@ class Canvas(object):
         print(f'\u279E Take a look at the Github page: {github_page}')
         print(f'\u279E Take a look at common symbols: {symbol_page}')
 
-    @staticmethod
-    def get_cmap(
-            colour_list: list,
-        ) -> LSC:
-        # creates a cmap using the list of colours
-        return LSC.from_list('pybean cmap', colour_list)
+    '''
+    main method
+    '''
 
-    @staticmethod
-    def get_greyscale(
-            start_with_white: bool = True,
-        ) -> LSC:
-        # creates a grayscale from white to black
-        if start_with_white:
-            colour_list = ['white', 'black']
-        else:
-            colour_list = ['black', 'white']
-        return LSC.from_list('pybean greyscale', colour_list)
-
-    @staticmethod
-    def get_cscale(
-            colour: str = 'grey',
-            start_with: str = 'white',
-            end_with: str = 'black',
-        ) -> LSC:
-        # creates a cmap scaling around a given colour
-        if (start_with == 'same') & (end_with == 'same'):
-            raise UserWarning(f'The cmap is uniformly coloured!')
-            colour_list = [colour]*2
-        elif start_with == 'same':
-            colour_list = [colour, end_with]
-        elif end_with == 'same':
-            colour_list = [start_with, colour]
-        else:
-            colour_list = [start_with, colour, end_with]
-        return LSC.from_list('pybean cscale', colour_list)
-
-    @staticmethod
-    def time_to_string(
-            time: float,
-        ) -> str:
-        # transform a time in (hours, minutes, seconds) string format
-        hours = int(time/3600)
-        minutes = int((time - 60*hours)/60)
-        seconds = int(time - 3600*hours - 60*minutes)
-        if hours:
-            return f'{hours}h{minutes}m{seconds}s'
-        elif minutes:
-            return f'{minutes}m{seconds}s'
-        else:
-            return f'{seconds}s'
-
-    @staticmethod
-    def angle_shift(
-            angle: float = 0,
-            two_dim: bool = False,
-        ) -> np.array:
-        # return a vector for shifting in the angle direction
-        shift = np.array([
-            np.cos(np.pi*angle/180),
-            np.sin(np.pi*angle/180),
-        ])
-        if two_dim:
-            shift = shift.reshape((1, 2))
-        return shift
-
-    @staticmethod
-    def angle_from_xy(
-            xy1: (float, float),
-            xy2: (float, float),
-        ) -> float:
-        # computes the angle formed by the two positions
-        vector = np.array(xy2) - np.array(xy1)
-        norm = np.sum(vector**2)**0.5
-        if not norm:
-            return 0.
-        vector /= norm
-        angle = np.arccos(vector[0])
-        if vector[1] < 0:
-            angle *= -1
-        return angle*180/np.pi
-
-    @staticmethod
-    def distance_from_xy(
-            xy1: (float, float),
-            xy2: (float, float),
-        ) -> float:
-        # computes the angle formed by the two positions
-        distance = np.array(xy2) - np.array(xy1)
-        distance = np.sum(distance**2)**0.5
-        return distance
-
-    @staticmethod
-    def normalize_angle(
-            angle: float,
-            lower_bound: float = -180,
-        ) -> float:
-        # set an angle to (lower_bound, lower_bound + 360]
-        while angle <= lower_bound:
-            angle += 360
-        while angle > lower_bound + 360:
-            angle -= 360
-        return angle
-
-    def test(
+    def main(
             self: Self,
         ) -> None:
-        # the main testing function
+        # the main running function
         print(self)
         print(self._get_classes())
         print(self._get_new_methods())
