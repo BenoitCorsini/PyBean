@@ -85,7 +85,13 @@ class Canvas(object):
         ) -> Self:
         # new canvas instance
         self.start_time = time()
-        return self.canvas()
+        self.fig = figure.Figure(figsize=self.figsize, dpi=self.dpi)
+        self.fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
+        self.ax = self.fig.add_subplot()
+        self.ax.set_xlim(self.xmin, self.xmax)
+        self.ax.set_ylim(self.ymin, self.ymax)
+        self.ax.set_axis_off()
+        return self
 
     def _set_params(
             self: Self,
@@ -253,18 +259,6 @@ class Canvas(object):
             getattr(self, method)()
         return self
 
-    def canvas(
-            self: Self,
-        ) -> Self:
-        # create a figure and axes, used as canvas
-        self.fig = figure.Figure(figsize=self.figsize, dpi=self.dpi)
-        self.fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
-        self.ax = self.fig.add_subplot()
-        self.ax.set_xlim(self.xmin, self.xmax)
-        self.ax.set_ylim(self.ymin, self.ymax)
-        self.ax.set_axis_off()
-        return self
-
     def save(
             self: Self,
             name: str = 'image',
@@ -294,10 +288,10 @@ class Canvas(object):
         ) -> (Any, bool):
         # check whether the key is available from the category
         if key is None:
-            index = getattr(self, f'_{category}_index')
+            index = getattr(self, f'_{category}_index', 0)
             key = f'{category}{index}'
             setattr(self, f'_{category}_index', index + 1)
-        if key in getattr(self, f'_{category}s'):
+        if key in getattr(self, f'_{category}s', {}):
             if key.startswith('_'):
                 return key, False
             else:

@@ -188,8 +188,37 @@ class CanvasTests(unittest.TestCase):
                     angle
                 )
 
+    def test_time(self):
+        self.CV.reset()
+        self.assertEqual(self.CV.time(), '0s')
+
+    def test_key_checker(self):
+        self.CV._pybeans = {}
+        for index in range(10):
+            key, is_available = self.CV.key_checker(
+                category='pybean',
+                key=None,
+            )
+            self.assertTrue(is_available)
+            self.assertEqual(key, f'pybean{index}')
+            self.assertEqual(self.CV._pybean_index, index + 1)
+            self.CV._pybeans[key] = None
+            self.CV._pybeans[f'_{key}'] = None
+        for index in range(10):
+            _, is_available = self.CV.key_checker(
+                category='pybean',
+                key=f'_pybean{index}',
+            )
+            self.assertFalse(is_available)
+            with self.assertRaises(UserWarning):
+                self.CV.key_checker(
+                    category='pybean',
+                    key=f'pybean{index}',
+                )
+
     def test_main(self):
-        pass
+        self.CV.reset()
+        self.CV.save()
 
 
 if __name__ == '__main__':
