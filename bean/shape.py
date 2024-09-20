@@ -12,6 +12,10 @@ from .canvas import Canvas
 
 class Shape(Canvas):
 
+    '''
+    fundamental variables
+    '''
+
     _shape_params = {
         'copyright_on' : bool,
         'axis_on' : bool,
@@ -21,6 +25,10 @@ class Shape(Canvas):
         'info_margin' : float,
         'info_height' : float,
     }
+
+    '''
+    hidden methods
+    '''
 
     def _new_shape(
             self: Self,
@@ -78,8 +86,8 @@ class Shape(Canvas):
         paths = []
         margin = (1 - self.axis_tick_ratio)*step/self.lines_per_axis/2
         height = self.axis_tick_ratio*step/self.lines_per_axis
-        xticks = self.get_ticks(axis='x', step=step)
-        yticks = self.get_ticks(axis='y', step=step)
+        xticks = self._get_ticks(axis='x', step=step)
+        yticks = self._get_ticks(axis='y', step=step)
         is_integer = step == int(step)
         is_integer = is_integer and self.xmin == int(self.xmin)
         is_integer = is_integer and self.ymin == int(self.ymin)
@@ -88,14 +96,14 @@ class Shape(Canvas):
         single_decimal = single_decimal and 10*self.ymin == int(10*self.ymin)
         for tick in xticks[1:]:
             paths.append(self.path_from_string(
-                s=self._tick_to_string(tick, is_integer, single_decimal),
+                s=self._num_to_string(tick, is_integer, single_decimal),
                 xy=(tick - margin, self.ymin + margin),
                 anchor='south east',
                 height=height,
             ))
         for tick in yticks[1:]:
             paths.append(self.path_from_string(
-                s=self._tick_to_string(tick, is_integer, single_decimal),
+                s=self._num_to_string(tick, is_integer, single_decimal),
                 xy=(self.xmin + margin, tick - margin),
                 anchor='north west',
                 height=height,
@@ -106,6 +114,19 @@ class Shape(Canvas):
             visible=self.axis_on,
             **getattr(self, 'axis_params', {})
         )
+
+    def _scale_transform(
+            self: Self,
+            transform: Affine2D,
+            bbox: Bbox,
+            height: float = 1,
+        ) -> Affine2D:
+        # scale the transform to straighthen the text with given height
+        xy_ratio = (self.xmax - self.xmin)/(self.ymax - self.ymin)
+        figsize_ratio = self.figsize[0]/self.figsize[1]
+        transform.scale(height/bbox.size[1])
+        transform.scale(xy_ratio/figsize_ratio, 1)
+        return transform
 
     def _copyright_visible(
             self: Self,
@@ -152,6 +173,27 @@ class Shape(Canvas):
             )
         )
 
+    def _get_ticks(
+            self: Self,
+            axis: str = 'x',
+            start: float = None,
+            end: float = None,
+            step: float = None,
+            n_line: int = 1,
+        ) -> list[float]:
+        # return the ticks given an axis
+        if start is None:
+            start = getattr(self, axis + 'min')
+        if end is None:
+            end = getattr(self, axis + 'max')
+        if step is None:
+            step = (end - start)/n_line
+        return np.arange(start, end + step, step)
+
+    '''
+    static methods
+    '''
+
     @staticmethod
     def _ticks_to_grid_path(
             xticks: np.array,
@@ -175,7 +217,7 @@ class Shape(Canvas):
         return Path(vertices=vertices, codes=codes, closed=False)
 
     @staticmethod
-    def _tick_to_string(
+    def _num_to_string(
             tick: float,
             is_integer: bool,
             single_decimal: bool,
@@ -188,288 +230,8 @@ class Shape(Canvas):
         else:
             return f'{tick:0.2f}'
 
-    def add_shape(
-            self: Self,
-            shape_name: str,
-            key: Any = None,
-            *args,
-            **kwargs,
-        ) -> patches.Patch:
-        # add a patch to the class
-        key, available = self.key_checker(key=key, category='shape')
-        if available:
-            shape = self.ax.add_patch(
-                getattr(patches, shape_name)(*args, **kwargs)
-            )
-            self._shapes[key] = shape
-        else:
-            shape = self._shapes[key]
-        return shape
-
-    def add_raw_path(
-            self: Self,
-            vertices: list = None,
-            codes: list = None,
-            closed: bool = False,
-            key: Any = None,
-            *args,
-            **kwargs,
-        ) -> patches.PathPatch:
-        # add a path patch from raw path parameters to the class
-        return self.add_shape(
-            shape_name='PathPatch',
-            key=key,
-            path=Path(
-                vertices=vertices,
-                codes=codes,
-                closed=closed,
-            ),
-            *args,
-            **kwargs
-        )
-
-    def add_path(
-            self: Self,
-            path: Path,
-            key: Any = None,
-            *args,
-            **kwargs,
-        ) -> patches.PathPatch:
-        # add a path patch to the class
-        return self.add_shape(
-            shape_name='PathPatch',
-            key=key,
-            path=path,
-            *args,
-            **kwargs
-        )
-
-    def add_paths(
-            self: Self,
-            paths: list[Path],
-            key: Any = None,
-            *args,
-            **kwargs,
-        ) -> patches.PathPatch:
-        # add a path patch to the class
-        return self.add_shape(
-            shape_name='PathPatch',
-            key=key,
-            path=Path.make_compound_path(*paths),
-            *args,
-            **kwargs
-        )
-
-    def apply_to_shape(
-            self: Self,
-            method: str,
-            key: Any = None,
-            *args,
-            **kwargs,
-        ) -> patches.Patch:
-        # apply a given method to a patch
-        if key is None:
-            key = f'shape{self._key_index - 1}'
-        shape = self._shapes[key]
-        getattr(shape, method)(*args, **kwargs)
-        return shape
-
-    def set_shape(
-            self: Self,
-            key: Any = None,
-            *args,
-            **kwargs,
-        ) -> patches.Patch:
-        # set parameters to a patch
-        return self.apply_to_shape('set', key, *args, **kwargs)
-
-    def path_from_string(
-            self: Self,
-            s: str,
-            xy: (float, float) = (0, 0),
-            size: float = None,
-            font_properties: dict = {},
-            anchor: str = None,
-            height: float = None,
-        ) -> Path:
-        # get the path from a string
-        path = TextPath(
-            xy=xy,
-            s=s,
-            size=size,
-            prop=FontProperties(**font_properties)
-        )
-        if height is not None:
-            bbox = path.get_extents()
-            transform = Affine2D()
-            self.shift_transform(transform, bbox, anchor)
-            self.scale_transform(transform, bbox, height)
-            transform.translate(*xy)
-            path = path.transformed(transform)
-        return path
-
-    def scale_transform(
-            self: Self,
-            transform: Affine2D,
-            bbox: Bbox,
-            height: float = 1,
-        ) -> Affine2D:
-        # scale the transform to straighthen the text with given height
-        xy_ratio = (self.xmax - self.xmin)/(self.ymax - self.ymin)
-        figsize_ratio = self.figsize[0]/self.figsize[1]
-        transform.scale(height/bbox.size[1])
-        transform.scale(xy_ratio/figsize_ratio, 1)
-        return transform
-
-    def add_copyright(
-            self: Self,
-        ) -> None:
-        # add a copyright stamp to the canvas
-        path = self._copyright_path()
-        self.add_shape(
-            shape_name='PathPatch',
-            key='_copyright_fill',
-            path=path,
-            lw=0,
-            color=self.copyright.get('fc', 'black'),
-            visible=self.copyright_on,
-            **self.copyright.get('params', {})
-        )
-        self.add_shape(
-            shape_name='PathPatch',
-            key='_copyright_line',
-            path=path,
-            lw=self.copyright.get('lw', 0),
-            color=self.copyright.get('ec', 'black'),
-            fill=False,
-            visible=self.copyright_on,
-            **self.copyright.get('params', {})
-        )
-
-    def show_copyright(
-            self: Self,
-        ) -> None:
-        # make the copyright visible
-        self._copyright_visible(True)
-
-    def hide_copyright(
-            self: Self,
-        ) -> None:
-        # make the copyright invisible
-        self._copyright_visible(False)
-
-    def get_ticks(
-            self: Self,
-            axis: str = 'x',
-            start: float = None,
-            stop: float = None,
-            step: float = None,
-            n_line: int = None,
-        ) -> list[float]:
-        # return the ticks given an axis
-        if start is None:
-            start = getattr(self, axis + 'min')
-        if stop is None:
-            stop = getattr(self, axis + 'max')
-        if step is None:
-            if n_line is None:
-                n_line = 1
-            step = (stop - start)/n_line
-        return np.arange(start, stop + step, step)
-
-    def grid(
-            self: Self,
-            key: Any = None,
-            left: float = None,
-            right: float = None,
-            top: float = None,
-            bottom: float = None,
-            steps: tuple[float] = None,
-            n_lines: tuple[int] = None,
-            *args,
-            **kwargs,
-        ) -> patches.PathPatch:
-        # creates a grid
-        if steps is None:
-            steps = (None, None)
-        elif isinstance(steps, float):
-            steps = (steps, steps)
-        if n_lines is None:
-            n_lines = (None, None)
-        elif isinstance(n_lines, int):
-            n_lines = (n_lines, n_lines)
-        xticks = self.get_ticks(
-            axis='x',
-            start=left,
-            stop=right,
-            step=steps[0],
-            n_line=n_lines[0],
-        )
-        yticks = self.get_ticks(
-            axis='y',
-            start=bottom,
-            stop=top,
-            step=steps[1],
-            n_line=n_lines[1],
-        )
-        return self.add_path(
-            key=key,
-            path=self._ticks_to_grid_path(xticks, yticks),
-            *args,
-            **kwargs
-        )
-
-    def add_axis(
-            self: Self,
-        ) -> None:
-        # represents the axis along with the coordinates
-        step = max(
-            (self.xmax - self.xmin),
-            (self.ymax - self.ymin),
-        )/max(self.figsize)
-        self._axis_grid(step)
-        self._axis_ticks(step)
-
-    def show_axis(
-            self: Self,
-        ) -> None:
-        # make the axis visible
-        self._axis_visible(True)
-
-    def hide_axis(
-            self: Self,
-        ) -> None:
-        # make the axis invisible
-        self._axis_visible(False)
-
-    def add_info(
-            self: Self,
-        ) -> None:
-        # represents the desired info
-        self.add_path(
-            path=Path([(0, 0)]),
-            key='_info',
-            visible=self.info_on,
-            **self.info_params
-        )
-
-    def show_info(
-            self: Self,
-            s: str = None,
-        ) -> None:
-        # make the info visible and possibly update the text
-        self._info_visible(True)
-        if s is not None:
-            self._info_text(s)
-
-    def hide_info(
-            self: Self,
-        ) -> None:
-        # make the info visible
-        self._info_visible(False)
-
     @staticmethod
-    def shift_transform(
+    def _shift_transform(
             transform: Affine2D,
             bbox: Bbox,
             anchor: str = None,
@@ -579,10 +341,265 @@ class Shape(Canvas):
         codes[0] = 1
         return Path(vertices=vertices, codes=codes, closed=True)
 
-    def test(
+    '''
+    general methods
+    '''
+
+    def add_shape(
+            self: Self,
+            shape_name: str,
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.Patch:
+        # add a patch to the class
+        key, available = self.key_checker(key=key, category='shape')
+        if available:
+            shape = self.ax.add_patch(
+                getattr(patches, shape_name)(*args, **kwargs)
+            )
+            self._shapes[key] = shape
+        else:
+            shape = self._shapes[key]
+        return shape
+
+    def add_raw_path(
+            self: Self,
+            vertices: list = None,
+            codes: list = None,
+            closed: bool = False,
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.PathPatch:
+        # add a path patch from raw path parameters to the class
+        return self.add_shape(
+            shape_name='PathPatch',
+            key=key,
+            path=Path(
+                vertices=vertices,
+                codes=codes,
+                closed=closed,
+            ),
+            *args,
+            **kwargs
+        )
+
+    def add_path(
+            self: Self,
+            path: Path,
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.PathPatch:
+        # add a path patch to the class
+        return self.add_shape(
+            shape_name='PathPatch',
+            key=key,
+            path=path,
+            *args,
+            **kwargs
+        )
+
+    def add_paths(
+            self: Self,
+            paths: list[Path],
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.PathPatch:
+        # add a path patch to the class
+        return self.add_path(
+            key=key,
+            path=Path.make_compound_path(*paths),
+            *args,
+            **kwargs
+        )
+
+    def apply_to_shape(
+            self: Self,
+            method: str,
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.Patch:
+        # apply a given method to a patch
+        if key is None:
+            key = f'shape{self._key_index - 1}'
+        shape = self._shapes[key]
+        getattr(shape, method)(*args, **kwargs)
+        return shape
+
+    def set_shape(
+            self: Self,
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.Patch:
+        # set parameters to a patch
+        return self.apply_to_shape('set', key, *args, **kwargs)
+
+    def path_from_string(
+            self: Self,
+            s: str,
+            xy: (float, float) = (0, 0),
+            size: float = None,
+            font_properties: dict = {},
+            anchor: str = None,
+            height: float = None,
+        ) -> Path:
+        # get the path from a string
+        path = TextPath(
+            xy=xy,
+            s=s,
+            size=size,
+            prop=FontProperties(**font_properties)
+        )
+        if height is not None:
+            bbox = path.get_extents()
+            transform = Affine2D()
+            self._shift_transform(transform, bbox, anchor)
+            self._scale_transform(transform, bbox, height)
+            transform.translate(*xy)
+            path = path.transformed(transform)
+        return path
+
+    def add_copyright(
             self: Self,
         ) -> None:
-        # the main testing function
+        # add a copyright stamp to the canvas
+        path = self._copyright_path()
+        self.add_shape(
+            shape_name='PathPatch',
+            key='_copyright_fill',
+            path=path,
+            lw=0,
+            color=self.copyright.get('fc', 'black'),
+            visible=self.copyright_on,
+            **self.copyright.get('params', {})
+        )
+        self.add_shape(
+            shape_name='PathPatch',
+            key='_copyright_line',
+            path=path,
+            lw=self.copyright.get('lw', 0),
+            color=self.copyright.get('ec', 'black'),
+            fill=False,
+            visible=self.copyright_on,
+            **self.copyright.get('params', {})
+        )
+
+    def show_copyright(
+            self: Self,
+        ) -> None:
+        # make the copyright visible
+        self._copyright_visible(True)
+
+    def hide_copyright(
+            self: Self,
+        ) -> None:
+        # make the copyright invisible
+        self._copyright_visible(False)
+
+    def grid(
+            self: Self,
+            key: Any = None,
+            left: float = None,
+            right: float = None,
+            top: float = None,
+            bottom: float = None,
+            steps: tuple[float] = None,
+            n_lines: tuple[int] = None,
+            *args,
+            **kwargs,
+        ) -> patches.PathPatch:
+        # creates a grid
+        if steps is None:
+            steps = (None, None)
+        elif isinstance(steps, float):
+            steps = (steps, steps)
+        if n_lines is None:
+            n_lines = (None, None)
+        elif isinstance(n_lines, int):
+            n_lines = (n_lines, n_lines)
+        xticks = self._get_ticks(
+            axis='x',
+            start=left,
+            end=right,
+            step=steps[0],
+            n_line=n_lines[0],
+        )
+        yticks = self._get_ticks(
+            axis='y',
+            start=bottom,
+            end=top,
+            step=steps[1],
+            n_line=n_lines[1],
+        )
+        return self.add_path(
+            key=key,
+            path=self._ticks_to_grid_path(xticks, yticks),
+            *args,
+            **kwargs
+        )
+
+    def add_axis(
+            self: Self,
+        ) -> None:
+        # represents the axis along with the coordinates
+        step = max(
+            (self.xmax - self.xmin),
+            (self.ymax - self.ymin),
+        )/max(self.figsize)
+        self._axis_grid(step)
+        self._axis_ticks(step)
+
+    def show_axis(
+            self: Self,
+        ) -> None:
+        # make the axis visible
+        self._axis_visible(True)
+
+    def hide_axis(
+            self: Self,
+        ) -> None:
+        # make the axis invisible
+        self._axis_visible(False)
+
+    def add_info(
+            self: Self,
+        ) -> None:
+        # represents the desired info
+        self.add_path(
+            path=Path([(0, 0)]),
+            key='_info',
+            visible=self.info_on,
+            **self.info_params
+        )
+
+    def show_info(
+            self: Self,
+            s: str = None,
+        ) -> None:
+        # make the info visible and possibly update the text
+        self._info_visible(True)
+        if s is not None:
+            self._info_text(s)
+
+    def hide_info(
+            self: Self,
+        ) -> None:
+        # make the info visible
+        self._info_visible(False)
+
+    '''
+    main method
+    '''
+
+    def main(
+            self: Self,
+        ) -> None:
+        # the main running function
         print(self)
         print(self._get_classes())
         print(self._get_new_methods())
