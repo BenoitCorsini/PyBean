@@ -12,8 +12,16 @@ class CanvasTests(unittest.TestCase):
 
     CV = Canvas()
 
+    '''
+    dunder methods
+    '''
+
     def test_string(self):
         self.assertTrue('Canvas' in str(self.CV))
+
+    '''
+    hidden methods
+    '''
 
     def test_classes(self):
         classes = self.CV._get_classes()
@@ -25,6 +33,10 @@ class CanvasTests(unittest.TestCase):
         methods = self.CV._get_new_methods()
         self.assertEqual(len(methods), 1)
         self.assertEqual(methods[0], '_new_canvas')
+
+    '''
+    static methods
+    '''
 
     def test_cmap(self):
         n_colours = 2
@@ -188,6 +200,10 @@ class CanvasTests(unittest.TestCase):
                     angle
                 )
 
+    '''
+    general methods
+    '''
+
     def test_time(self):
         self.CV.reset()
         self.assertEqual(self.CV.time(), '0s')
@@ -215,6 +231,10 @@ class CanvasTests(unittest.TestCase):
                     category='pybean',
                     key=f'pybean{index}',
                 )
+
+    '''
+    main method
+    '''
 
     def test_main(self):
         self.CV.reset()
