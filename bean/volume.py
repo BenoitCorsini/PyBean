@@ -13,8 +13,12 @@ class Volume(Shape):
     _volume_params = {
         'draft' : bool,
         'scale' : float,
+        'horizon_angle' : float,
+        'depth_shift' : float,
+        'depth_scale' : float,
         'shade_angle' : float,
-        'shade_delta_height' : float,
+        'altitude_to_shade' : float,
+        'shade_cmap_ratio' : float,
     }
 
     '''
@@ -27,6 +31,7 @@ class Volume(Shape):
         # new volume instance
         self._volumes = {}
         self._volume_index = 0
+        self._depth_exponent = 1 - np.tan(self.horizon_angle*np.pi/180)
         self.add_axis()
         self.add_info()
         if self.draft:
@@ -54,24 +59,38 @@ class Volume(Shape):
             pos: (float, float, float),
         ) -> float:
         # transforms a position into the corresponding scale
-        return self.scale
+        _, depth, _ = pos
+        depth *= self.scale*self.depth_scale
+        depth += self.depth_shift
+        return self._depth_exponent**depth
 
     def _pos_to_xy(
             self: Self,
             pos: (float, float, float),
+            height: float = 0,
         ) -> (float, float):
         # transforms a 3D position into a 2D coordinate
-        scale = self._pos_to_scale(pos)
         side, depth, altitude = pos
-        return side*scale, depth*scale
+        scale = self._pos_to_scale(pos)
+        if self.horizon_angle:
+            y = (1 - scale)/(1 - self._depth_exponent)
+        else:
+            y = depth*self.scale
+        x = scale*self.side_scale*(side*self.scale - 0.5) + 0.5
+        x = self.xmin + (self.xmax - self.xmin)*x
+        y = self.ymin + (self.ymax - self.ymin)*y
+        sin = np.sin(self.horizon_angle*np.pi/180)
+        y += (altitude + height)*self.scale*scale*sin
+        return x, y
 
     def _pos_to_shade_pos(
             self: Self,
             pos: (float, float, float),
+            height: float = 0
         ) -> (float, float):
         # transforms a 3D position into a 2D coordinate
         side, depth, altitude = pos
-        shade_shift = altitude*self.shade_delta_height*self._shade_shift()
+        shade_shift = (height + altitude)*self.altitude_to_shade*self._shade_shift()
         return (
             side + shade_shift[0],
             depth + shade_shift[1],
@@ -135,19 +154,26 @@ class Volume(Shape):
         ) -> None:
         # update the sphere
         if pos is not None:
-            shade_pos = self._pos_to_shade_pos(pos)
-            xy = self._pos_to_xy(pos)
-            shade_xy = self._pos_to_xy(shade_pos)
-            shade_radius = radius*self._pos_to_scale(shade_pos)
-            radius *= self._pos_to_scale(pos)
-        else:
-            xy = (xy[0]*self.scale, xy[1]*self.scale)
-            shade_xy = xy
+            xy = self._pos_to_xy(pos, height=radius)
+            if not self.draft:
+                shade_pos = self._pos_to_shade_pos(pos, height=radius)
             radius *= self.scale
-            shade_radius = radius
+            if not self.draft:
+                shade_xy = self._pos_to_xy(shade_pos)
+                shade_radius = radius*self._pos_to_scale(shade_pos)
+            scale = self._pos_to_scale(pos)
+            radius *= scale
+            zorder = scale
+        else:
+            radius *= self.scale
+            xy = (xy[0]*self.scale, xy[1]*self.scale)
+            zorder = 0
+            if not self.draft:
+                shade_xy = xy
+                shade_radius = radius
         path = self.curve_path(xy=xy, a=radius)
         self.apply_to_shape('set_path', key=main, path=path)
-        clipper = self.set_shape(key=main, color=colour)
+        clipper = self.set_shape(key=main, color=colour, zorder=zorder)
         if not self.draft:
             for key, ratio in zip(side, self.round_sides):
                 path = self.merge_curves(*self.crescent_paths(
@@ -159,8 +185,12 @@ class Volume(Shape):
                     angle=self.shade_angle,
                 ))
                 self.apply_to_shape('set_path', key=key, path=path)
-                self.set_shape(key=key, clip_path=clipper)
-            path = self.curve_path(xy=shade_xy, a=shade_radius)
+                self.set_shape(key=key, clip_path=clipper, zorder=zorder)
+            path = self.curve_path(
+                xy=shade_xy,
+                a=shade_radius,
+                b=shade_radius*np.cos(self.horizon_angle*np.pi/180),
+            )
             self.apply_to_shape('set_path', key=shade, path=path)
             shade_colour = self.get_cmap(['white', clipper.get_fc()])(
                 self.shade_cmap_ratio
