@@ -6,12 +6,20 @@ from .shape import Shape
 
 class Volume(Shape):
 
+    '''
+    fundamental variables
+    '''
+
     _volume_params = {
         'draft' : bool,
         'scale' : float,
         'shade_angle' : float,
         'shade_delta_height' : float,
     }
+
+    '''
+    hidden methods
+    '''
 
     def _new_volume(
             self: Self,
@@ -53,8 +61,9 @@ class Volume(Shape):
             pos: (float, float, float),
         ) -> (float, float):
         # transforms a 3D position into a 2D coordinate
+        scale = self._pos_to_scale(pos)
         side, depth, altitude = pos
-        return side, depth
+        return side*scale, depth*scale
 
     def _pos_to_shade_pos(
             self: Self,
@@ -62,7 +71,7 @@ class Volume(Shape):
         ) -> (float, float):
         # transforms a 3D position into a 2D coordinate
         side, depth, altitude = pos
-        shade_shift = altitude*self.shade_delta_height*self.scale*self._shade_shift()
+        shade_shift = altitude*self.shade_delta_height*self._shade_shift()
         return (
             side + shade_shift[0],
             depth + shade_shift[1],
@@ -126,11 +135,16 @@ class Volume(Shape):
         ) -> None:
         # update the sphere
         if pos is not None:
+            shade_pos = self._pos_to_shade_pos(pos)
             xy = self._pos_to_xy(pos)
-            shade_xy = self._pos_to_xy(self._pos_to_shade_pos(pos))
+            shade_xy = self._pos_to_xy(shade_pos)
+            shade_radius = radius*self._pos_to_scale(shade_pos)
+            radius *= self._pos_to_scale(pos)
         else:
+            xy = (xy[0]*self.scale, xy[1]*self.scale)
             shade_xy = xy
-        radius *= self.scale
+            radius *= self.scale
+            shade_radius = radius
         path = self.curve_path(xy=xy, a=radius)
         self.apply_to_shape('set_path', key=main, path=path)
         clipper = self.set_shape(key=main, color=colour)
@@ -146,7 +160,7 @@ class Volume(Shape):
                 ))
                 self.apply_to_shape('set_path', key=key, path=path)
                 self.set_shape(key=key, clip_path=clipper)
-            path = self.curve_path(xy=shade_xy, a=radius)
+            path = self.curve_path(xy=shade_xy, a=shade_radius)
             self.apply_to_shape('set_path', key=shade, path=path)
             shade_colour = self.get_cmap(['white', clipper.get_fc()])(
                 self.shade_cmap_ratio
@@ -179,9 +193,8 @@ class Volume(Shape):
             radius2 = radius1
         variables = {}
         for index in [1, 2]:
-            scaled_radius = self.scale*locals()[f'radius{index}']
-            variables[f'radius{index}'] = scaled_radius
-            variables[f'shade_radius{index}'] = scaled_radius
+            variables[f'radius{index}'] = locals()[f'radius{index}']
+            variables[f'shade_radius{index}'] = locals()[f'radius{index}']
             pos = locals()[f'pos{index}']
             if pos is not None:
                 shade_pos = self._pos_to_shade_pos(pos)
@@ -190,8 +203,12 @@ class Volume(Shape):
                 variables[f'xy{index}'] = self._pos_to_xy(pos)
                 variables[f'shade_xy{index}'] = self._pos_to_xy(shade_pos)
             else:
-                variables[f'xy{index}'] = locals()[f'xy{index}']
-                variables[f'shade_xy{index}'] = locals()[f'xy{index}']
+                xy = locals()[f'xy{index}']
+                xy = (xy[0]*self.scale, xy[1]*self.scale)
+                variables[f'xy{index}'] = xy
+                variables[f'shade_xy{index}'] = xy
+                variables[f'radius{index}'] *= self.scale
+                variables[f'shade_radius{index}'] *= self.scale
         distance = self.distance_from_xy(variables['xy1'], variables['xy2'])
         delta_radius = variables['radius2'] - variables['radius1']
         is_sphere = np.abs(delta_radius) > distance
@@ -298,6 +315,10 @@ class Volume(Shape):
                 ) for index in [1, 2]])
                 self.apply_to_shape('set_path', key=shade, path=path)
 
+    '''
+    general methods
+    '''
+
     def new_volume(
             self: Self,
             name: str,
@@ -324,7 +345,11 @@ class Volume(Shape):
         # update the volume
         getattr(self, f'_update_{name}')(**kwargs)
 
-    def test(
+    '''
+    main method
+    '''
+
+    def main(
             self: Self,
         ) -> None:
         # the main testing function
