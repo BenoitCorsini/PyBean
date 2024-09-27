@@ -86,12 +86,19 @@ class MotionTests(unittest.TestCase):
             radius=0.1,
             colour='crimson',
         )
-        self.MT.wait(2, plot_info=True)
+        self.MT.wait(1, plot_info=True)
         self.MT.new_volume(
             name='sphere',
             pos=(0.5, 0.5, 0),
             radius=0.1,
             colour='gold',
+        )
+        self.MT.wait(2, plot_info=True)
+        self.MT.new_volume(
+            name='sphere',
+            pos=(0, 0.45, 0),
+            radius=0.1,
+            colour='royalblue',
         )
         self.MT.wait('Test', plot_info=True)
         self.MT.video()

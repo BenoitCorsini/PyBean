@@ -55,7 +55,7 @@ DEFAULT = {
     'depth_scale' : 1,
     'side_scale' : 1,
     'shade_angle' : -60,
-    'altitude_to_shade' : 0.3,
+    'altitude_to_shade' : 0.1,
     'shade_cmap_ratio' : 0.05,
     'round_sides' : {
         0.49 : 0.05,

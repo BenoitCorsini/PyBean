@@ -93,7 +93,7 @@ class Volume(Shape):
         shade_shift = self._shade_shift()
         shade_shift *= (height + altitude)*self.altitude_to_shade
         return (
-            side + shade_shift[0],
+            side + shade_shift[0]/self._depth_exponent,
             depth + shade_shift[1],
             0,
         )
