@@ -66,4 +66,5 @@ DEFAULT = {
     # motion
     'fps' : 20,
     'frames_dir' : 'frames',
+    'print_on' : True,
 }

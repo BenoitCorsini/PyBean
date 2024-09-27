@@ -17,6 +17,7 @@ class Motion(Volume):
     _volume_params = {
         'fps' : int,
         'frames_dir' : str,
+        'print_on' : str,
     }
 
     '''
@@ -70,6 +71,24 @@ class Motion(Volume):
         cv2.destroyAllWindows()
         return video_file
 
+    def _repeat_frames(
+            self: Self,
+            nfs: int = 1,
+            time: float = None,
+            key: Any = None,
+            time_dict: dict = 'times',
+        ) -> int:
+        # repeat a given number of frames
+        if key is not None:
+            nfs = self.key_to_nfs(key, time_dict)
+            if self.draft:
+                self.show_info(str(key))
+        elif time is not None:
+            nfs = self.time_to_nfs(time)
+        for _ in range(nfs):
+            output = self.new_frame()
+        return output
+
     '''
     general methods
     '''
@@ -92,19 +111,19 @@ class Motion(Volume):
 
     def wait(
             self: Self,
-            nfs: int = 1,
-            time: float = None,
-            key: Any = None,
-            time_dict: dict = 'times',
+            waiter: Any = None,
+            **kwargs,
         ) -> int:
         # wait before next motion
-        if key is not None:
-            nfs = self.key_to_nfs(key, time_dict)
-        elif time is not None:
-            nfs = self.time_to_nfs(time)
-        for _ in range(nfs):
-            output = self.new_frame()
-        return output
+        if waiter is None:
+            pass
+        elif isinstance(waiter, int):
+            kwargs['nfs'] = waiter
+        elif isinstance(waiter, float):
+            kwargs['time'] = waiter
+        else:
+            kwargs['key'] = waiter
+        return self._repeat_frames(**kwargs)
 
     def video(
             self: Self,
@@ -112,14 +131,16 @@ class Motion(Volume):
             **kwargs,
         ) -> None:
         # make and save a video
-        sys.stdout.write('\033[F\033[K')
-        message = f'Time to create all frames ({self._frame_index}): '
-        message += self.time()
-        print(message)
-        print('Making the video...')
+        if self.print_on:
+            sys.stdout.write('\033[F\033[K')
+            message = f'Time to create all frames ({self._frame_index}): '
+            message += self.time()
+            print(message)
+            print('Making the video...')
         self._frames_to_video(*args, **kwargs)
-        sys.stdout.write('\033[F\033[K')
-        print('Time to make video: ' + self.time())
+        if self.print_on:
+            sys.stdout.write('\033[F\033[K')
+            print('Time to make video: ' + self.time())
 
     def new_frame(
             self: Self,
@@ -129,8 +150,9 @@ class Motion(Volume):
             name=f'{self._frame_index:04d}',
             image_dir=self.frames_dir,
         )
-        if self._frame_index:
-            sys.stdout.write('\033[F\033[K')
         self._frame_index += 1
-        print(f'Time to create {self._frame_index} frames: ' + self.time())
+        if self.print_on:
+            if self._frame_index:
+                sys.stdout.write('\033[F\033[K')
+            print(f'Time to create {self._frame_index} frames: ' + self.time())
         return self._frame_index
