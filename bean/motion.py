@@ -90,7 +90,7 @@ class Motion(Volume):
             key: Any = None,
             time_dict: dict = 'times',
         ):
-        # from params returns the corresponding number of frames
+        # returns the number of frames corresponding to params
         if key is not None:
             nfs = self._key_to_number_of_frames(key, time_dict)
             if self.draft:
@@ -104,7 +104,7 @@ class Motion(Volume):
             waiter: Any = None,
             **kwargs,
         ) -> int:
-        # wait before next motion
+        # gets the number of frames from various possible params
         if waiter is None:
             pass
         elif isinstance(waiter, int):
@@ -118,16 +118,6 @@ class Motion(Volume):
     '''
     general methods
     '''
-
-    def wait(
-            self: Self,
-            *args,
-            **kwargs,
-        ) -> int:
-        # wait before next motion
-        for _ in range(self._get_number_of_frames(*args, **kwargs)):
-            output = self.new_frame()
-        return output
 
     def new_frame(
             self: Self,
@@ -145,6 +135,16 @@ class Motion(Volume):
             message += self.time()
             print(message)
         return self._frame_index
+
+    def wait(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> int:
+        # waits before next motion
+        for _ in range(self._get_number_of_frames(*args, **kwargs)):
+            output = self.new_frame()
+        return output
 
     def video(
             self: Self,

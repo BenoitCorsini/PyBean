@@ -97,7 +97,7 @@ class Canvas(object):
             self: Self,
             **kwargs,
         ) -> None:
-        # collect and setup the parameters of the class and its parents
+        # collects and sets up the parameters of the class and its parents
         for current_class in self._get_classes():
             class_name = current_class.__name__.lower()
             class_params = getattr(self, f'_{class_name}_params', {})
@@ -167,7 +167,7 @@ class Canvas(object):
     def time_to_string(
             time: float,
         ) -> str:
-        # transform a time in (hours, minutes, seconds) string format
+        # transforms a time in (hours, minutes, seconds) string format
         hours = int(time/3600)
         minutes = int((time - 3600*hours)/60)
         seconds = int(time - 3600*hours - 60*minutes)
@@ -183,7 +183,7 @@ class Canvas(object):
             angle: float = 0,
             two_dim: bool = False,
         ) -> np.array:
-        # return a vector for shifting in the angle direction
+        # returns a vector for shifting in the angle direction
         shift = np.array([
             np.cos(np.pi*angle/180),
             np.sin(np.pi*angle/180),
@@ -223,7 +223,7 @@ class Canvas(object):
             angle: float,
             lower_bound: float = -180,
         ) -> float:
-        # set an angle to (lower_bound, lower_bound + 360]
+        # sets an angle to (lower_bound, lower_bound + 360]
         while angle <= lower_bound:
             angle += 360
         while angle > lower_bound + 360:
@@ -239,14 +239,14 @@ class Canvas(object):
             *args,
             **kwargs,
         ) -> None:
-        # add a parameter to the parser
+        # adds a parameter to the parser
         self._parser.add_argument(*args, **kwargs)
 
     def get_kwargs(
             self: Self,
             **kwargs
         ) -> dict:
-        # return the arguments of the parser as a dictionnary
+        # returns the arguments of the parser as a dictionnary
         parser_kwargs = vars(self._parser.parse_args())
         parser_kwargs.update(kwargs)
         return parser_kwargs.copy()
@@ -254,7 +254,7 @@ class Canvas(object):
     def reset(
             self: Self,
         ) -> Self:
-        # reset self using _new methods in order of depth
+        # resets self using _new methods in order of depth
         for method in self._get_new_methods():
             getattr(self, method)()
         return self
@@ -265,7 +265,7 @@ class Canvas(object):
             image_dir: str = None,
             transparent: bool = False,
         ) -> None:
-        # save the current state of the figure
+        # saves the current state of the figure
         if image_dir is None:
             image_dir = '.'
         if not osp.exists(image_dir):
@@ -278,7 +278,7 @@ class Canvas(object):
     def time(
             self: Self,
         ) -> str:
-        # compute the current time duration of the algorithm
+        # computes the current time duration of the algorithm
         return self.time_to_string(time() - self.start_time)
 
     def key_checker(
@@ -286,7 +286,7 @@ class Canvas(object):
             category: str,
             key: Any = None,
         ) -> (Any, bool):
-        # check whether the key is available from the category
+        # checks whether the key is available from the category
         if key is None:
             index = getattr(self, f'_{category}_index', 0)
             key = f'{category}{index}'
@@ -304,7 +304,7 @@ class Canvas(object):
     def help(
             self: Self,
         ) -> None:
-        # print helpful tips
+        # prints helpful tips
         doc_page = 'NOT READY YET'
         github_page = 'https://github.com/BenoitCorsini/PyBean'
         symbol_page = 'https://www.rapidtables.com'

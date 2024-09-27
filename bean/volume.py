@@ -48,7 +48,7 @@ class Volume(Shape):
             self: Self,
             two_dim: bool = False,
         ) -> np.array:
-        # return a vector for shade shifting
+        # returns a vector for shade shifting
         return self.angle_shift(
             angle=self.shade_angle,
             two_dim=two_dim,
@@ -152,7 +152,7 @@ class Volume(Shape):
             radius: float = 1,
             colour: str = None,
         ) -> None:
-        # update the sphere
+        # updates the sphere
         if pos is not None:
             xy = self._pos_to_xy(pos, height=radius)
             if not self.draft:
@@ -201,7 +201,7 @@ class Volume(Shape):
             self: Self,
             name: str,
         ) -> dict:
-        # creates the voluem dictionary of a tube
+        # creates the volume dictionary of a tube
         return self._create_round(name=name)
 
     def _update_tube(
@@ -219,7 +219,7 @@ class Volume(Shape):
             slope: str = 'flat',
 
         ) -> None:
-        # update the sphere
+        # updates the tube
         if radius2 is None:
             radius2 = radius1
         variables = {}
@@ -393,7 +393,7 @@ class Volume(Shape):
             key: Any = None,
             **kwargs,
         ) -> None:
-        # create the basis for a new sphere
+        # creates the basis for a new volume
         key, available = self.key_checker(key=key, category='volume')
         if available:
             volume = {'name' : name}
@@ -410,7 +410,7 @@ class Volume(Shape):
             name: str,
             **kwargs,
         ) -> None:
-        # update the volume
+        # updates the volume
         getattr(self, f'_update_{name}')(**kwargs)
 
     '''

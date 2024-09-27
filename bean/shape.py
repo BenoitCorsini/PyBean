@@ -121,7 +121,7 @@ class Shape(Canvas):
             bbox: Bbox,
             height: float = 1,
         ) -> Affine2D:
-        # scale the transform to straighthen the text with given height
+        # scales the transform to give the bbox a given height
         xy_ratio = (self.xmax - self.xmin)/(self.ymax - self.ymin)
         figsize_ratio = self.figsize[0]/self.figsize[1]
         transform.scale(height/bbox.size[1])
@@ -181,7 +181,7 @@ class Shape(Canvas):
             step: float = None,
             n_line: int = 1,
         ) -> list[float]:
-        # return the ticks given an axis
+        # returns the ticks given an axis
         if start is None:
             start = getattr(self, axis + 'min')
         if end is None:
@@ -199,7 +199,7 @@ class Shape(Canvas):
             xticks: np.array,
             yticks: np.array,
         ) -> dict:
-        # transform x and y ticks into a grid path
+        # transforms x and y ticks into a grid path
         xmin, xmax = np.min(xticks), np.max(xticks)
         ymin, ymax = np.min(yticks), np.max(yticks)
         vertices = []
@@ -236,7 +236,7 @@ class Shape(Canvas):
             bbox: Bbox,
             anchor: str = None,
         ) -> Affine2D:
-        # shift the transform to move the bbox according to the anchor
+        # shifts the transform to move the bbox according to the anchor
         transform.translate(*(-(bbox.size/2 + bbox.p0)))
         transform.translate(*Shape.shift_from_anchor(
             bbox=bbox,
@@ -352,7 +352,7 @@ class Shape(Canvas):
             *args,
             **kwargs,
         ) -> patches.Patch:
-        # add a patch to the class
+        # adds a patch to the class
         key, available = self.key_checker(key=key, category='shape')
         if available:
             shape = self.ax.add_patch(
@@ -372,7 +372,7 @@ class Shape(Canvas):
             *args,
             **kwargs,
         ) -> patches.PathPatch:
-        # add a path patch from raw path parameters to the class
+        # adds a path patch from raw path parameters to the class
         return self.add_shape(
             shape_name='PathPatch',
             key=key,
@@ -392,7 +392,7 @@ class Shape(Canvas):
             *args,
             **kwargs,
         ) -> patches.PathPatch:
-        # add a path patch to the class
+        # adds a path patch to the class
         return self.add_shape(
             shape_name='PathPatch',
             key=key,
@@ -408,7 +408,7 @@ class Shape(Canvas):
             *args,
             **kwargs,
         ) -> patches.PathPatch:
-        # add a path patch to the class
+        # adds a path patch from a list of paths to the class
         return self.add_path(
             key=key,
             path=Path.make_compound_path(*paths),
@@ -423,7 +423,7 @@ class Shape(Canvas):
             *args,
             **kwargs,
         ) -> patches.Patch:
-        # apply a given method to a patch
+        # applies a given method to a patch
         if key is None:
             key = f'shape{self._key_index - 1}'
         shape = self._shapes[key]
@@ -436,7 +436,7 @@ class Shape(Canvas):
             *args,
             **kwargs,
         ) -> patches.Patch:
-        # set parameters to a patch
+        # sets parameters to a patch
         return self.apply_to_shape('set', key, *args, **kwargs)
 
     def path_from_string(
@@ -448,7 +448,7 @@ class Shape(Canvas):
             anchor: str = None,
             height: float = None,
         ) -> Path:
-        # get the path from a string
+        # gets the path from a string
         path = TextPath(
             xy=xy,
             s=s,
@@ -467,7 +467,7 @@ class Shape(Canvas):
     def add_copyright(
             self: Self,
         ) -> None:
-        # add a copyright stamp to the canvas
+        # adds a copyright stamp to the canvas
         path = self._copyright_path()
         self.add_shape(
             shape_name='PathPatch',
@@ -492,13 +492,13 @@ class Shape(Canvas):
     def show_copyright(
             self: Self,
         ) -> None:
-        # make the copyright visible
+        # makes the copyright visible
         self._copyright_visible(True)
 
     def hide_copyright(
             self: Self,
         ) -> None:
-        # make the copyright invisible
+        # makes the copyright invisible
         self._copyright_visible(False)
 
     def grid(
@@ -557,13 +557,13 @@ class Shape(Canvas):
     def show_axis(
             self: Self,
         ) -> None:
-        # make the axis visible
+        # makes the axis visible
         self._axis_visible(True)
 
     def hide_axis(
             self: Self,
         ) -> None:
-        # make the axis invisible
+        # makes the axis invisible
         self._axis_visible(False)
 
     def add_info(
@@ -581,7 +581,7 @@ class Shape(Canvas):
             self: Self,
             s: str = None,
         ) -> None:
-        # make the info visible and possibly update the text
+        # makes the info visible and possibly update the text
         self._info_visible(True)
         if s is not None:
             self._info_text(s)
@@ -589,7 +589,7 @@ class Shape(Canvas):
     def hide_info(
             self: Self,
         ) -> None:
-        # make the info visible
+        # makes the info visible
         self._info_visible(False)
 
     '''
