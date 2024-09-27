@@ -340,24 +340,46 @@ class Volume(Shape):
                 self.shade_cmap_ratio
             )
             self.set_shape(key=shade, color=shade_colour)
-            distance = self.distance_from_xy(variables['shade_xy1'], variables['shade_xy2'])
-            delta_radius = variables['shade_radius2'] - variables['shade_radius1']
+            distance = self.distance_from_xy(
+                variables['shade_xy1'],
+                variables['shade_xy2'],
+            )
+            delta_radius = (
+                variables['shade_radius2']
+                - variables['shade_radius1']
+            )
+            cos = np.cos(self.horizon_angle*np.pi/180)
             if np.abs(delta_radius) > distance:
                 index = 1 + int(delta_radius > 0)
-                self.apply_to_shape('set_path', key=shade, path=self.curve_path(
-                    xy=variables[f'shade_xy{index}'],
-                    a=variables[f'shade_radius{index}'],
-                    b=variables[f'shade_radius{index}']*np.cos(self.horizon_angle*np.pi/180),
-                ))
+                self.apply_to_shape(
+                    method='set_path',
+                    key=shade,
+                    path=self.curve_path(
+                        xy=variables[f'shade_xy{index}'],
+                        a=variables[f'shade_radius{index}'],
+                        b=variables[f'shade_radius{index}']*cos,
+                    )
+                )
             else:
-                shade_angle = self.angle_from_xy(variables['shade_xy1'], variables['shade_xy2'])
-                shade_around_angle = np.arcsin(delta_radius/distance)*180/np.pi
+                shade_angle = self.angle_from_xy(
+                    variables['shade_xy1'],
+                    variables['shade_xy2'],
+                )
+                shade_around_angle = (
+                    np.arcsin(delta_radius/distance)*180/np.pi
+                )
                 path = self.merge_curves(*[self.curve_path(
                     xy=variables[f'shade_xy{index}'],
                     a=variables[f'shade_radius{index}'],
-                    b=variables[f'shade_radius{index}']*np.cos(self.horizon_angle*np.pi/180),
-                    theta1=(3 - 2*index)*(90 + shade_around_angle) + shade_angle,
-                    theta2=(2*index - 3)*(90 + shade_around_angle) + shade_angle,
+                    b=variables[f'shade_radius{index}']*cos,
+                    theta1=(
+                        (3 - 2*index)*(90 + shade_around_angle)
+                        + shade_angle
+                    ),
+                    theta2=(
+                        (2*index - 3)*(90 + shade_around_angle)
+                        + shade_angle
+                    ),
                 ) for index in [1, 2]])
                 self.apply_to_shape('set_path', key=shade, path=path)
 
