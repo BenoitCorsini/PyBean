@@ -12,7 +12,7 @@ class VolumeTests(unittest.TestCase):
     VL = Volume()
 
     '''
-    main volumes
+    image methods
     '''
 
     def test_sphere(self):
