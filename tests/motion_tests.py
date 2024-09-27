@@ -3,16 +3,21 @@ import unittest
 
 sys.path.append('.')
 
-# from bean import Motion
+from bean import Motion
 
 
 class MotionTests(unittest.TestCase):
 
-    def test_true(self):
-        self.assertTrue(True)
+    MT = Motion()
 
-    def test_equal(self):
-        self.assertEqual(1 + 1, 2)
+    '''
+    main method
+    '''
+
+    def test_main(self):
+        self.MT.reset()
+        self.MT.save('image_motion')
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

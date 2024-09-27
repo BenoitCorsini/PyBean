@@ -63,7 +63,7 @@ DEFAULT = {
         0.09 : 0.12,
         0.02 : 0.25,
     },
-    # other
+    # motion
     'fps' : 20,
     'frames_dir' : 'frames',
 }
