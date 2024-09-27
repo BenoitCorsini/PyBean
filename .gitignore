@@ -4,3 +4,6 @@
 # default files
 image*.png
 video.mp4
+
+# default folders
+frames/
