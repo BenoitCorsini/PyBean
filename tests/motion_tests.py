@@ -16,7 +16,7 @@ class MotionTests(unittest.TestCase):
 
     def test_main(self):
         self.MT.reset()
-        self.MT.save('image_motion')
+        self.MT.video()
 
 
 if __name__ == '__main__':

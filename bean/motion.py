@@ -33,6 +33,8 @@ class Motion(Volume):
             for file in os.listdir(self.frames_dir):
                 if file.endswith('.png'):
                     os.remove(osp.join(self.frames_dir, file))
+        else:
+            os.makedirs(self.frames_dir)
         return self
 
     '''
@@ -51,8 +53,8 @@ class Motion(Volume):
             os.makedirs(video_dir)
         video_file = osp.join(video_dir, name + '.mp4')
         frames = [
-            osp.join(frames_dir, file)
-            for file in sorted(os.listdir(frames_dir))
+            osp.join(self.frames_dir, file)
+            for file in sorted(os.listdir(self.frames_dir))
         ]
         height, width, _ = cv2.imread(frames[0]).shape
         video = cv2.VideoWriter(
@@ -82,7 +84,7 @@ class Motion(Volume):
         message += self.time()
         print(message)
         print('Making the video...')
-        self.frames_to_video(*args, **kwargs)
+        self._frames_to_video(*args, **kwargs)
         sys.stdout.write('\033[F\033[K')
         print('Time to make video: ' + self.time())
 
