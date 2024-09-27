@@ -7,7 +7,7 @@ from .shape import Shape
 class Volume(Shape):
 
     '''
-    fundamental variables
+    fundamental variables and function
     '''
 
     _volume_params = {
@@ -20,10 +20,6 @@ class Volume(Shape):
         'altitude_to_shade' : float,
         'shade_cmap_ratio' : float,
     }
-
-    '''
-    hidden methods
-    '''
 
     def _new_volume(
             self: Self,
@@ -43,6 +39,10 @@ class Volume(Shape):
             self.hide_axis()
             self.hide_info()
         return self
+
+    '''
+    hidden methods
+    '''
 
     def _shade_shift(
             self: Self,

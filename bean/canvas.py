@@ -13,7 +13,7 @@ from .default import DEFAULT
 class Canvas(object):
 
     '''
-    fundamental variables
+    fundamental variables and function
     '''
 
     _canvas_params = {
@@ -29,10 +29,6 @@ class Canvas(object):
         'figsize' : 2,
     }
 
-    '''
-    dunder methods
-    '''
-
     def __init__(
             self: Self,
             **kwargs,
@@ -43,6 +39,10 @@ class Canvas(object):
         self._parser = argparse.ArgumentParser()
         self._set_params(**kwargs)
         self.reset()
+
+    '''
+    dunder methods
+    '''
 
     def __repr__(
             self: Self,

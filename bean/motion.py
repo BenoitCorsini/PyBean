@@ -11,7 +11,7 @@ from .volume import Volume
 class Motion(Volume):
 
     '''
-    fundamental variables
+    fundamental variables and function
     '''
 
     _volume_params = {
@@ -19,10 +19,6 @@ class Motion(Volume):
         'frames_dir' : str,
         'print_on' : str,
     }
-
-    '''
-    hidden methods
-    '''
 
     def _new_motion(
             self: Self,
@@ -145,7 +141,9 @@ class Motion(Volume):
         if self.print_on:
             if self._frame_index:
                 sys.stdout.write('\033[F\033[K')
-            print(f'Time to create {self._frame_index} frames: ' + self.time())
+            message = f'Time to create {self._frame_index} frames: '
+            message += self.time()
+            print(message)
         return self._frame_index
 
     def video(

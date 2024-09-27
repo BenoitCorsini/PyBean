@@ -13,7 +13,7 @@ from .canvas import Canvas
 class Shape(Canvas):
 
     '''
-    fundamental variables
+    fundamental variables and function
     '''
 
     _shape_params = {
@@ -26,10 +26,6 @@ class Shape(Canvas):
         'info_height' : float,
     }
 
-    '''
-    hidden methods
-    '''
-
     def _new_shape(
             self: Self,
         ) -> Self:
@@ -39,6 +35,10 @@ class Shape(Canvas):
         if hasattr(self, 'copyright'):
             self.add_copyright()
         return self
+
+    '''
+    hidden methods
+    '''
 
     def _copyright_path(
             self: Self,
