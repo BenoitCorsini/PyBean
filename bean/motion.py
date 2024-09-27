@@ -1,6 +1,7 @@
 import sys
 import os
 import os.path as osp
+import numpy as np
 import cv2
 from typing_extensions import Any, Self
 
@@ -72,6 +73,38 @@ class Motion(Volume):
     '''
     general methods
     '''
+
+    def time_to_nfs(
+            self: Self,
+            time: float,
+        ) -> int:
+        # transforms a time in seconds to a number of frames
+        return int(np.ceil(self.fps*time))
+
+    def key_to_nfs(
+            self: Self,
+            key: Any,
+            time_dict: dict = 'times',
+        ) -> int:
+        # transforms the time attached to a key to a number of frames
+        time = getattr(self, time_dict, {}).get(key, 1/self.fps)
+        return self.time_to_nfs(time)
+
+    def wait(
+            self: Self,
+            nfs: int = 1,
+            time: float = None,
+            key: Any = None,
+            time_dict: dict = 'times',
+        ) -> int:
+        # wait before next motion
+        if key is not None:
+            nfs = self.key_to_nfs(key, time_dict)
+        elif time is not None:
+            nfs = self.time_to_nfs(time)
+        for _ in range(nfs):
+            output = self.new_frame()
+        return output
 
     def video(
             self: Self,
