@@ -71,45 +71,39 @@ class Motion(Volume):
         cv2.destroyAllWindows()
         return video_file
 
-    def _repeat_frames(
-            self: Self,
-            nfs: int = 1,
-            time: float = None,
-            key: Any = None,
-            time_dict: dict = 'times',
-        ) -> int:
-        # repeat a given number of frames
-        if key is not None:
-            nfs = self.key_to_nfs(key, time_dict)
-            if self.draft:
-                self.show_info(str(key))
-        elif time is not None:
-            nfs = self.time_to_nfs(time)
-        for _ in range(nfs):
-            output = self.new_frame()
-        return output
-
-    '''
-    general methods
-    '''
-
-    def time_to_nfs(
+    def _time_to_number_of_frames(
             self: Self,
             time: float,
         ) -> int:
         # transforms a time in seconds to a number of frames
         return int(np.ceil(self.fps*time))
 
-    def key_to_nfs(
+    def _key_to_number_of_frames(
             self: Self,
             key: Any,
             time_dict: dict = 'times',
         ) -> int:
         # transforms the time attached to a key to a number of frames
         time = getattr(self, time_dict, {}).get(key, 1/self.fps)
-        return self.time_to_nfs(time)
+        return self._time_to_number_of_frames(time)
 
-    def wait(
+    def _params_to_number_of_frames(
+            self: Self,
+            nfs: int = 1,
+            time: float = None,
+            key: Any = None,
+            time_dict: dict = 'times',
+        ):
+        # from params returns the corresponding number of frames
+        if key is not None:
+            nfs = self._key_to_number_of_frames(key, time_dict)
+            if self.draft:
+                self.show_info(str(key))
+        elif time is not None:
+            nfs = self._time_to_number_of_frames(time)
+        return nfs
+
+    def _get_number_of_frames(
             self: Self,
             waiter: Any = None,
             **kwargs,
@@ -123,24 +117,21 @@ class Motion(Volume):
             kwargs['time'] = waiter
         else:
             kwargs['key'] = waiter
-        return self._repeat_frames(**kwargs)
+        return self._params_to_number_of_frames(**kwargs)
 
-    def video(
+    '''
+    general methods
+    '''
+
+    def wait(
             self: Self,
             *args,
             **kwargs,
-        ) -> None:
-        # make and save a video
-        if self.print_on:
-            sys.stdout.write('\033[F\033[K')
-            message = f'Time to create all frames ({self._frame_index}): '
-            message += self.time()
-            print(message)
-            print('Making the video...')
-        self._frames_to_video(*args, **kwargs)
-        if self.print_on:
-            sys.stdout.write('\033[F\033[K')
-            print('Time to make video: ' + self.time())
+        ) -> int:
+        # wait before next motion
+        for _ in range(self._get_number_of_frames(*args, **kwargs)):
+            output = self.new_frame()
+        return output
 
     def new_frame(
             self: Self,
@@ -156,3 +147,20 @@ class Motion(Volume):
                 sys.stdout.write('\033[F\033[K')
             print(f'Time to create {self._frame_index} frames: ' + self.time())
         return self._frame_index
+
+    def video(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> None:
+        # makes and saves a video
+        if self.print_on:
+            sys.stdout.write('\033[F\033[K')
+            message = f'Time to create all frames ({self._frame_index}): '
+            message += self.time()
+            print(message)
+            print('Making the video...')
+        self._frames_to_video(*args, **kwargs)
+        if self.print_on:
+            sys.stdout.write('\033[F\033[K')
+            print('Time to make video: ' + self.time())

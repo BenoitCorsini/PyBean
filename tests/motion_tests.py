@@ -15,80 +15,55 @@ class MotionTests(unittest.TestCase):
     dunder methods
     '''
 
-    def test_repeats(self):
-        self.MT.draft = True
-        self.MT.print_on = False
-        self.MT.fps = 3
-        self.MT.frames_dir = 'frames/repeats/'
-        self.MT.reset()
-        self.MT.show_info('Default repeats (1 frame)')
-        self.MT._repeat_frames()
-        self.MT.show_info(f'time overrules nfs ({self.MT.fps} frames)')
-        self.MT._repeat_frames(nfs=1, time=1)
-        self.MT._repeat_frames(nfs=2, key='key overrules nfs (1 frame)')
-        self.MT._repeat_frames(time=1, key='key overrules time (1 frame)')
-        self.MT._repeat_frames(nfs=2, time=1, key='key overrules both (1 frame)')
-
-    '''
-    general methods
-    '''
-
     def test_time_nfs(self):
         for i in range(10):
-            self.assertEqual(self.MT.time_to_nfs(i), i*self.MT.fps)
-            self.assertEqual(self.MT.time_to_nfs(i + 1e-10), i*self.MT.fps + 1)
-            self.assertEqual(self.MT.time_to_nfs(i/self.MT.fps), i)
-            self.assertEqual(self.MT.time_to_nfs(i/self.MT.fps + 1e-10), i + 1)
+            self.assertEqual(self.MT._time_to_number_of_frames(i), i*self.MT.fps)
+            self.assertEqual(self.MT._time_to_number_of_frames(i + 1e-10), i*self.MT.fps + 1)
+            self.assertEqual(self.MT._time_to_number_of_frames(i/self.MT.fps), i)
+            self.assertEqual(self.MT._time_to_number_of_frames(i/self.MT.fps + 1e-10), i + 1)
 
     def test_key_nfs(self):
         self.MT.tests = {'empty' : 0, 'fps' : 1}
         self.MT.partials = {'two' : 2/self.MT.fps, 'small' : 1 + 1e-10}
-        self.assertEqual(1, self.MT.key_to_nfs('empty'))
-        self.assertEqual(0, self.MT.key_to_nfs('empty', 'tests'))
-        self.assertEqual(1, self.MT.key_to_nfs('empty', 'partials'))
-        self.assertEqual(1, self.MT.key_to_nfs('fps'))
-        self.assertEqual(self.MT.fps, self.MT.key_to_nfs('fps', 'tests'))
-        self.assertEqual(1, self.MT.key_to_nfs('fps', 'partials'))
-        self.assertEqual(1, self.MT.key_to_nfs('two'))
-        self.assertEqual(1, self.MT.key_to_nfs('two', 'tests'))
-        self.assertEqual(2, self.MT.key_to_nfs('two', 'partials'))
-        self.assertEqual(1, self.MT.key_to_nfs('small'))
-        self.assertEqual(1, self.MT.key_to_nfs('small', 'tests'))
-        self.assertEqual(self.MT.fps + 1, self.MT.key_to_nfs('small', 'partials'))
+        self.assertEqual(1, self.MT._key_to_number_of_frames('empty'))
+        self.assertEqual(0, self.MT._key_to_number_of_frames('empty', 'tests'))
+        self.assertEqual(1, self.MT._key_to_number_of_frames('empty', 'partials'))
+        self.assertEqual(1, self.MT._key_to_number_of_frames('fps'))
+        self.assertEqual(self.MT.fps, self.MT._key_to_number_of_frames('fps', 'tests'))
+        self.assertEqual(1, self.MT._key_to_number_of_frames('fps', 'partials'))
+        self.assertEqual(1, self.MT._key_to_number_of_frames('two'))
+        self.assertEqual(1, self.MT._key_to_number_of_frames('two', 'tests'))
+        self.assertEqual(2, self.MT._key_to_number_of_frames('two', 'partials'))
+        self.assertEqual(1, self.MT._key_to_number_of_frames('small'))
+        self.assertEqual(1, self.MT._key_to_number_of_frames('small', 'tests'))
+        self.assertEqual(self.MT.fps + 1, self.MT._key_to_number_of_frames('small', 'partials'))
 
-    '''
-    general methods
-    '''
+    def test_nfs_params(self):
+        self.assertEqual(1, self.MT._params_to_number_of_frames())
+        self.assertEqual(self.MT.fps, self.MT._params_to_number_of_frames(nfs=1, time=1))
+        self.assertEqual(1, self.MT._params_to_number_of_frames(nfs=2, key=''))
+        self.assertEqual(1, self.MT._params_to_number_of_frames(time=1, key=''))
+        self.assertEqual(1, self.MT._params_to_number_of_frames(nfs=2, time=1, key=''))
 
-    def test_wait(self):
-        self.MT.draft = True
-        self.MT.print_on = False
-        self.MT.fps = 3
-        self.MT.frames_dir = 'frames/wait/'
-        self.MT.reset()
-        self.MT.show_info('Default wait (1 frame)')
-        self.MT.wait()
-        self.MT.show_info('1 wait (1 frame)')
-        self.MT.wait(1)
-        self.MT.show_info('int(1.5) wait (1 frame)')
-        self.MT.wait(int(1.5))
-        self.MT.show_info(f'1. wait ({self.MT.fps} frames)')
-        self.MT.wait(1.)
-        self.MT.show_info(f'float(1) wait ({self.MT.fps} frames)')
-        self.MT.wait(float(1))
-        self.MT.show_info(f'key wait (1 frame)')
-        self.MT.wait('actual key wait (1 frame)')
-        self.MT.show_info(f'str(1) wait (1 frame)')
-        self.MT.wait(str(1))
-        self.MT.show_info(f'int overrules nfs (1 frames)')
-        self.MT.wait(1, nfs=2)
-        self.MT.show_info(f'time overrules int ({self.MT.fps} frames)')
-        self.MT.wait(1, time=1)
-        self.MT.wait(1, key='key overrules int (1 frame)')
-        self.MT.show_info(f'float overrules time ({self.MT.fps} frames)')
-        self.MT.wait(1., time=2)
-        self.MT.wait(1., key='key overrules float (1 frame)')
-        self.MT.wait('string overrules key (1 frame)', key='it does')
+    def test_get_nfs(self):
+        self.assertEqual(1, self.MT._get_number_of_frames())
+        self.assertEqual(1, self.MT._get_number_of_frames(1))
+        self.assertEqual(1, self.MT._get_number_of_frames(int(1.5)))
+        self.assertEqual(self.MT.fps, self.MT._get_number_of_frames(1.))
+        self.assertEqual(self.MT.fps, self.MT._get_number_of_frames(float(1)))
+        self.assertEqual(1, self.MT._get_number_of_frames(''))
+        self.assertEqual(1, self.MT._get_number_of_frames(str(1)))
+        self.assertEqual(1, self.MT._get_number_of_frames(1, nfs=2))
+        self.assertEqual(self.MT.fps, self.MT._get_number_of_frames(1, time=1))
+        self.assertEqual(1, self.MT._get_number_of_frames(1, key=''))
+        self.assertEqual(self.MT.fps, self.MT._get_number_of_frames(1., time=2))
+        self.assertEqual(1, self.MT._get_number_of_frames(1., key=''))
+        self.MT.times = {'test': 1}
+        self.assertEqual(self.MT.fps, self.MT._get_number_of_frames('test', key=''))
+        self.assertEqual(self.MT.fps, self.MT._get_number_of_frames('test'))
+        self.assertEqual(self.MT.fps, self.MT._get_number_of_frames('test', key='test'))
+        self.assertEqual(1, self.MT._get_number_of_frames('', key='test'))
+        self.assertEqual(self.MT.fps, self.MT._get_number_of_frames(key='test'))
 
 
 if __name__ == '__main__':
