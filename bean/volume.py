@@ -90,7 +90,8 @@ class Volume(Shape):
         ) -> (float, float):
         # transforms a 3D position into a 2D coordinate
         side, depth, altitude = pos
-        shade_shift = (height + altitude)*self.altitude_to_shade*self._shade_shift()
+        shade_shift = self._shade_shift()
+        shade_shift *= (height + altitude)*self.altitude_to_shade
         return (
             side + shade_shift[0],
             depth + shade_shift[1],
@@ -150,7 +151,6 @@ class Volume(Shape):
             xy: (float, float) = (0, 0),
             radius: float = 1,
             colour: str = None,
-
         ) -> None:
         # update the sphere
         if pos is not None:
@@ -216,29 +216,45 @@ class Volume(Shape):
             xy2: (float, float) = (0, 0),
             radius2: float = None,
             colour: str = None,
+            slope: str = 'flat',
 
         ) -> None:
         # update the sphere
         if radius2 is None:
             radius2 = radius1
         variables = {}
+        zorder = 0
         for index in [1, 2]:
-            variables[f'radius{index}'] = locals()[f'radius{index}']
-            variables[f'shade_radius{index}'] = locals()[f'radius{index}']
             pos = locals()[f'pos{index}']
+            radius = locals()[f'radius{index}']
             if pos is not None:
-                shade_pos = self._pos_to_shade_pos(pos)
-                variables[f'radius{index}'] *= self._pos_to_scale(pos)
-                variables[f'shade_radius{index}'] *= self._pos_to_scale(shade_pos)
-                variables[f'xy{index}'] = self._pos_to_xy(pos)
-                variables[f'shade_xy{index}'] = self._pos_to_xy(shade_pos)
+                if slope == 'down':
+                    height = radius
+                elif slope == 'up':
+                    height = 2*max(radius1, radius2) - radius
+                else:
+                    height = max(radius1, radius2)
+                variables[f'xy{index}'] = self._pos_to_xy(pos, height=height)
+                if not self.draft:
+                    shade_pos = self._pos_to_shade_pos(pos, height=height)
+                radius *= self.scale
+                scale = self._pos_to_scale(pos)
+                variables[f'radius{index}'] = radius*scale
+                zorder = max(zorder, scale)
+                if not self.draft:
+                    variables[f'shade_xy{index}'] = self._pos_to_xy(shade_pos)
+                    variables[f'shade_radius{index}'] = (
+                        radius*self._pos_to_scale(shade_pos)
+                    )
             else:
                 xy = locals()[f'xy{index}']
                 xy = (xy[0]*self.scale, xy[1]*self.scale)
                 variables[f'xy{index}'] = xy
-                variables[f'shade_xy{index}'] = xy
-                variables[f'radius{index}'] *= self.scale
-                variables[f'shade_radius{index}'] *= self.scale
+                radius *= self.scale
+                variables[f'radius{index}'] = radius
+                if not self.draft:
+                    variables[f'shade_xy{index}'] = xy
+                    variables[f'shade_radius{index}'] = radius
         distance = self.distance_from_xy(variables['xy1'], variables['xy2'])
         delta_radius = variables['radius2'] - variables['radius1']
         is_sphere = np.abs(delta_radius) > distance
@@ -248,7 +264,6 @@ class Volume(Shape):
                 xy=variables[f'xy{sphere_index}'],
                 a=variables[f'radius{sphere_index}'],
             ))
-            clipper = self.set_shape(key=main, color=colour)
             angle = 0
             around_angle = 0
         else:
@@ -262,7 +277,7 @@ class Volume(Shape):
                 theta2=(2*index - 3)*(90 + around_angle),
             ) for index in [1, 2]])
             self.apply_to_shape('set_path', key=main, path=path)
-        clipper = self.set_shape(key=main, color=colour)
+        clipper = self.set_shape(key=main, color=colour, zorder=zorder)
         if not self.draft:
             theta1 = self.normalize_angle(
                 90 + around_angle + angle - self.shade_angle
@@ -320,7 +335,7 @@ class Volume(Shape):
                 inners, outers = zip(*paths)
                 path = self.merge_curves(*(inners[::-1] + outers))
                 self.apply_to_shape('set_path', key=key, path=path)
-                self.set_shape(key=key, clip_path=clipper)
+                self.set_shape(key=key, clip_path=clipper, zorder=zorder)
             shade_colour = self.get_cmap(['white', clipper.get_fc()])(
                 self.shade_cmap_ratio
             )
@@ -332,6 +347,7 @@ class Volume(Shape):
                 self.apply_to_shape('set_path', key=shade, path=self.curve_path(
                     xy=variables[f'shade_xy{index}'],
                     a=variables[f'shade_radius{index}'],
+                    b=variables[f'shade_radius{index}']*np.cos(self.horizon_angle*np.pi/180),
                 ))
             else:
                 shade_angle = self.angle_from_xy(variables['shade_xy1'], variables['shade_xy2'])
@@ -339,9 +355,9 @@ class Volume(Shape):
                 path = self.merge_curves(*[self.curve_path(
                     xy=variables[f'shade_xy{index}'],
                     a=variables[f'shade_radius{index}'],
-                    angle=shade_angle,
-                    theta1=(3 - 2*index)*(90 + shade_around_angle),
-                    theta2=(2*index - 3)*(90 + shade_around_angle),
+                    b=variables[f'shade_radius{index}']*np.cos(self.horizon_angle*np.pi/180),
+                    theta1=(3 - 2*index)*(90 + shade_around_angle) + shade_angle,
+                    theta2=(2*index - 3)*(90 + shade_around_angle) + shade_angle,
                 ) for index in [1, 2]])
                 self.apply_to_shape('set_path', key=shade, path=path)
 
