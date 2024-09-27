@@ -284,7 +284,7 @@ class ShapeTests(unittest.TestCase):
         self.SH.show_info('Testing')
         self.SH.hide_info()
         self.SH.show_info()
-        self.SH.save()
+        self.SH.save('image_shape')
 
 
 if __name__ == '__main__':

@@ -238,7 +238,7 @@ class CanvasTests(unittest.TestCase):
 
     def test_main(self):
         self.CV.reset()
-        self.CV.save()
+        self.CV.save('image_canvas')
 
 
 if __name__ == '__main__':

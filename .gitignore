@@ -2,5 +2,5 @@
 *__pycache__/
 
 # default files
-image.png
+image*.png
 video.mp4
