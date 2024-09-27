@@ -89,14 +89,19 @@ class Motion(Volume):
             time: float = None,
             key: Any = None,
             time_dict: dict = 'times',
+            plot_info: bool = False,
         ):
         # returns the number of frames corresponding to params
+        info = f'Waiting {nfs} frame'
+        info += '' if nfs <= 1 else 's'
         if key is not None:
             nfs = self._key_to_number_of_frames(key, time_dict)
-            if self.draft:
-                self.show_info(str(key))
+            info = str(key)
         elif time is not None:
             nfs = self._time_to_number_of_frames(time)
+            info = f'Waiting {time}s'
+        if self.draft and plot_info:
+            self.show_info(info)
         return nfs
 
     def _get_number_of_frames(

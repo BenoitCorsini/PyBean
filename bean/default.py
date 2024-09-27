@@ -56,7 +56,7 @@ DEFAULT = {
     'side_scale' : 1,
     'shade_angle' : -60,
     'altitude_to_shade' : 0.3,
-    'shade_cmap_ratio' : 0.1,
+    'shade_cmap_ratio' : 0.05,
     'round_sides' : {
         0.49 : 0.05,
         0.25 : 0.07,
@@ -66,5 +66,5 @@ DEFAULT = {
     # motion
     'fps' : 20,
     'frames_dir' : 'frames',
-    'print_on' : True,
+    'print_on' : False,
 }
