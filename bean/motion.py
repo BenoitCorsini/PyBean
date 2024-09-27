@@ -162,3 +162,13 @@ class Motion(Volume):
         if self.print_on:
             sys.stdout.write('\033[F\033[K')
             print('Time to make video: ' + self.time())
+
+    '''
+    main method
+    '''
+
+    def main(
+            self: Self,
+        ) -> None:
+        # the main running function
+        pass

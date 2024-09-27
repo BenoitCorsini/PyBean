@@ -600,24 +600,4 @@ class Shape(Canvas):
             self: Self,
         ) -> None:
         # the main running function
-        print(self)
-        print(self._get_classes())
-        print(self._get_new_methods())
-        print(self.get_kwargs())
-        self.add_shape(shape_name='Circle', key='test', xy=(0, 1), radius=0.2)
-        self.add_shape(shape_name='Circle', xy=(1, 0), radius=0.5)
-        self.set_shape(key='test', color='red')
-        self.apply_to_shape(key='test', method='set_center', xy=(0.2, 0.5))
-        self.add_raw_path(vertices=[(0, 0), (1, 1)], color='green', lw=10)
-        self.grid(left=0.5, right=0.6, bottom=0.1, top=0.4, n_lines=(3, 5), color='red', lw=5)
-        self.grid(steps=0.1, color='darkblue', zorder=-1)
-        self.grid(color='orange', zorder=-2, lw=30)
-        self.add_axis()
-        self.set_shape(key='_axis', alpha=1)
-        self.add_axis()
-        self.show_axis()
-        self.hide_copyright()
-        self.add_info()
-        self.show_info(repr(self))
-        self.save()
-        print(self._shapes)
+        pass

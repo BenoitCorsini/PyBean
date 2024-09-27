@@ -322,13 +322,4 @@ class Canvas(object):
             self: Self,
         ) -> None:
         # the main running function
-        print(self)
-        print(self._get_classes())
-        print(self._get_new_methods())
-        print(self.get_kwargs())
-        self.save()
-        self.reset()
-        cmap = self.get_cscale()
-        print(cmap == Canvas.get_cscale())
-        print(self.time())
-        self.help()
+        pass
