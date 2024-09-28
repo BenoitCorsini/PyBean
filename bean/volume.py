@@ -257,7 +257,7 @@ class Volume(Shape):
                     variables[f'shade_radius{index}'] = radius
         distance = self.distance_from_xy(variables['xy1'], variables['xy2'])
         delta_radius = variables['radius2'] - variables['radius1']
-        is_sphere = np.abs(delta_radius) > distance
+        is_sphere = np.abs(delta_radius) >= distance
         if is_sphere:
             sphere_index = 1 + int(delta_radius > 0)
             self.apply_to_shape('set_path', key=main, path=self.curve_path(
@@ -349,7 +349,7 @@ class Volume(Shape):
                 - variables['shade_radius1']
             )
             cos = np.cos(self.horizon_angle*np.pi/180)
-            if np.abs(delta_radius) > distance:
+            if np.abs(delta_radius) >= distance:
                 index = 1 + int(delta_radius > 0)
                 self.apply_to_shape(
                     method='set_path',
@@ -384,6 +384,17 @@ class Volume(Shape):
                 self.apply_to_shape('set_path', key=shade, path=path)
 
     '''
+    static methods
+    '''
+
+    @staticmethod
+    def _modifier(
+            kwargs: dict,
+        ):
+        # modifies the parameters of a volume its representation
+        return kwargs
+
+    '''
     general methods
     '''
 
@@ -411,7 +422,7 @@ class Volume(Shape):
             **kwargs,
         ) -> None:
         # updates the volume
-        getattr(self, f'_update_{name}')(**kwargs)
+        getattr(self, f'_update_{name}')(**self._modifier(kwargs))
 
     '''
     main method
