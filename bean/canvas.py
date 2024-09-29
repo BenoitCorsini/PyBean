@@ -2,6 +2,7 @@ import argparse
 import os
 import os.path as osp
 import numpy as np
+import numpy.random as npr
 import matplotlib.figure as figure
 from matplotlib.colors import LinearSegmentedColormap as LSC
 from time import time
@@ -23,6 +24,7 @@ class Canvas(object):
         'xmax' : float,
         'ymin' : float,
         'ymax' : float,
+        'seed' : int,
     }
 
     _canvas_nargs = {
@@ -85,6 +87,7 @@ class Canvas(object):
         ) -> Self:
         # new canvas instance
         self.start_time = time()
+        npr.seed(self.seed)
         self.fig = figure.Figure(figsize=self.figsize, dpi=self.dpi)
         self.fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
         self.ax = self.fig.add_subplot()

@@ -2,6 +2,7 @@ import sys
 import os
 import os.path as osp
 import numpy as np
+import numpy.random as npr
 import cv2
 from typing_extensions import Any, Self
 
@@ -18,6 +19,9 @@ class Motion(Volume):
         'fps' : int,
         'frames_dir' : str,
         'print_on' : str,
+        'levitation_mode' : str,
+        'levitation_height' : float,
+        'levitation_freq' : float,
     }
 
     def _new_motion(
@@ -119,6 +123,46 @@ class Motion(Volume):
         else:
             kwargs['key'] = waiter
         return self._params_to_number_of_frames(**kwargs)
+
+    def _volume_kwargs_levitate(
+            self: Self,
+            kwargs: dict,
+        ) -> dict:
+        # adds the levitation effect to the volumes
+        if self.levitation_mode == 'off':
+            return kwargs
+        pos_params = [key for key in kwargs if key.startswith('pos')]
+        default_freq_shift = kwargs.pop('levit_freq_shift', None)
+        for pos_param in pos_params:
+            extra_info = pos_param.replace('pos', '', 1)
+            freq_shift_key = 'levit_freq_shift' + extra_info
+            if freq_shift_key not in kwargs:
+                if default_freq_shift is not None:
+                    freq_shift = default_freq_shift
+                elif self.levitation_mode == 'random':
+                    freq_shift = npr.rand()*self.levitation_freq
+                else:
+                    freq_shift = 0
+                volume_key = kwargs['main'][::-1].replace(
+                    'niam_',
+                    '',
+                    1,
+                )[::-1]
+                self._volumes[volume_key][freq_shift_key] = freq_shift
+            else:
+                freq_shift = kwargs.pop(freq_shift_key)
+            side, depth, altitude = kwargs[pos_param]
+            extra_altitude = (1 - np.cos(
+                2*np.pi*(
+                    freq_shift + self._frame_index/self.fps
+                )/self.levitation_freq
+            ))*self.levitation_height/2
+            kwargs[pos_param] = (
+                side,
+                depth,
+                altitude + extra_altitude,
+            )
+        return kwargs
 
     '''
     general methods

@@ -408,16 +408,16 @@ class Volume(Shape):
             **kwargs,
         ) -> None:
         # updates the volume
-        getattr(self, f'_update_{name}')(**self._modifier(kwargs))
+        getattr(self, f'_update_{name}')(**self._volume_kwargs(kwargs))
 
-    def _modifier(
+    def _volume_kwargs(
             self: Self,
             kwargs: dict,
         ):
-        # modifies the parameters of a volume its representation
+        # modifies the parameters used for a volume
         kwargs = kwargs.copy()
         for method in dir(self):
-            if method.startswith('_modifier_'):
+            if method.startswith('_volume_kwargs_'):
                 kwargs = getattr(self, method)(kwargs)
         return kwargs
 
@@ -483,13 +483,11 @@ class Volume(Shape):
             avoid: Any = None,
             **kwargs,
         ) -> None:
-        # update the state of the image
+        # updates the state of the image
         volume_list = self._get_volume_list(only, avoid)
         for volume_kwargs in self._volumes.values():
             volume_kwargs.update(kwargs)
             self._update_volume(**volume_kwargs)
-
-    # add update with only and avoid
 
     '''
     main method

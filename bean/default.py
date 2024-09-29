@@ -6,6 +6,7 @@ DEFAULT = {
     'xmax' : 1,
     'ymin' : 0,
     'ymax' : 9/16,
+    'seed' : None,
     # shape
     'copyright_on' : None,
     'copyright' : {
@@ -67,4 +68,7 @@ DEFAULT = {
     'fps' : 20,
     'frames_dir' : 'frames',
     'print_on' : False,
+    'levitation_mode' : 'random',
+    'levitation_height' : 5e-2,
+    'levitation_freq' : 0.2,
 }
