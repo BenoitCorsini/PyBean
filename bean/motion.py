@@ -187,11 +187,10 @@ class Motion(Volume):
             start_with: float = 1,
             end_with: float = 1,
             duration: Any = 1,
-        ) -> dict:
+        ) -> None:
         # changes the radius of sphere
-        print('Add growing sphere')
         if start_with == end_with:
-            print('Did not add motion')
+            return None
         motion = {
             'method' : '_grow_sphere',
             'volume' : volume,
@@ -205,7 +204,6 @@ class Motion(Volume):
                 motion[f'{timing}_radius'] = radius*timing_with
             else:
                 motion[f'{timing}_radius'] = abs(timing_with)
-        print(motion)
         self._add_motion(motion)
 
     def _grow_sphere(
@@ -218,7 +216,6 @@ class Motion(Volume):
             end_radius: float,
         ) -> bool:
         # changes the radius of sphere
-        print('In grow sphere')
         finished = False
         if step >= duration:
             step = duration
@@ -311,6 +308,26 @@ class Motion(Volume):
             motion.update(kwargs)
             volume_name = self._volumes[volume]['name']
             getattr(self, f'_add_grow_{volume_name}')(**motion)
+
+    def appear(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> None:
+        # makes a volume appear
+        kwargs['start_with'] = 0
+        kwargs['end_with'] = 1
+        self.grow(*args, **kwargs)
+
+    def disappear(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> None:
+        # makes a volume disappear
+        kwargs['start_with'] = 1
+        kwargs['end_with'] = 0
+        self.grow(*args, **kwargs)
 
     def run(
             self: Self,
