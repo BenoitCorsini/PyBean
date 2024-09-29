@@ -98,38 +98,38 @@ class Volume(Shape):
             0,
         )
 
-    def _create_round(
+    def _round_volume(
             self: Self,
-            name: str,
+            available_key: Any,
         ) -> dict:
         # creates the volume dictionary for a rounded object
         volume = {
-            'main' : f'{name}_main',
+            'main' : f'{available_key}_main',
             'side' : [
-                f'{name}_side{index}'
+                f'{available_key}_side{index}'
                 for index in range(len(self.round_sides))
             ],
-            'shade' : f'{name}_shade',
+            'shade' : f'{available_key}_shade',
         }
-        for key in volume.values():
-            if isinstance(key, str):
-                keys = [key]
+        for shape_key in volume.values():
+            if isinstance(shape_key, str):
+                shape_keys = [shape_key]
                 alphas = [1]
             else:
-                keys = key
+                shape_keys = shape_key
                 alphas = self.round_sides.values()
-            for key, alpha in zip(keys, alphas):
+            for shape_key, alpha in zip(shape_keys, alphas):
                 patch = self.add_raw_path(
-                    key=key,
+                    key=shape_key,
                     vertices=[(0, 0)],
                     lw=0,
                     alpha=alpha,
                     zorder=0,
                     visible=not self.draft
                 )
-                if key.endswith('_main'):
+                if shape_key.endswith('_main'):
                     patch.set_visible(True)
-                elif key.endswith('_shade'):
+                elif shape_key.endswith('_shade'):
                     patch.set_zorder(-1)
                 else:
                     patch.set_color('black')
@@ -137,10 +137,36 @@ class Volume(Shape):
 
     def _create_sphere(
             self: Self,
-            name: str,
+            *args,
+            **kwargs,
         ) -> dict:
         # creates the volume dictionary of a sphere
-        return self._create_round(name=name)
+        return self._round_volume(*args, **kwargs)
+
+    def _create_tube(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> dict:
+        # creates the volume dictionary of a tube
+        return self._round_volume(*args, **kwargs)
+
+    def _create_volume(
+            self: Self,
+            name: str,
+            key: Any = None,
+            **kwargs,
+        ) -> None:
+        # creates the basis for a new volume
+        key, available = self.key_checker(key=key, category='volume')
+        if available:
+            volume = {'name' : name}
+            volume.update(kwargs)
+            volume.update(getattr(self, f'_create_{name}')(available_key=key))
+            self._volumes[key] = volume
+        else:
+            volume = self._volumes[key]
+        return volume
 
     def _update_sphere(
             self: Self,
@@ -196,13 +222,6 @@ class Volume(Shape):
                 self.shade_cmap_ratio
             )
             self.set_shape(key=shade, color=shade_colour)
-
-    def _create_tube(
-            self: Self,
-            name: str,
-        ) -> dict:
-        # creates the volume dictionary of a tube
-        return self._create_round(name=name)
 
     def _update_tube(
             self: Self,
@@ -383,46 +402,94 @@ class Volume(Shape):
                 ) for index in [1, 2]])
                 self.apply_to_shape('set_path', key=shade, path=path)
 
-    '''
-    static methods
-    '''
-
-    @staticmethod
-    def _modifier(
-            kwargs: dict,
-        ):
-        # modifies the parameters of a volume its representation
-        return kwargs
-
-    '''
-    general methods
-    '''
-
-    def new_volume(
-            self: Self,
-            name: str,
-            key: Any = None,
-            **kwargs,
-        ) -> None:
-        # creates the basis for a new volume
-        key, available = self.key_checker(key=key, category='volume')
-        if available:
-            volume = {'name' : name}
-            volume.update(kwargs)
-            volume.update(getattr(self, f'_create_{name}')(name=key))
-            self.update_volume(**volume)
-            self._volumes[key] = volume
-        else:
-            volume = self._volumes[key]
-        return volume
-
-    def update_volume(
+    def _update_volume(
             self: Self,
             name: str,
             **kwargs,
         ) -> None:
         # updates the volume
         getattr(self, f'_update_{name}')(**self._modifier(kwargs))
+
+    def _modifier(
+            self: Self,
+            kwargs: dict,
+        ):
+        # modifies the parameters of a volume its representation
+        kwargs = kwargs.copy()
+        for method in dir(self):
+            if method.startswith('_modifier_'):
+                kwargs = getattr(self, method)(kwargs)
+        return kwargs
+
+    def _only_avoid_to_list(
+            self: Self,
+            only_avoid: Any = None,
+        ) -> list:
+        # transforms an only/avoid parameter into a list
+        if only_avoid is None:
+            only_avoid = list(self._volumes)
+        elif isinstance(only_avoid, list):
+            only_avoid = [
+                volume for volume in only_avoid
+                if volume in self._volumes
+            ]
+        elif only_avoid in self._volumes:
+            only_avoid = [only_avoid]
+        elif isinstance(only_avoid, str):
+            only_avoid = [
+                volume for (volume, info) in self._volumes.items()
+                if info['name'] == only_avoid
+            ]
+        else:
+            message = 'The value of only and avoid must be either '
+            message += 'None, a key, a string, or a list: '
+            message ++ str(only_avoid)
+            raise ValueError(message)
+        return only_avoid
+
+    def _get_volume_list(
+            self: Self,
+            only: Any = None,
+            avoid: Any = [],
+        ) -> list:
+        # returns the list of all volumes satifying the conditions
+        only = self._only_avoid_to_list(only) 
+        avoid = self._only_avoid_to_list(avoid) 
+        return [volume for volume in only if volume not in avoid]
+
+    '''
+    general methods
+    '''
+
+    def new_sphere(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> None:
+        # creates the basis for a new sphere
+        return self._create_volume(name='sphere', *args, **kwargs)
+
+    def new_tube(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> None:
+        # creates the basis for a new sphere
+        return self._create_volume(name='tube', *args, **kwargs)
+
+    def update(
+            self: Self,
+            only: Any = None,
+            avoid: Any = None,
+            **kwargs,
+        ) -> None:
+        # update the state of the image
+        volume_list = self._get_volume_list(only, avoid)
+        for volume_kwargs in self._volumes.values():
+            volume_kwargs.update(kwargs)
+            self._update_volume(**volume_kwargs)
+
+    # add update with only and avoid
 
     '''
     main method

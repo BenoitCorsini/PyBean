@@ -128,6 +128,7 @@ class Motion(Volume):
             self: Self,
         ) -> int:
         # creates a new frame
+        self.update()
         self.save(
             name=f'{self._frame_index:04d}',
             image_dir=self.frames_dir,

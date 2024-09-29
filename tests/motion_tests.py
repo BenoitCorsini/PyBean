@@ -73,29 +73,26 @@ class MotionTests(unittest.TestCase):
         self.MT.draft = True
         self.MT.reset()
         self.MT.wait(0.5)
-        self.MT.new_volume(
-            name='sphere',
-            pos=(0.1, 0.2, 0),
-            radius=0.1,
+        self.MT.new_sphere(
+            pos=(0.5, 0.2, 0),
+            radius=0.2,
             colour='forestgreen',
         )
         self.MT.wait(0.5, plot_info=True)
-        self.MT.new_volume(
-            name='sphere',
+        self.MT.update(pos=(0.1, 0.2, 0), radius=0.1)
+        self.MT.new_sphere(
             pos=(0.8, 0.3, 0),
             radius=0.1,
             colour='crimson',
         )
         self.MT.wait(1, plot_info=True)
-        self.MT.new_volume(
-            name='sphere',
+        self.MT.new_sphere(
             pos=(0.5, 0.5, 0),
             radius=0.1,
             colour='gold',
         )
         self.MT.wait(2, plot_info=True)
-        self.MT.new_volume(
-            name='sphere',
+        self.MT.new_sphere(
             pos=(0, 0.45, 0),
             radius=0.1,
             colour='royalblue',
