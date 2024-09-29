@@ -9,14 +9,14 @@ from bean import Volume
 
 class VolumeTests(unittest.TestCase):
 
-    VL = Volume()
+    vl = Volume()
 
     '''
     hidden methods
     '''
 
     def test_only_avoid(self):
-        self.VL._volumes = {
+        self.vl._volumes = {
             'a1' : {'name' : 'a'},
             'a2' : {'name' : 'a'},
             'b1' : {'name' : 'b'},
@@ -24,48 +24,48 @@ class VolumeTests(unittest.TestCase):
             'b3' : {'name' : 'b'},
         }
         self.assertEqual(
-            self.VL._only_avoid_to_list(),
+            self.vl._only_avoid_to_list(),
             ['a1', 'a2', 'b1', 'b2', 'b3']
         )
         self.assertEqual(
-            self.VL._only_avoid_to_list('a1'),
+            self.vl._only_avoid_to_list('a1'),
             ['a1']
         )
         self.assertEqual(
-            self.VL._only_avoid_to_list(['a1']),
+            self.vl._only_avoid_to_list(['a1']),
             ['a1']
         )
         self.assertEqual(
-            self.VL._only_avoid_to_list(['a1', 'a3']),
+            self.vl._only_avoid_to_list(['a1', 'a3']),
             ['a1']
         )
         self.assertEqual(
-            self.VL._only_avoid_to_list(['a']),
+            self.vl._only_avoid_to_list(['a']),
             []
         )
         self.assertEqual(
-            self.VL._only_avoid_to_list(['a1', 'b1']),
+            self.vl._only_avoid_to_list(['a1', 'b1']),
             ['a1', 'b1']
         )
         self.assertEqual(
-            self.VL._only_avoid_to_list([]),
+            self.vl._only_avoid_to_list([]),
             []
         )
         self.assertEqual(
-            self.VL._only_avoid_to_list('a'),
+            self.vl._only_avoid_to_list('a'),
             ['a1', 'a2']
         )
         self.assertEqual(
-            self.VL._only_avoid_to_list('b'),
+            self.vl._only_avoid_to_list('b'),
             ['b1', 'b2', 'b3']
         )
         self.assertEqual(
-            self.VL._only_avoid_to_list('c'),
+            self.vl._only_avoid_to_list('c'),
             []
         )
 
     def test_volume_list(self):
-        self.VL._volumes = {
+        self.vl._volumes = {
             'a1' : {'name' : 'a'},
             'a2' : {'name' : 'a'},
             'b1' : {'name' : 'b'},
@@ -73,39 +73,39 @@ class VolumeTests(unittest.TestCase):
             'b3' : {'name' : 'b'},
         }
         self.assertEqual(
-            self.VL._get_volume_list(),
+            self.vl._get_volume_list(),
             ['a1', 'a2', 'b1', 'b2', 'b3']
         )
         self.assertEqual(
-            self.VL._get_volume_list(avoid=None),
+            self.vl._get_volume_list(avoid=None),
             []
         )
         self.assertEqual(
-            self.VL._get_volume_list(only='a'),
+            self.vl._get_volume_list(only='a'),
             ['a1', 'a2']
         )
         self.assertEqual(
-            self.VL._get_volume_list(avoid='a'),
+            self.vl._get_volume_list(avoid='a'),
             ['b1', 'b2', 'b3']
         )
         self.assertEqual(
-            self.VL._get_volume_list(only='a', avoid='a1'),
+            self.vl._get_volume_list(only='a', avoid='a1'),
             ['a2']
         )
         self.assertEqual(
-            self.VL._get_volume_list(only='a', avoid='b'),
+            self.vl._get_volume_list(only='a', avoid='b'),
             ['a1', 'a2']
         )
         self.assertEqual(
-            self.VL._get_volume_list(only=['a1', 'b1'], avoid='a'),
+            self.vl._get_volume_list(only=['a1', 'b1'], avoid='a'),
             ['b1']
         )
         self.assertEqual(
-            self.VL._get_volume_list(only=['a1', 'b1', 'b2'], avoid='b'),
+            self.vl._get_volume_list(only=['a1', 'b1', 'b2'], avoid='b'),
             ['a1']
         )
         self.assertEqual(
-            self.VL._get_volume_list(only=['a1', 'b1', 'b2'], avoid='b2'),
+            self.vl._get_volume_list(only=['a1', 'b1', 'b2'], avoid='b2'),
             ['a1', 'b1']
         )
 
@@ -114,14 +114,14 @@ class VolumeTests(unittest.TestCase):
     '''
 
     def test_sphere(self):
-        self.VL.reset()
-        self.VL.depth_shift = 0.05
-        self.VL.depth_scale = 0.75
-        self.VL.side_scale = 0.8
+        self.vl.reset()
+        self.vl.depth_shift = 0.05
+        self.vl.depth_scale = 0.75
+        self.vl.side_scale = 0.8
         num = 10
-        self.VL.scale = 1/num
+        self.vl.scale = 1/num
         for y in range(num + 1):
-            self.VL._create_volume(
+            self.vl._create_volume(
                 name='sphere',
                 xy=(0.5, 0.5 + y),
                 radius=0.4,
@@ -129,31 +129,31 @@ class VolumeTests(unittest.TestCase):
             )
             for x in range(num + 1):
                 if ((x + y) % 2) == 0:
-                    self.VL._create_volume(
+                    self.vl._create_volume(
                         name='sphere',
                         pos=(x, y, (x + y)/num),
                         radius=0.4,
                         colour='forestgreen',
                     )
                 else:
-                    self.VL._create_volume(
+                    self.vl._create_volume(
                         name='sphere',
                         pos=(x, y, 0),
                         radius=0.2,
                         colour='royalblue',
                     )
-        self.VL.update()
-        self.VL.save('image_sphere')
+        self.vl.update()
+        self.vl.save('image_sphere')
 
     def test_tubes(self):
-        self.VL.reset()
-        self.VL.depth_shift = 0.05
-        self.VL.depth_scale = 0.75
-        self.VL.side_scale = 0.8
+        self.vl.reset()
+        self.vl.depth_shift = 0.05
+        self.vl.depth_scale = 0.75
+        self.vl.side_scale = 0.8
         num = 10
-        self.VL.scale = 1/num
+        self.vl.scale = 1/num
         for y in range(num + 1):
-            self.VL._create_volume(
+            self.vl._create_volume(
                 name='tube',
                 xy1=(0.5, 0.5 + y),
                 xy2=(0.5, 0.5 + y),
@@ -161,7 +161,7 @@ class VolumeTests(unittest.TestCase):
                 radius2=0.2,
                 colour='gold',
             )
-            self.VL._create_volume(
+            self.vl._create_volume(
                 name='tube',
                 xy1=(num - 0.5, 0.5 + y),
                 xy2=(
@@ -175,7 +175,7 @@ class VolumeTests(unittest.TestCase):
             for x in range(num + 1):
                 if ((x + y) % 2) == 0:
                     if x > y:
-                        self.VL._create_volume(
+                        self.vl._create_volume(
                             name='tube',
                             pos1=(x, y, 0),
                             pos2=(x, y, (x + y)/num),
@@ -183,7 +183,7 @@ class VolumeTests(unittest.TestCase):
                             colour='forestgreen',
                         )
                     else:
-                        self.VL._create_volume(
+                        self.vl._create_volume(
                             name='tube',
                             pos1=(
                                 x + 0.3*np.cos((x + y)*np.pi/num),
@@ -200,7 +200,7 @@ class VolumeTests(unittest.TestCase):
                         )
                 else:
                     if x > y:
-                        self.VL._create_volume(
+                        self.vl._create_volume(
                             name='tube',
                             pos1=(x, y, 0),
                             pos2=(
@@ -213,7 +213,7 @@ class VolumeTests(unittest.TestCase):
                             colour='purple',
                         )
                     else:
-                        self.VL._create_volume(
+                        self.vl._create_volume(
                             name='tube',
                             pos1=(x, y, 0),
                             pos2=(x, y, 0),
@@ -221,8 +221,8 @@ class VolumeTests(unittest.TestCase):
                             radius2=0.1,
                             colour='royalblue',
                         )
-        self.VL.update()
-        self.VL.save('image_tube')
+        self.vl.update()
+        self.vl.save('image_tube')
 
 
 if __name__ == '__main__':
