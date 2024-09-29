@@ -70,5 +70,5 @@ DEFAULT = {
     'print_on' : False,
     'levitation_mode' : 'random',
     'levitation_height' : 5e-2,
-    'levitation_freq' : 0.2,
+    'levitation_freq' : 1,
 }
