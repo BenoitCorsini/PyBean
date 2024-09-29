@@ -129,7 +129,7 @@ class Motion(Volume):
             kwargs: dict,
         ) -> dict:
         # adds the levitation effect to the volumes
-        if self.levitation_mode == 'off':
+        if self.levitation_mode == 'off' or self.draft:
             return kwargs
         pos_params = [key for key in kwargs if key.startswith('pos')]
         default_freq_shift = kwargs.pop('levit_freq_shift', None)
