@@ -168,11 +168,28 @@ class Motion(Volume):
     general methods
     '''
 
+    def frame_time(
+            self: Self,
+        ):
+        # returns time information related to the current frame
+        frame_time = self._frame_index/self.fps
+        s = self.time_to_string(frame_time)
+        s = s.replace('h', ':').replace('m', ':').replace('s', '')
+        s += f'{frame_time - int(frame_time):.02f}'[1:]
+        return 'Time stamp: ' + s
+
     def new_frame(
             self: Self,
         ) -> int:
         # creates a new frame
         self.update()
+        if self.draft:
+            self.show_info(
+                None,
+                self.frame_time(),
+                None,
+                str(self._frame_index),
+            )
         self.save(
             name=f'{self._frame_index:04d}',
             image_dir=self.frames_dir,

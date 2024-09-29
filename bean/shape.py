@@ -152,24 +152,36 @@ class Shape(Canvas):
         ) -> None:
         # makes the info visible or not
         if self.info_on is None:
-            self.set_shape(key='_info', visible=visible)
+            for corner in self._corners():
+                self.set_shape(key=f'_{corner}_info', visible=visible)
 
     def _info_text(
             self: Self,
-            s: str,
+            info: str,
+            corner: str = 'top_right',
         ) -> None:
         # modifies the text of the info
+        anchor = ''
+        if 'top' in corner:
+            y = self.ymax - self.info_margin
+            anchor += 'north '
+        else:
+            y = self.ymin + self.info_margin
+            anchor += 'south '
+        if 'right' in corner:
+            x = self.xmax - self.info_margin
+            anchor += 'east'
+        else:
+            x = self.xmin + self.info_margin
+            anchor += 'west'
         self.apply_to_shape(
-            key='_info',
+            key=f'_{corner}_info',
             method='set_path',
             path=self.path_from_string(
-                s=s,
-                xy=(
-                    self.xmax - self.info_margin,
-                    self.ymax - self.info_margin,
-                ),
+                s=info,
+                xy=(x, y),
                 height=self.info_height,
-                anchor='north east',
+                anchor=anchor,
             )
         )
 
@@ -243,6 +255,17 @@ class Shape(Canvas):
             anchor=anchor
         ))
         return transform
+
+    @staticmethod
+    def _corners(
+        ) -> list[str]:
+        # returns a list of corners in inverse order of importance
+        return [
+            'bottom_right',
+            'top_left',
+            'bottom_left',
+            'top_right',
+        ]
 
     @staticmethod
     def shift_from_anchor(
@@ -570,21 +593,27 @@ class Shape(Canvas):
             self: Self,
         ) -> None:
         # represents the desired info
-        self.add_path(
-            path=Path([(0, 0)]),
-            key='_info',
-            visible=self.info_on,
-            **self.info_params
-        )
+        for corner in self._corners():
+            self.add_path(
+                path=Path([(0, 0)]),
+                key=f'_{corner}_info',
+                visible=self.info_on,
+                **self.info_params
+            )
 
     def show_info(
             self: Self,
-            s: str = None,
+            top_right_info: str = None,
+            bottom_left_info: str = None,
+            top_left_info: str = None,
+            bottom_right_info: str = None,
         ) -> None:
         # makes the info visible and possibly update the text
         self._info_visible(True)
-        if s is not None:
-            self._info_text(s)
+        for corner in self._corners():
+            info = locals()[f'{corner}_info']
+            if info is not None:
+                self._info_text(info, corner)
 
     def hide_info(
             self: Self,
