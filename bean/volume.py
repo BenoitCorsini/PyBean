@@ -91,7 +91,8 @@ class Volume(Shape):
         # transforms a 3D position into a 2D coordinate
         side, depth, altitude = pos
         shade_shift = self._shade_shift()
-        shade_shift *= (height + altitude)*self.altitude_to_shade
+        # shade_shift *= (height + altitude)*self.altitude_to_shade
+        shade_shift *= altitude*self.altitude_to_shade
         return (
             side + shade_shift[0]/self._depth_exponent,
             depth + shade_shift[1],
@@ -447,7 +448,11 @@ class Volume(Shape):
             raise ValueError(message)
         return only_avoid
 
-    def _get_volume_list(
+    '''
+    general methods
+    '''
+
+    def get_volume_list(
             self: Self,
             only: Any = None,
             avoid: Any = [],
@@ -457,17 +462,13 @@ class Volume(Shape):
         avoid = self._only_avoid_to_list(avoid) 
         return [volume for volume in only if volume not in avoid]
 
-    '''
-    general methods
-    '''
-
     def new_sphere(
             self: Self,
             *args,
             **kwargs,
         ) -> None:
         # creates the basis for a new sphere
-        return self._create_volume(name='sphere', *args, **kwargs)
+        return self._create_volume('sphere', *args, **kwargs)
 
     def new_tube(
             self: Self,
@@ -475,17 +476,18 @@ class Volume(Shape):
             **kwargs,
         ) -> None:
         # creates the basis for a new sphere
-        return self._create_volume(name='tube', *args, **kwargs)
+        return self._create_volume('tube', *args, **kwargs)
 
     def update(
             self: Self,
             only: Any = None,
-            avoid: Any = None,
+            avoid: Any = [],
             **kwargs,
         ) -> None:
         # updates the state of the image
-        volume_list = self._get_volume_list(only, avoid)
-        for volume_kwargs in self._volumes.values():
+        volume_list = self.get_volume_list(only, avoid)
+        for volume in volume_list:
+            volume_kwargs = self._volumes[volume]
             volume_kwargs.update(kwargs)
             self._update_volume(**volume_kwargs)
 

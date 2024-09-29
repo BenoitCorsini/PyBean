@@ -74,24 +74,27 @@ class MotionTests(unittest.TestCase):
         self.mt.reset()
         self.mt.wait(0.2)
         self.mt.new_sphere(
+            'green',
             pos=(0.5, 0.2, 0),
             radius=0.2,
             colour='forestgreen',
         )
         self.mt.wait(0.2, plot_info=True)
-        self.mt.update(pos=(0.1, 0.2, 0), radius=0.1)
+        self.mt.update(only='green', pos=(0.1, 0.2, 0), radius=0.1)
         self.mt.new_sphere(
             pos=(0.8, 0.3, 0),
             radius=0.1,
             colour='crimson',
         )
         self.mt.wait(1, plot_info=True)
+        self.mt.grow('green', end_with=0.5, duration=1.)
+        self.mt.run()
         self.mt.new_sphere(
             pos=(0.5, 0.5, 0),
             radius=0.1,
             colour='gold',
         )
-        self.mt.wait(2., plot_info=True)
+        self.mt.wait(2, plot_info=True)
         self.mt.new_sphere(
             pos=(0, 0.45, 0),
             radius=0.1,

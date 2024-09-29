@@ -43,6 +43,15 @@ class Motion(Volume):
     hidden methods
     '''
 
+    def _add_motion(
+            self: Self,
+            motion: dict,
+        ) -> None:
+        # adds a motion to the current dictionary
+        motion['motion_index'] = self._motion_index
+        self._motions[self._motion_index] = motion
+        self._motion_index += 1
+
     def _frames_to_video(
             self: Self,
             name: str = 'video',
@@ -164,6 +173,63 @@ class Motion(Volume):
             )
         return kwargs
 
+    def _run_motion(
+            self: Self,
+            method: str,
+            **kwargs,
+        ) -> bool:
+        # runs a specific motion and returns whether it is finished or not
+        return getattr(self, method)(**kwargs)
+
+    def _add_grow_sphere(
+            self: Self,
+            volume: Any,
+            start_with: float = 1,
+            end_with: float = 1,
+            duration: Any = 1,
+        ) -> dict:
+        # changes the radius of sphere
+        print('Add growing sphere')
+        if start_with == end_with:
+            print('Did not add motion')
+        motion = {
+            'method' : '_grow_sphere',
+            'volume' : volume,
+            'step' : 0,
+            'duration' : self._get_number_of_frames(duration),
+        }
+        radius = self._volumes[volume]['radius']
+        for timing in ['start', 'end']:
+            timing_with = locals()[f'{timing}_with']
+            if timing_with >= 0:
+                motion[f'{timing}_radius'] = radius*timing_with
+            else:
+                motion[f'{timing}_radius'] = abs(timing_with)
+        print(motion)
+        self._add_motion(motion)
+
+    def _grow_sphere(
+            self: Self,
+            motion_index: int,
+            volume: Any,
+            step: int,
+            duration: Any,
+            start_radius: float,
+            end_radius: float,
+        ) -> bool:
+        # changes the radius of sphere
+        print('In grow sphere')
+        finished = False
+        if step >= duration:
+            step = duration
+            finished = True
+        self._volumes[volume]['radius'] = (
+            start_radius
+            + (end_radius - start_radius)*step/duration
+        )
+        self._motions[motion_index]['step'] = step + 1
+        return finished
+
     '''
     general methods
     '''
@@ -229,6 +295,37 @@ class Motion(Volume):
         if self.print_on:
             sys.stdout.write('\033[F\033[K')
             print('Time to make video: ' + self.time())
+
+    def grow(
+            self: Self,
+            only: Any = None,
+            avoid: Any = [],
+            **kwargs,
+        ) -> None:
+        # grows the volume according to the given parameters
+        volume_list = self.get_volume_list(only, avoid)
+        for volume in volume_list:
+            motion = {
+                'volume' : volume,
+            }
+            motion.update(kwargs)
+            volume_name = self._volumes[volume]['name']
+            getattr(self, f'_add_grow_{volume_name}')(**motion)
+
+    def run(
+            self: Self,
+        ) -> None:
+        # runs through the current motions
+        while self._motions:
+            finished_motions = []
+            for index, motion in self._motions.items():
+                finished = self._run_motion(**motion)
+                if finished:
+                    finished_motions.append(index)
+            for index in finished_motions:
+                del self._motions[index]
+            self.new_frame()
+
 
     '''
     main method
