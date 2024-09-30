@@ -173,6 +173,28 @@ class Motion(Volume):
             )
         return kwargs
 
+    def _create_motion(
+            self: Self,
+            method: str,
+            only: Any = None,
+            avoid: Any = [],
+            duration: Any = 1,
+            **kwargs,
+        ) -> Self:
+        # change the radius of the volume according to the given parameters
+        volume_list = self.get_volume_list(only, avoid)
+        for volume in volume_list:
+            volume_name = self._volumes[volume]['name']
+            motion = {
+                'volume' : volume,
+                'duration' : self._get_number_of_frames(duration),
+                'method' : f'_apply_{method}_{volume_name}',
+                'step' : 0,
+            }
+            motion.update(kwargs)
+            getattr(self, f'_add_{method}_{volume_name}')(**motion)
+        return self
+
     def _run_motion(
             self: Self,
             method: str,
@@ -186,19 +208,17 @@ class Motion(Volume):
             volume: Any,
             start_with: float = 1,
             end_with: float = 1,
-            duration: Any = 1,
             centred: bool = True,
+            **kwargs,
         ) -> None:
         # changes the radius of sphere
         if start_with == end_with:
             return None
         motion = {
-            'method' : '_change_radius_sphere',
             'volume' : volume,
-            'step' : 0,
-            'duration' : self._get_number_of_frames(duration),
             'centred' : centred,
         }
+        motion.update(kwargs)
         radius = self._volumes[volume]['radius']
         for timing in ['start', 'end']:
             timing_with = locals()[f'{timing}_with']
@@ -208,7 +228,7 @@ class Motion(Volume):
                 motion[f'{timing}_radius'] = abs(timing_with)
         self._add_motion(motion)
 
-    def _change_radius_sphere(
+    def _apply_change_radius_sphere(
             self: Self,
             motion_index: int,
             volume: Any,
@@ -307,20 +327,11 @@ class Motion(Volume):
 
     def change_radius(
             self: Self,
-            only: Any = None,
-            avoid: Any = [],
+            *args,
             **kwargs,
         ) -> Self:
-        # change the radius of the volume according to the given parameters
-        volume_list = self.get_volume_list(only, avoid)
-        for volume in volume_list:
-            motion = {
-                'volume' : volume,
-            }
-            motion.update(kwargs)
-            volume_name = self._volumes[volume]['name']
-            getattr(self, f'_add_change_radius_{volume_name}')(**motion)
-        return self
+        # changes a volume radius
+        return self._create_motion('change_radius', *args, **kwargs)
 
     def grow(
             self: Self,
