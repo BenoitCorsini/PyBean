@@ -84,22 +84,25 @@ class MotionTests(unittest.TestCase):
             pos=(0.6, 0.3, 0),
             radius=0.2,
             colour='gold',
-        ).grow('yellow', duration=0.5).run().wait(0.1)
+        ).grow('yellow', duration=0.5).appear('yellow', duration=0.25).run().wait(0.1)
         self.mt.new_sphere(
             'green',
             pos=(0.85, 0.15, 0),
             radius=0.2,
             colour='forestgreen',
             alpha=0.5,
-        ).grow('green', duration=0.5, centred=False).run().wait(0.1)
+        ).appear('green', duration=1.).grow('green', duration=0.5, centred=False).run().wait(0.1)
         self.mt.new_sphere(
             'red',
             pos=(0.3, 0.5, 0.1),
             radius=0.1,
             colour='crimson',
-        ).grow('red sphere', duration=0.5).run().wait(0.1)
+        ).grow('red', duration=0.5).run().wait(0.1)
+        self.mt.disappear('green', duration=0.5).run()
         self.mt.schrink(avoid='blue', duration=0.5).run().wait(0.1)
-        self.mt.schrink(duration=0.5).run().wait(0.1)
+        self.mt.update(alpha=1)
+        self.mt.change_radius(start_with=1, end_with=-0.2, duration=0.5).run()
+        self.mt.schrink(duration=0.5).disappear(duration=0.5).run().wait(0.1)
         self.mt.video()
 
 

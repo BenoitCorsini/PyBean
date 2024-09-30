@@ -198,11 +198,19 @@ class Motion(Volume):
     def _run_motion(
             self: Self,
             method: str,
+            motion_index: int,
             step: int,
+            duration: int,
             **kwargs,
         ) -> bool:
         # runs a specific motion and returns whether it is finished or not
-        return getattr(self, method)(step=step, **kwargs)
+        finished = False
+        if step >= duration:
+            step = duration
+            finished = True
+        self._motions[motion_index]['step'] = step + 1
+        getattr(self, method)(step=step, duration=duration, **kwargs)
+        return finished
 
     def _add_change_radius_sphere(
             self: Self,
@@ -220,7 +228,7 @@ class Motion(Volume):
             'centred' : centred,
         }
         motion.update(kwargs)
-        radius = self._volumes[volume]['radius']
+        radius = self._volumes[volume].get('radius', 1)
         for timing in ['start', 'end']:
             timing_with = locals()[f'{timing}_with']
             if timing_with >= 0:
@@ -231,7 +239,6 @@ class Motion(Volume):
 
     def _apply_change_radius_sphere(
             self: Self,
-            motion_index: int,
             volume: Any,
             step: int,
             duration: Any,
@@ -240,25 +247,56 @@ class Motion(Volume):
             centred: bool,
         ) -> bool:
         # changes the radius of sphere
-        finished = False
-        if step >= duration:
-            step = duration
-            finished = True
         delta_radius = (end_radius - start_radius)/duration
         radius = start_radius + step*delta_radius
-        delta_altitude = max(start_radius, end_radius) - radius
-        self._volumes[volume]['radius'] = radius
         pos = self._volumes[volume].get('pos', None)
         if pos is not None and centred:
             if not step:
-                delta_radius = min(0, start_radius -  end_radius)
+                if start_radius != self._volumes[volume]['radius']:
+                    delta_radius = min(0, start_radius -  end_radius)
+                else:
+                    delta_radius = 0
             self._volumes[volume]['pos'] = (
                 pos[0],
                 pos[1],
                 pos[2] - delta_radius,
             )
-        self._motions[motion_index]['step'] = step + 1
-        return finished
+        self._volumes[volume]['radius'] = radius
+
+    def _add_change_alpha_sphere(
+            self: Self,
+            volume: Any,
+            start_with: float = 1,
+            end_with: float = 1,
+            **kwargs,
+        ) -> None:
+        # changes the radius of sphere
+        if start_with == end_with:
+            return None
+        motion = {
+            'volume' : volume,
+        }
+        motion.update(kwargs)
+        alpha = self._volumes[volume].get('alpha', 1)
+        for timing in ['start', 'end']:
+            timing_with = locals()[f'{timing}_with']
+            if timing_with >= 0:
+                motion[f'{timing}_alpha'] = alpha*timing_with
+            else:
+                motion[f'{timing}_alpha'] = abs(timing_with)
+        self._add_motion(motion)
+
+    def _apply_change_alpha_sphere(
+            self: Self,
+            volume: Any,
+            step: int,
+            duration: Any,
+            start_alpha: float,
+            end_alpha: float,
+        ) -> bool:
+        # changes the radius of sphere
+        alpha = start_alpha + (end_alpha - start_alpha)*step/duration
+        self._volumes[volume]['alpha'] = alpha
 
     '''
     general methods
@@ -326,6 +364,21 @@ class Motion(Volume):
             sys.stdout.write('\033[F\033[K')
             print('Time to make video: ' + self.time())
 
+    def run(
+            self: Self,
+        ) -> Self:
+        # runs through the current motions
+        while self._motions:
+            finished_motions = []
+            for index, motion in self._motions.items():
+                finished = self._run_motion(**motion)
+                if finished:
+                    finished_motions.append(index)
+            for index in finished_motions:
+                del self._motions[index]
+            self.new_frame()
+        return self
+
     def change_radius(
             self: Self,
             *args,
@@ -354,21 +407,33 @@ class Motion(Volume):
         kwargs['end_with'] = 0
         return self.change_radius(*args, **kwargs)
 
-    def run(
+    def change_alpha(
             self: Self,
+            *args,
+            **kwargs,
         ) -> Self:
-        # runs through the current motions
-        while self._motions:
-            finished_motions = []
-            for index, motion in self._motions.items():
-                finished = self._run_motion(**motion)
-                if finished:
-                    finished_motions.append(index)
-            for index in finished_motions:
-                del self._motions[index]
-            self.new_frame()
-        return self
+        # changes a volume radius
+        return self._create_motion('change_alpha', *args, **kwargs)
 
+    def appear(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # makes a volume appear
+        kwargs['start_with'] = 0
+        kwargs['end_with'] = 1
+        return self.change_alpha(*args, **kwargs)
+
+    def disappear(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # makes a volume disappear
+        kwargs['start_with'] = 1
+        kwargs['end_with'] = 0
+        return self.change_alpha(*args, **kwargs)
 
     '''
     main method
