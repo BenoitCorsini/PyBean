@@ -181,21 +181,23 @@ class Motion(Volume):
         # runs a specific motion and returns whether it is finished or not
         return getattr(self, method)(**kwargs)
 
-    def _add_grow_sphere(
+    def _add_change_radius_sphere(
             self: Self,
             volume: Any,
             start_with: float = 1,
             end_with: float = 1,
             duration: Any = 1,
+            centred: bool = True,
         ) -> None:
         # changes the radius of sphere
         if start_with == end_with:
             return None
         motion = {
-            'method' : '_grow_sphere',
+            'method' : '_change_radius_sphere',
             'volume' : volume,
             'step' : 0,
             'duration' : self._get_number_of_frames(duration),
+            'centred' : centred,
         }
         radius = self._volumes[volume]['radius']
         for timing in ['start', 'end']:
@@ -206,7 +208,7 @@ class Motion(Volume):
                 motion[f'{timing}_radius'] = abs(timing_with)
         self._add_motion(motion)
 
-    def _grow_sphere(
+    def _change_radius_sphere(
             self: Self,
             motion_index: int,
             volume: Any,
@@ -214,16 +216,26 @@ class Motion(Volume):
             duration: Any,
             start_radius: float,
             end_radius: float,
+            centred: bool,
         ) -> bool:
         # changes the radius of sphere
         finished = False
         if step >= duration:
             step = duration
             finished = True
-        self._volumes[volume]['radius'] = (
-            start_radius
-            + (end_radius - start_radius)*step/duration
-        )
+        delta_radius = (end_radius - start_radius)/duration
+        radius = start_radius + step*delta_radius
+        delta_altitude = max(start_radius, end_radius) - radius
+        self._volumes[volume]['radius'] = radius
+        pos = self._volumes[volume].get('pos', None)
+        if pos is not None and centred:
+            if not step:
+                delta_radius = min(0, start_radius -  end_radius)
+            self._volumes[volume]['pos'] = (
+                pos[0],
+                pos[1],
+                pos[2] - delta_radius,
+            )
         self._motions[motion_index]['step'] = step + 1
         return finished
 
@@ -293,13 +305,13 @@ class Motion(Volume):
             sys.stdout.write('\033[F\033[K')
             print('Time to make video: ' + self.time())
 
-    def grow(
+    def change_radius(
             self: Self,
             only: Any = None,
             avoid: Any = [],
             **kwargs,
         ) -> Self:
-        # grows the volume according to the given parameters
+        # change the radius of the volume according to the given parameters
         volume_list = self.get_volume_list(only, avoid)
         for volume in volume_list:
             motion = {
@@ -307,10 +319,10 @@ class Motion(Volume):
             }
             motion.update(kwargs)
             volume_name = self._volumes[volume]['name']
-            getattr(self, f'_add_grow_{volume_name}')(**motion)
+            getattr(self, f'_add_change_radius_{volume_name}')(**motion)
         return self
 
-    def appear(
+    def grow(
             self: Self,
             *args,
             **kwargs,
@@ -318,9 +330,9 @@ class Motion(Volume):
         # makes a volume appear
         kwargs['start_with'] = 0
         kwargs['end_with'] = 1
-        return self.grow(*args, **kwargs)
+        return self.change_radius(*args, **kwargs)
 
-    def disappear(
+    def schrink(
             self: Self,
             *args,
             **kwargs,
@@ -328,7 +340,7 @@ class Motion(Volume):
         # makes a volume disappear
         kwargs['start_with'] = 1
         kwargs['end_with'] = 0
-        return self.grow(*args, **kwargs)
+        return self.change_radius(*args, **kwargs)
 
     def run(
             self: Self,

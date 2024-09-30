@@ -71,35 +71,35 @@ class MotionTests(unittest.TestCase):
 
     def test_main(self):
         # self.mt.draft = True
-        # self.mt.levitation_mode = 'off'
-        # self.mt.scale = 0.5
+        self.mt.levitation_mode = 'off'
         self.mt.reset().wait(0.1)
         self.mt.new_sphere(
-            'blue sphere',
+            'blue',
             pos=(0.2, 0.1, 0),
             radius=0.2,
             colour='royalblue',
-        ).wait(1.)
+        ).grow('blue', duration=0.5, centred=False).run().wait(0.1)
         self.mt.new_sphere(
-            'yellow sphere',
+            'yellow',
             pos=(0.6, 0.3, 0),
             radius=0.2,
             colour='gold',
-        ).wait(1.)
+        ).grow('yellow', duration=0.5).run().wait(0.1)
         self.mt.new_sphere(
-            'green sphere',
+            'green',
             pos=(0.85, 0.15, 0),
             radius=0.2,
             colour='forestgreen',
-        ).appear('green sphere', duration=1.).run().wait(1.)
+            alpha=0.5,
+        ).grow('green', duration=0.5, centred=False).run().wait(0.1)
         self.mt.new_sphere(
-            'red sphere',
+            'red',
             pos=(0.3, 0.5, 0.1),
             radius=0.1,
             colour='crimson',
-        ).appear('red sphere', duration=0.2).run().wait(7.)
-        self.mt.disappear(avoid='blue sphere', duration=1.).run().wait(1.)
-        self.mt.disappear(duration=0.2).run().wait(0.5)
+        ).grow('red sphere', duration=0.5).run().wait(0.1)
+        self.mt.schrink(avoid='blue', duration=0.5).run().wait(0.1)
+        self.mt.schrink(duration=0.5).run().wait(0.1)
         self.mt.video()
 
 
