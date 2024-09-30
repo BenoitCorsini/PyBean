@@ -270,11 +270,11 @@ class Motion(Volume):
             self: Self,
             *args,
             **kwargs,
-        ) -> int:
+        ) -> Self:
         # waits before next motion
         for _ in range(self._get_number_of_frames(*args, **kwargs)):
-            output = self.new_frame()
-        return output
+            self.new_frame()
+        return Self
 
     def video(
             self: Self,
@@ -298,7 +298,7 @@ class Motion(Volume):
             only: Any = None,
             avoid: Any = [],
             **kwargs,
-        ) -> None:
+        ) -> Self:
         # grows the volume according to the given parameters
         volume_list = self.get_volume_list(only, avoid)
         for volume in volume_list:
@@ -308,30 +308,31 @@ class Motion(Volume):
             motion.update(kwargs)
             volume_name = self._volumes[volume]['name']
             getattr(self, f'_add_grow_{volume_name}')(**motion)
+        return self
 
     def appear(
             self: Self,
             *args,
             **kwargs,
-        ) -> None:
+        ) -> Self:
         # makes a volume appear
         kwargs['start_with'] = 0
         kwargs['end_with'] = 1
-        self.grow(*args, **kwargs)
+        return self.grow(*args, **kwargs)
 
     def disappear(
             self: Self,
             *args,
             **kwargs,
-        ) -> None:
+        ) -> Self:
         # makes a volume disappear
         kwargs['start_with'] = 1
         kwargs['end_with'] = 0
-        self.grow(*args, **kwargs)
+        return self.grow(*args, **kwargs)
 
     def run(
             self: Self,
-        ) -> None:
+        ) -> Self:
         # runs through the current motions
         while self._motions:
             finished_motions = []
@@ -342,6 +343,7 @@ class Motion(Volume):
             for index in finished_motions:
                 del self._motions[index]
             self.new_frame()
+        return self
 
 
     '''

@@ -64,6 +64,10 @@ class VolumeTests(unittest.TestCase):
             []
         )
 
+    '''
+    general methods
+    '''
+
     def test_volume_list(self):
         self.vl._volumes = {
             'a1' : {'name' : 'a'},
@@ -73,39 +77,39 @@ class VolumeTests(unittest.TestCase):
             'b3' : {'name' : 'b'},
         }
         self.assertEqual(
-            self.vl._get_volume_list(),
+            self.vl.get_volume_list(),
             ['a1', 'a2', 'b1', 'b2', 'b3']
         )
         self.assertEqual(
-            self.vl._get_volume_list(avoid=None),
+            self.vl.get_volume_list(avoid=None),
             []
         )
         self.assertEqual(
-            self.vl._get_volume_list(only='a'),
+            self.vl.get_volume_list(only='a'),
             ['a1', 'a2']
         )
         self.assertEqual(
-            self.vl._get_volume_list(avoid='a'),
+            self.vl.get_volume_list(avoid='a'),
             ['b1', 'b2', 'b3']
         )
         self.assertEqual(
-            self.vl._get_volume_list(only='a', avoid='a1'),
+            self.vl.get_volume_list(only='a', avoid='a1'),
             ['a2']
         )
         self.assertEqual(
-            self.vl._get_volume_list(only='a', avoid='b'),
+            self.vl.get_volume_list(only='a', avoid='b'),
             ['a1', 'a2']
         )
         self.assertEqual(
-            self.vl._get_volume_list(only=['a1', 'b1'], avoid='a'),
+            self.vl.get_volume_list(only=['a1', 'b1'], avoid='a'),
             ['b1']
         )
         self.assertEqual(
-            self.vl._get_volume_list(only=['a1', 'b1', 'b2'], avoid='b'),
+            self.vl.get_volume_list(only=['a1', 'b1', 'b2'], avoid='b'),
             ['a1']
         )
         self.assertEqual(
-            self.vl._get_volume_list(only=['a1', 'b1', 'b2'], avoid='b2'),
+            self.vl.get_volume_list(only=['a1', 'b1', 'b2'], avoid='b2'),
             ['a1', 'b1']
         )
 

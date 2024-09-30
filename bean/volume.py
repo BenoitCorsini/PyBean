@@ -157,7 +157,7 @@ class Volume(Shape):
             name: str,
             key: Any = None,
             **kwargs,
-        ) -> None:
+        ) -> Self:
         # creates the basis for a new volume
         key, available = self.key_checker(key=key, category='volume')
         if available:
@@ -167,7 +167,7 @@ class Volume(Shape):
             self._volumes[key] = volume
         else:
             volume = self._volumes[key]
-        return volume
+        return self
 
     def _update_sphere(
             self: Self,
@@ -178,9 +178,19 @@ class Volume(Shape):
             xy: (float, float) = (0, 0),
             radius: float = 1,
             colour: str = None,
+            shade_colour: str = None,
+            visible: bool = True,
+            alpha: float = 1,
         ) -> None:
         # updates the sphere
+        if not visible:
+            self.set_shape(key=main, visible=False)
+            for key in side:
+                self.set_shape(key=key, visible=False)
+            self.set_shape(key=shade, visible=False)
+            return None
         if pos is not None:
+            altitude = pos[2]
             xy = self._pos_to_xy(pos, height=radius)
             if not self.draft:
                 shade_pos = self._pos_to_shade_pos(pos, height=radius)
@@ -192,6 +202,7 @@ class Volume(Shape):
             radius *= scale
             zorder = scale
         else:
+            altitude = 0
             radius *= self.scale
             xy = (xy[0]*self.scale, xy[1]*self.scale)
             zorder = 0
@@ -200,7 +211,12 @@ class Volume(Shape):
                 shade_radius = radius
         path = self.curve_path(xy=xy, a=radius)
         self.apply_to_shape('set_path', key=main, path=path)
-        clipper = self.set_shape(key=main, color=colour, zorder=zorder)
+        clipper = self.set_shape(
+            key=main,
+            color=colour,
+            zorder=zorder,
+            alpha=alpha,
+        )
         if not self.draft:
             for key, ratio in zip(side, self.round_sides):
                 path = self.merge_curves(*self.crescent_paths(
@@ -212,17 +228,23 @@ class Volume(Shape):
                     angle=self.shade_angle,
                 ))
                 self.apply_to_shape('set_path', key=key, path=path)
-                self.set_shape(key=key, clip_path=clipper, zorder=zorder)
+                self.set_shape(
+                    key=key,
+                    clip_path=clipper,
+                    zorder=zorder,
+                    alpha=alpha*self.round_sides[ratio],
+                )
             path = self.curve_path(
                 xy=shade_xy,
                 a=shade_radius,
                 b=shade_radius*np.cos(self.horizon_angle*np.pi/180),
             )
             self.apply_to_shape('set_path', key=shade, path=path)
-            shade_colour = self.get_cmap(['white', clipper.get_fc()])(
-                self.shade_cmap_ratio
-            )
-            self.set_shape(key=shade, color=shade_colour)
+            if shade_colour is None:
+                shade_colour = self.get_cmap(['white', clipper.get_fc()])(
+                    self.shade_cmap_ratio
+                )
+            self.set_shape(key=shade, color=shade_colour, alpha=alpha)
 
     def _update_tube(
             self: Self,
@@ -236,10 +258,19 @@ class Volume(Shape):
             xy2: (float, float) = (0, 0),
             radius2: float = None,
             colour: str = None,
+            shade_colour: str = None,
             slope: str = 'flat',
+            visible: bool = True,
+            alpha: float = 1,
 
         ) -> None:
         # updates the tube
+        if not visible:
+            self.set_shape(key=main, visible=False)
+            for key in side:
+                self.set_shape(key=key, visible=False)
+            self.set_shape(key=shade, visible=False)
+            return None
         if radius2 is None:
             radius2 = radius1
         variables = {}
@@ -297,7 +328,12 @@ class Volume(Shape):
                 theta2=(2*index - 3)*(90 + around_angle),
             ) for index in [1, 2]])
             self.apply_to_shape('set_path', key=main, path=path)
-        clipper = self.set_shape(key=main, color=colour, zorder=zorder)
+        clipper = self.set_shape(
+            key=main,
+            color=colour,
+            zorder=zorder,
+            alpha=alpha,
+        )
         if not self.draft:
             theta1 = self.normalize_angle(
                 90 + around_angle + angle - self.shade_angle
@@ -355,11 +391,17 @@ class Volume(Shape):
                 inners, outers = zip(*paths)
                 path = self.merge_curves(*(inners[::-1] + outers))
                 self.apply_to_shape('set_path', key=key, path=path)
-                self.set_shape(key=key, clip_path=clipper, zorder=zorder)
-            shade_colour = self.get_cmap(['white', clipper.get_fc()])(
-                self.shade_cmap_ratio
-            )
-            self.set_shape(key=shade, color=shade_colour)
+                self.set_shape(
+                    key=key,
+                    clip_path=clipper,
+                    zorder=zorder,
+                    alpha=alpha*self.round_sides[ratio],
+                )
+            if shade_colour is None:
+                shade_colour = self.get_cmap(['white', clipper.get_fc()])(
+                    self.shade_cmap_ratio
+                )
+            self.set_shape(key=shade, color=shade_colour, alpha=alpha)
             distance = self.distance_from_xy(
                 variables['shade_xy1'],
                 variables['shade_xy2'],
@@ -466,7 +508,7 @@ class Volume(Shape):
             self: Self,
             *args,
             **kwargs,
-        ) -> None:
+        ) -> Self:
         # creates the basis for a new sphere
         return self._create_volume('sphere', *args, **kwargs)
 
@@ -474,7 +516,7 @@ class Volume(Shape):
             self: Self,
             *args,
             **kwargs,
-        ) -> None:
+        ) -> Self:
         # creates the basis for a new sphere
         return self._create_volume('tube', *args, **kwargs)
 
@@ -483,13 +525,14 @@ class Volume(Shape):
             only: Any = None,
             avoid: Any = [],
             **kwargs,
-        ) -> None:
+        ) -> Self:
         # updates the state of the image
         volume_list = self.get_volume_list(only, avoid)
         for volume in volume_list:
             volume_kwargs = self._volumes[volume]
             volume_kwargs.update(kwargs)
             self._update_volume(**volume_kwargs)
+        return self
 
     '''
     main method

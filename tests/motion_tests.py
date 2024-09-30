@@ -72,47 +72,34 @@ class MotionTests(unittest.TestCase):
     def test_main(self):
         # self.mt.draft = True
         # self.mt.levitation_mode = 'off'
-        self.mt.scale = 0.5
-        self.mt.reset()
-        self.mt.wait(0.1)
+        # self.mt.scale = 0.5
+        self.mt.reset().wait(0.1)
         self.mt.new_sphere(
             'blue sphere',
             pos=(0.2, 0.1, 0),
             radius=0.2,
             colour='royalblue',
-        )
-        self.mt.wait(1.)
+        ).wait(1.)
         self.mt.new_sphere(
             'yellow sphere',
             pos=(0.6, 0.3, 0),
             radius=0.2,
             colour='gold',
-        )
-        self.mt.wait(1.)
+        ).wait(1.)
         self.mt.new_sphere(
             'green sphere',
             pos=(0.85, 0.15, 0),
             radius=0.2,
             colour='forestgreen',
-        )
-        self.mt.appear('green sphere', duration=1.)
-        self.mt.run()
-        self.mt.wait(1.)
+        ).appear('green sphere', duration=1.).run().wait(1.)
         self.mt.new_sphere(
             'red sphere',
             pos=(0.3, 0.5, 0.1),
             radius=0.1,
             colour='crimson',
-        )
-        self.mt.appear('red sphere', duration=0.2)
-        self.mt.run()
-        self.mt.wait(7.)
-        self.mt.disappear(avoid='blue sphere', duration=1.)
-        self.mt.run()
-        self.mt.wait(1.)
-        self.mt.disappear(duration=0.2)
-        self.mt.run()
-        self.mt.wait(0.5)
+        ).appear('red sphere', duration=0.2).run().wait(7.)
+        self.mt.disappear(avoid='blue sphere', duration=1.).run().wait(1.)
+        self.mt.disappear(duration=0.2).run().wait(0.5)
         self.mt.video()
 
 
