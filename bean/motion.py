@@ -198,10 +198,11 @@ class Motion(Volume):
     def _run_motion(
             self: Self,
             method: str,
+            step: int,
             **kwargs,
         ) -> bool:
         # runs a specific motion and returns whether it is finished or not
-        return getattr(self, method)(**kwargs)
+        return getattr(self, method)(step=step, **kwargs)
 
     def _add_change_radius_sphere(
             self: Self,
