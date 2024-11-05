@@ -1,6 +1,7 @@
 import sys
 import unittest
 import numpy as np
+import cv2
 
 sys.path.append('.')
 
@@ -66,11 +67,11 @@ class MotionTests(unittest.TestCase):
         self.assertEqual(self.mt.fps, self.mt._get_number_of_frames(key='test'))
 
     '''
-    main method
+    video methods
     '''
 
-    def test_main(self):
-        # self.mt.draft = True
+    def test_appear_disappear(self):
+        self.mt.draft = True
         self.mt.levitation_mode = 'off'
         self.mt.reset().wait(0.1)
         self.mt.new_sphere(
@@ -84,7 +85,8 @@ class MotionTests(unittest.TestCase):
             pos=(0.6, 0.3, 0),
             radius=0.2,
             colour='gold',
-        ).grow('yellow', duration=0.5).appear('yellow', duration=0.25).run().wait(0.1)
+            alpha=0.1,
+        ).grow('yellow', duration=0.5).change_alpha('yellow', start_with=1, end_with=-1, duration=0.1, delay=0.4).run().wait(0.1)
         self.mt.new_sphere(
             'green',
             pos=(0.85, 0.15, 0),
@@ -99,6 +101,7 @@ class MotionTests(unittest.TestCase):
             colour='crimson',
         ).grow('red', duration=0.5).run().wait(0.1)
         self.mt.disappear('green', duration=0.5).run()
+        self.mt.appear('green', use_current_alpha=False, duration=0.5).run()
         self.mt.schrink(avoid='blue', duration=0.5).run().wait(0.1)
         self.mt.update(alpha=1)
         self.mt.change_radius(start_with=1, end_with=-0.2, duration=0.5).run()

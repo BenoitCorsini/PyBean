@@ -179,6 +179,7 @@ class Motion(Volume):
             only: Any = None,
             avoid: Any = [],
             duration: Any = 1,
+            delay: Any = 0,
             **kwargs,
         ) -> Self:
         # change the radius of the volume according to the given parameters
@@ -189,7 +190,7 @@ class Motion(Volume):
                 'volume' : volume,
                 'duration' : self._get_number_of_frames(duration),
                 'method' : f'_apply_{method}_{volume_name}',
-                'step' : 0,
+                'step' : 1 - self._get_number_of_frames(delay),
             }
             motion.update(kwargs)
             getattr(self, f'_add_{method}_{volume_name}')(**motion)
@@ -209,7 +210,8 @@ class Motion(Volume):
             step = duration
             finished = True
         self._motions[motion_index]['step'] = step + 1
-        getattr(self, method)(step=step, duration=duration, **kwargs)
+        if step >= 1:
+            getattr(self, method)(step=step, duration=duration, **kwargs)
         return finished
 
     def _add_change_radius_sphere(
@@ -418,11 +420,14 @@ class Motion(Volume):
     def appear(
             self: Self,
             *args,
+            use_current_alpha: bool = True,
             **kwargs,
         ) -> Self:
         # makes a volume appear
         kwargs['start_with'] = 0
         kwargs['end_with'] = 1
+        if not use_current_alpha:
+            kwargs['end_with'] *= -1
         return self.change_alpha(*args, **kwargs)
 
     def disappear(
