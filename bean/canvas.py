@@ -181,58 +181,6 @@ class Canvas(object):
         else:
             return f'{seconds}s'
 
-    @staticmethod
-    def angle_shift(
-            angle: float = 0,
-            two_dim: bool = False,
-        ) -> np.array:
-        # returns a vector for shifting in the angle direction
-        shift = np.array([
-            np.cos(np.pi*angle/180),
-            np.sin(np.pi*angle/180),
-        ])
-        if two_dim:
-            shift = shift.reshape((1, 2))
-        return shift
-
-    @staticmethod
-    def angle_from_xy(
-            xy1: (float, float),
-            xy2: (float, float),
-        ) -> float:
-        # computes the angle formed by the two positions
-        vector = np.array(xy2) - np.array(xy1)
-        norm = np.sum(vector**2)**0.5
-        if not norm:
-            return 0.
-        vector = vector/norm
-        angle = np.arccos(vector[0])
-        if vector[1] < 0:
-            angle *= -1
-        return angle*180/np.pi
-
-    @staticmethod
-    def distance_from_xy(
-            xy1: (float, float),
-            xy2: (float, float),
-        ) -> float:
-        # computes the angle formed by the two positions
-        distance = np.array(xy2) - np.array(xy1)
-        distance = np.sum(distance**2)**0.5
-        return distance
-
-    @staticmethod
-    def normalize_angle(
-            angle: float,
-            lower_bound: float = -180,
-        ) -> float:
-        # sets an angle to (lower_bound, lower_bound + 360]
-        while angle <= lower_bound:
-            angle += 360
-        while angle > lower_bound + 360:
-            angle -= 360
-        return angle
-
     '''
     general methods
     '''
@@ -265,12 +213,10 @@ class Canvas(object):
     def save(
             self: Self,
             name: str = 'image',
-            image_dir: str = None,
+            image_dir: str = '.',
             transparent: bool = False,
         ) -> None:
         # saves the current state of the figure
-        if image_dir is None:
-            image_dir = '.'
         if not osp.exists(image_dir):
             os.makedirs(image_dir)
         self.fig.savefig(

@@ -1,6 +1,7 @@
 import sys
 import unittest
 import numpy as np
+import numpy.random as npr
 from matplotlib.transforms import Affine2D, Bbox
 
 sys.path.append('.')
@@ -114,6 +115,112 @@ class ShapeTests(unittest.TestCase):
         self.assertEqual(self.sh._num_to_string(1.234, True, False), '1')
         self.assertEqual(self.sh._num_to_string(1.234, False, True), '1.2')
         self.assertEqual(self.sh._num_to_string(1.234, True, True), '1')
+
+    def test_angle_shift(self):
+        angles = [0, 45, 90, 180, 225, 360, 720]
+        arrays = [
+            np.array([1, 0]),
+            np.array([1, 1])*np.sqrt(2)/2,
+            np.array([0, 1]),
+            np.array([-1, 0]),
+            np.array([-1, -1])*np.sqrt(2)/2,
+            np.array([1, 0]),
+            np.array([1, 0]),
+        ]
+        for angle, array in zip(angles, arrays):
+            one_dim = self.sh.angle_shift(angle)
+            two_dim = self.sh.angle_shift(angle, two_dim=True)
+            self.assertTrue(np.all(np.abs(one_dim - array) < 1e-10))
+            self.assertTrue(np.all(np.abs(two_dim - array) < 1e-10))
+            self.assertEqual(one_dim.shape, (2, ))
+            self.assertEqual(two_dim.shape, (1, 2))
+
+    def test_xy_angle(self):
+        for mult in [0, 1, 2, 10]:
+            for shift in [(0, 0), (1, 1), (1/3, -5**0.5)]:
+                self.assertEqual(
+                    round(self.sh.angle_from_xy(
+                        (shift[0], shift[1]),
+                        (shift[0] + mult, shift[1]),
+                    ), 10),
+                    0
+                )
+                self.assertEqual(
+                    round(self.sh.angle_from_xy(
+                        (shift[0], shift[1]),
+                        (shift[0] + mult, shift[1] + mult),
+                    ), 10),
+                    45*(mult > 0)
+                )
+                self.assertEqual(
+                    round(self.sh.angle_from_xy(
+                        (shift[0], shift[1]),
+                        (shift[0] - mult, shift[1]),
+                    ), 10),
+                    180*(mult > 0)
+                )
+                self.assertEqual(
+                    round(self.sh.angle_from_xy(
+                        (shift[0], shift[1]),
+                        (shift[0] - mult*3**0.5/2, shift[1] - mult/2),
+                    ), 10),
+                    -150*(mult > 0)
+                )
+
+    def text_xy_distance(self):
+        for mult in [0, 1, 2, 10]:
+            for shift in [(0, 0), (1, 1), (1/3, -5**0.5)]:
+                self.assertEqual(
+                    round(self.sh.distance_from_xy(
+                        (shift[0], shift[1]),
+                        (shift[0] + mult, shift[1]),
+                    ), 10),
+                    mult
+                )
+                self.assertEqual(
+                    round(self.sh.distance_from_xy(
+                        (shift[0], shift[1]),
+                        (shift[0] + mult, shift[1] + mult),
+                    ), 10),
+                    round(mult*2**0.5, 10)
+                )
+                self.assertEqual(
+                    round(self.sh.distance_from_xy(
+                        (shift[0], shift[1]),
+                        (shift[0] - mult, shift[1]),
+                    ), 10),
+                    mult
+                )
+                self.assertEqual(
+                    round(self.sh.distance_from_xy(
+                        (shift[0], shift[1]),
+                        (shift[0] - mult*3**0.5/2, shift[1] - mult/2),
+                    ), 10),
+                    mult
+                )
+
+    def test_normalized_angle(self):
+        for angle in [1e-5 - 180, -90, 0, 123, 180]:
+            for mult in npr.randint(100, size=10):
+                self.assertEqual(
+                    round(self.sh.normalize_angle(angle + mult*360), 10),
+                    angle
+                )
+        for angle in [1e-5, 90, 123, 360]:
+            for mult in npr.randint(100, size=10):
+                self.assertEqual(
+                    round(self.sh.normalize_angle(angle + mult*360, 0), 10),
+                    angle
+                )
+        for angle in [1e-5 - 0.6, 0, 123, 359]:
+            for mult in npr.randint(100, size=10):
+                self.assertEqual(
+                    round(self.sh.normalize_angle(
+                        angle + mult*360,
+                        -0.6,
+                    ), 10),
+                    angle
+                )
 
     def test_anchor_shift(self):
         bbox = Bbox([[0, 0], [2, 2]])
