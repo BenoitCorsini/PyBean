@@ -10,8 +10,8 @@ DEFAULT = {
     # shape
     'copyright_on' : None,
     'copyright' : {
-        'text' : '@B.Corsini',
-        'height' : 0.05,
+        'text' : 'MathemaSixte',
+        'height' : 0.07,
         'margin' : 0.02,
         'lw' : 2,
         'ec' : 'grey',
