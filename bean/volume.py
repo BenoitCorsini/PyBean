@@ -16,6 +16,7 @@ class Volume(Shape):
         'horizon_angle' : float,
         'depth_shift' : float,
         'depth_scale' : float,
+        'side_scale' : float,
         'shade_angle' : float,
         'altitude_to_shade' : float,
         'shade_cmap_ratio' : float,
@@ -54,28 +55,41 @@ class Volume(Shape):
             two_dim=two_dim,
         )
 
+    def _normalize_pos(
+            self: Self,
+            pos: tuple[float],
+        ) -> (float, float, float):
+        # normalize a position into a triplet
+        if '__len__' not in dir(pos):
+            raise ValueError(f'Position is not a tuple: {pos}')
+        elif len(pos) == 2:
+            return pos[0], pos[1], 0
+        elif len(pos) != 3:
+            raise ValueError(f'Position with a wrong length: {pos}')
+        return tuple(pos)
+
     def _pos_to_scale(
             self: Self,
-            pos: (float, float, float),
+            pos: tuple[float],
         ) -> float:
         # transforms a position into the corresponding scale
-        _, depth, _ = pos
+        _, depth, _ = self._normalize_pos(pos)
         depth *= self.scale*self.depth_scale
         depth += self.depth_shift
         return self._depth_exponent**depth
 
     def _pos_to_xy(
             self: Self,
-            pos: (float, float, float),
+            pos: tuple[float],
             height: float = 0,
         ) -> (float, float):
         # transforms a 3D position into a 2D coordinate
-        side, depth, altitude = pos
+        side, depth, altitude = self._normalize_pos(pos)
         scale = self._pos_to_scale(pos)
         if self.horizon_angle:
             y = (1 - scale)/(1 - self._depth_exponent)
         else:
-            y = depth*self.scale
+            y = depth*self.scale*self.depth_scale + self.depth_shift
         x = scale*self.side_scale*(side*self.scale - 0.5) + 0.5
         x = self.xmin + (self.xmax - self.xmin)*x
         y = self.ymin + (self.ymax - self.ymin)*y
@@ -85,13 +99,12 @@ class Volume(Shape):
 
     def _pos_to_shade_pos(
             self: Self,
-            pos: (float, float, float),
-            height: float = 0
+            pos: tuple[float],
+            height: float = 0,
         ) -> (float, float):
         # transforms a 3D position into a 2D coordinate
-        side, depth, altitude = pos
+        side, depth, altitude = self._normalize_pos(pos)
         shade_shift = self._shade_shift()
-        # shade_shift *= (height + altitude)*self.altitude_to_shade
         shade_shift *= altitude*self.altitude_to_shade
         return (
             side + shade_shift[0]/self._depth_exponent,
@@ -174,8 +187,7 @@ class Volume(Shape):
             main: str,
             side: list[str],
             shade: str,
-            pos: (float, float, float) = None,
-            xy: (float, float) = (0, 0),
+            pos: tuple[float] = (0, 0),
             radius: float = 1,
             colour: str = None,
             shade_colour: str = None,
@@ -189,26 +201,16 @@ class Volume(Shape):
                 self.set_shape(key=key, visible=False)
             self.set_shape(key=shade, visible=False)
             return None
-        if pos is not None:
-            altitude = pos[2]
-            xy = self._pos_to_xy(pos, height=radius)
-            if not self.draft:
-                shade_pos = self._pos_to_shade_pos(pos, height=radius)
-            radius *= self.scale
-            if not self.draft:
-                shade_xy = self._pos_to_xy(shade_pos)
-                shade_radius = radius*self._pos_to_scale(shade_pos)
-            scale = self._pos_to_scale(pos)
-            radius *= scale
-            zorder = scale
-        else:
-            altitude = 0
-            radius *= self.scale
-            xy = (xy[0]*self.scale, xy[1]*self.scale)
-            zorder = 0
-            if not self.draft:
-                shade_xy = xy
-                shade_radius = radius
+        xy = self._pos_to_xy(pos, height=radius)
+        if not self.draft:
+            shade_pos = self._pos_to_shade_pos(pos, height=radius)
+        radius *= self.scale
+        if not self.draft:
+            shade_xy = self._pos_to_xy(shade_pos)
+            shade_radius = radius*self._pos_to_scale(shade_pos)
+        scale = self._pos_to_scale(pos)
+        radius *= scale
+        zorder = scale
         path = self.curve_path(xy=xy, a=radius)
         self.apply_to_shape('set_path', key=main, path=path)
         clipper = self.set_shape(
