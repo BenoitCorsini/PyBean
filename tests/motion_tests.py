@@ -233,60 +233,96 @@ class MotionTests(unittest.TestCase):
     #     self.mt.wait(0.1)
     #     self.mt.video('video_appear')
 
-    def test_movement(self):
-        # self.mt.draft = True
+    # def test_movement(self):
+    #     # self.mt.draft = True
+    #     self.mt.levitation_mode = 'off'
+    #     self.mt.reset().wait(1)
+    #     self.mt.show_info('step1')
+    #     self.mt.new_sphere(
+    #         pos=(0.5, 0.5),
+    #         radius=0.1,
+    #         alpha=0.1,
+    #     ).grow(duration=0.1, centred=False)
+    #     self.mt.new_sphere(
+    #         pos=(0.5, 0),
+    #         radius=0.1,
+    #         alpha=0.1,
+    #     ).grow(duration=0.1, centred=False)
+    #     self.mt.new_sphere(
+    #         'main',
+    #         pos=(0.5, 0),
+    #         radius=0.1,
+    #     ).grow(duration=0.1, centred=False).run()
+    #     self.mt.show_info('step2')
+    #     self.mt.move_to(
+    #         (0.5, 0.5),
+    #         'main',
+    #         duration=0.5,
+    #     ).run().wait(0.1)
+    #     self.mt.show_info('step3')
+    #     self.mt.movement(
+    #         [(0.5, 0.5), (0.5, 0.5, 1)] + [(0.5, 0.5)]*9,
+    #         'main',
+    #         duration=2.,
+    #         normalize=False,
+    #     ).run().wait(0.1)
+    #     self.mt.show_info('step4')
+    #     self.mt.jump(
+    #         1,
+    #         'main',
+    #         duration=0.2,
+    #     ).run().wait(0.1)
+    #     self.mt.show_info('step5')
+    #     self.mt.shift(
+    #         (0.5, 0),
+    #         avoid='main',
+    #         duration=0.5,
+    #         rigid=True,
+    #     )
+    #     self.mt.movement(
+    #         [(0, 0.5), (0.5, 0.5, 1), (1, 0), (0.5, 0, 0.5), (0.5, 0)],
+    #         'main',
+    #         duration=0.5,
+    #         normalize=False,
+    #         initial_speed=(-10, 0, 0),
+    #     ).run().wait(0.1)
+    #     self.mt.video('video_movements')
+
+    def test_main(self):
         self.mt.levitation_mode = 'off'
-        self.mt.reset().wait(1)
-        self.mt.show_info('step1')
-        self.mt.new_sphere(
-            pos=(0.5, 0.5),
-            radius=0.1,
-            alpha=0.1,
-        ).grow(duration=0.1, centred=False)
-        self.mt.new_sphere(
-            pos=(0.5, 0),
-            radius=0.1,
-            alpha=0.1,
-        ).grow(duration=0.1, centred=False)
-        self.mt.new_sphere(
-            'main',
-            pos=(0.5, 0),
-            radius=0.1,
-        ).grow(duration=0.1, centred=False).run()
-        self.mt.show_info('step2')
-        self.mt.move_to(
-            (0.5, 0.5),
-            'main',
-            duration=0.5,
-        ).run().wait(0.1)
-        self.mt.show_info('step3')
-        self.mt.movement(
-            [(0.5, 0.5), (0.5, 0.5, 1)] + [(0.5, 0.5)]*9,
-            'main',
-            duration=2.,
-            normalize=False,
-        ).run().wait(0.1)
-        self.mt.show_info('step4')
-        self.mt.jump(
-            1,
-            'main',
-            duration=0.2,
-        ).run().wait(0.1)
-        self.mt.show_info('step5')
-        self.mt.shift(
-            (0.5, 0),
-            avoid='main',
-            duration=0.5,
-            rigid=True,
-        )
-        self.mt.movement(
-            [(0, 0.5), (0.5, 0.5, 1), (1, 0), (0.5, 0, 0.5), (0.5, 0)],
-            'main',
-            duration=0.5,
-            normalize=False,
-            initial_speed=(-10, 0, 0),
-        ).run().wait(0.1)
-        self.mt.video('video_movements')
+        self.mt.depth_shift = 0.1
+        self.mt.depth_scale = 0.5
+        self.mt.side_scale = 0.8
+        num = 4
+        self.mt.scale = 1/num
+        self.mt.reset()
+        self.mt.wait(1)
+        for y in range(num + 1):
+            for x in range(num + 1):
+                self.mt.new_sphere(
+                    f'{x}-{y}',
+                    pos=(x, y),
+                    radius=0.25,
+                    alpha=0,
+                )
+        for y in range(num + 1):
+            for x in range(num + 1):
+                s = f'{x}-{y}'
+                delay = (x + num*y/2)/num**2
+                self.mt.appear(s, duration=0.5, delay=delay, use_current_alpha=False)
+                self.mt.grow(s, duration=0.5, delay=delay)
+                self.mt.jump(1, s, duration=0.5, delay=delay)
+        self.mt.run()
+        for y in range(num + 1):
+            for x in range(num + 1):
+                s = f'{x}-{y}'
+                delay = (x + num*y/2)/num**2
+                self.mt.disappear(s, duration=0.2, delay=delay + 0.4)
+                self.mt.schrink(s, duration=0.2, delay=delay + 0.4)
+                self.mt.jump(1, s, duration=0.5, delay=delay, early_stop=2.)
+        self.mt.run()
+        self.mt.video()
+
 
 
 if __name__ == '__main__':

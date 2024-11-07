@@ -262,7 +262,7 @@ class Motion(Volume):
         # changes the radius of sphere
         delta_radius = (end_radius - start_radius)/duration
         radius = start_radius + step*delta_radius
-        pos = self._volumes[volume].get('pos', None)
+        pos = self._normalize_pos(self._volumes[volume].get('pos', None))
         if pos is not None and centred:
             if step:
                 delta_altitude = delta_radius
@@ -347,8 +347,8 @@ class Motion(Volume):
         k3 = response*damping/2/np.pi/frequency
         positions = []
         speeds = []
-        current_pos = path[0]
-        current_speed = np.array(initial_speed, dtype=float)
+        current_pos = path[0].astype(float)
+        current_speed = np.array(initial_speed).astype(float)
         current_puller = path[0]
         for index in range(duration + 1):
             for batch_index in range(batch_size):
