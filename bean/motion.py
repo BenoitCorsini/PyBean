@@ -392,7 +392,10 @@ class Motion(Volume):
         # changes the radius of sphere
         origin = self._normalize_pos(self._volumes[volume].get('pos', (0, 0)))
         if pos is not None:
-            path = [origin, pos]
+            if shifted:
+                path = [(0, 0), pos]
+            else:
+                path = [origin, pos]
         assert path is not None
         path = np.stack([self._normalize_pos(pos) for pos in path])
         if shifted:
@@ -621,27 +624,61 @@ class Motion(Volume):
 
     def movement(
             self: Self,
+            path: list,
             *args,
             **kwargs,
         ) -> Self:
-        # moves a volume
+        # moves a volume according to a path
+        kwargs['path'] = path
+        kwargs['pos'] = None
+        kwargs['shifted'] = False
         return self._create_motion('movement', *args, **kwargs)
 
     def move_to(
             self: Self,
+            pos: tuple[float],
             *args,
             **kwargs,
         ) -> Self:
-        # moves a volume
-        return self.movement(*args, **kwargs)
+        # moves a volume towards a specific position
+        kwargs['pos'] = pos
+        kwargs['shifted'] = False
+        return self._create_motion('movement', *args, **kwargs)
 
-    def move_to(
+    def shift(
             self: Self,
+            shift: Any,
             *args,
             **kwargs,
         ) -> Self:
-        # moves a volume
-        return self.movement(*args, **kwargs)
+        # shifts a volume
+        if isinstance(shift, tuple):
+            kwargs['pos'] = shift
+        elif isinstance(shift, list):
+            kwargs['pos'] = None
+            kwargs['path'] = shift
+        else:
+            if len(shift.shape) == 1:
+                kwargs['pos'] = tuple(shift)
+            else:
+                kwargs['pos'] = None
+                kwargs['path'] = [tuple(pos) for pos in shift]
+        kwargs['shifted'] = True
+        return self._create_motion('movement', *args, **kwargs)
+
+    def jump(
+            self: Self,
+            height: float,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # makes a volume jump
+        shift = [
+            (0, 0, 0),
+            (0, 0, height),
+            (0, 0, 0),
+        ]
+        return self.shift(shift, *args, **kwargs)
 
     '''
     main method
