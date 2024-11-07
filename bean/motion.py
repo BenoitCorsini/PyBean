@@ -22,6 +22,12 @@ class Motion(Volume):
         'levitation_mode' : str,
         'levitation_height' : float,
         'levitation_freq' : float,
+        'movement_frequency' : float,
+        'movement_damping' : float,
+        'movement_response' : float,
+        'movement_batch_size' : int,
+        'movement_position_threshold' : float,
+        'movement_speed_threshold' : float,
     }
 
     def _new_motion(
@@ -248,7 +254,7 @@ class Motion(Volume):
             self: Self,
             volume: Any,
             step: int,
-            duration: Any,
+            duration: int,
             start_radius: float,
             end_radius: float,
             centred: bool,
@@ -298,13 +304,81 @@ class Motion(Volume):
             self: Self,
             volume: Any,
             step: int,
-            duration: Any,
+            duration: int,
             start_alpha: float,
             end_alpha: float,
         ) -> None:
         # changes the radius of sphere
         alpha = start_alpha + (end_alpha - start_alpha)*step/duration
         self._volumes[volume]['alpha'] = alpha
+
+    def _smooth_movement(
+            self: Self,
+            duration: int,
+            vertices: np.array,
+            normers: np.array,
+            initial_speed: np.array = np.zeros(3),
+            frequency: float = None,
+            damping: float = None,
+            response: float = None,
+            batch_size: int = None,
+            position_threshold: float = None,
+            speed_threshold: float = None,
+            **kwargs
+        ) -> dict:
+        # see https://www.youtube.com/watch?v=KPoeNZZ6H4s
+        if frequency is None:
+            frequency = self.movement_frequency
+        if damping is None:
+            damping = self.movement_damping
+        if response is None:
+            response = self.movement_response
+        if batch_size is None:
+            batch_size = self.movement_batch_size
+        if position_threshold is None:
+            position_threshold = self.movement_position_threshold
+        position_threshold = position_threshold**2
+        if speed_threshold is None:
+            speed_threshold = self.movement_speed_threshold
+        speed_threshold = speed_threshold**2
+        k1 = damping/np.pi/frequency
+        k2 = 1/(2*np.pi*frequency)**2
+        k3 = response*damping/2/np.pi/frequency
+        positions = []
+        speeds = []
+        current_pos = vertices[0]
+        current_speed = initial_speed
+        current_puller = vertices[0]
+        for index in range(duration + 1):
+            for batch_index in range(batch_size):
+                next_puller = np.array(self._normed_vertices_to_pos(
+                    ratio=(index + batch_index/batch_size)/duration,
+                    vertices=vertices,
+                    normers=normers,
+                ))
+                current_pos += current_speed/self.fps/batch_size
+                current_speed += k3*(next_puller - current_puller) + (
+                    next_puller - current_pos - k1*current_speed
+                )/self.fps/batch_size/k2
+                current_puller = next_puller.copy()
+            positions.append(current_pos.copy())
+            speeds.append(current_speed.copy())
+        end_pos = vertices[-1]
+        while (
+                np.sum((current_pos - end_pos)**2) > position_threshold
+                or
+                np.sum(current_speed**2) > speed_threshold
+            ):
+            for batch_index in range(batch_size):
+                current_pos += current_speed/self.fps/batch_size
+                current_speed += (
+                    end_pos - current_pos - k1*current_speed
+                )/self.fps/batch_size/k2
+            positions.append(current_pos.copy())
+            speeds.append(current_speed.copy())
+        kwargs['duration'] = len(positions) - 1
+        kwargs['pos_list'] = [tuple(pos) for pos in positions]
+        return kwargs
 
     def _add_movement_sphere(
             self: Self,
@@ -315,8 +389,6 @@ class Motion(Volume):
             **kwargs,
         ) -> None:
         # changes the radius of sphere
-        print()
-        print('IN ADD MOVEMENT')
         if end_pos is not None:
             if start_pos is None:
                 start_pos = self._volumes[volume].get('pos', (0, 0))
@@ -330,32 +402,22 @@ class Motion(Volume):
             'normers' : normers,
         }
         motion.update(kwargs)
-        self._add_motion(motion)
+        self._add_motion(self._smooth_movement(**motion))
 
-    def _apply_move_sphere(
+    def _apply_movement_sphere(
             self: Self,
             volume: Any,
             step: int,
-            duration: Any,
-            vertices: np.array,
-            normers: np.array,
+            duration: int,
+            pos_list: list,
         ) -> None:
         # changes the radius of sphere
-        delta_radius = (end_radius - start_radius)/duration
-        radius = start_radius + step*delta_radius
-        pos = self._volumes[volume].get('pos', None)
-        if pos is not None and centred:
-            if not step:
-                if start_radius != self._volumes[volume]['radius']:
-                    delta_radius = min(0, start_radius -  end_radius)
-                else:
-                    delta_radius = 0
-            self._volumes[volume]['pos'] = (
-                pos[0],
-                pos[1],
-                pos[2] - delta_radius,
-            )
-        self._volumes[volume]['radius'] = radius
+        pos = pos_list[step]
+        self._volumes[volume]['pos'] = (
+            pos[0],
+            pos[1],
+            abs(pos[2]),
+        )
 
     '''
     static methods
@@ -382,19 +444,19 @@ class Motion(Volume):
     def _normed_vertices_to_pos(
             ratio: float,
             vertices: np.array = np.array([[0], [0]]),
-            normer: np.array = np.array([0]),
+            normers: np.array = np.array([0]),
         ) -> (float, float, float):
-        assert normer[0] == 0
-        assert normer[-1] == 1 or normer[-1] == 0
-        if normer[-1] == 0:
+        assert normers[0] == 0
+        assert normers[-1] == 1 or normers[-1] == 0
+        if normers[-1] == 0:
             return tuple(vertices[0])
         ratio = max(0, min(1, ratio))
-        start = np.where(normer <= ratio)[0][-1]
-        end = np.where(normer >= ratio)[0][0]
-        divider = normer[end] - normer[start]
+        start = np.where(normers <= ratio)[0][-1]
+        end = np.where(normers >= ratio)[0][0]
+        divider = normers[end] - normers[start]
         if not divider:
             divider = 1
-        ratio = (ratio - normer[start])/divider
+        ratio = (ratio - normers[start])/divider
         start = vertices[start]
         end = vertices[end]
         pos = start + ratio*(end - start)
