@@ -52,11 +52,11 @@ DEFAULT = {
     'draft' : False,
     'scale' : 1,
     'horizon_angle' : 42,
-    'depth_shift' : 0,
     'depth_scale' : 1,
+    'depth_shift' : 0,
     'side_scale' : 1,
     'shade_angle' : -60,
-    'altitude_to_shade' : 0.1,
+    'altitude_to_shade' : 0.05,
     'shade_cmap_ratio' : 0.05,
     'round_sides' : {
         0.49 : 0.05,

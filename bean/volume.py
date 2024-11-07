@@ -14,8 +14,8 @@ class Volume(Shape):
         'draft' : bool,
         'scale' : float,
         'horizon_angle' : float,
-        'depth_shift' : float,
         'depth_scale' : float,
+        'depth_shift' : float,
         'side_scale' : float,
         'shade_angle' : float,
         'altitude_to_shade' : float,
@@ -29,6 +29,7 @@ class Volume(Shape):
         self._volumes = {}
         self._volume_index = 0
         self._depth_exponent = 1 - np.tan(self.horizon_angle*np.pi/180)
+        self._side_angle = 0
         self.add_axis()
         self.add_info()
         if self.draft:
@@ -105,11 +106,10 @@ class Volume(Shape):
         # transforms a 3D position into a 2D coordinate
         side, depth, altitude = self._normalize_pos(pos)
         shade_shift = self._shade_shift()
-        shade_shift *= altitude*self.altitude_to_shade
+        shade_shift *= (height + altitude)*self.altitude_to_shade
         return (
             side + shade_shift[0]/self._depth_exponent,
             depth + shade_shift[1],
-            0,
         )
 
     def _round_volume(
@@ -227,7 +227,7 @@ class Volume(Shape):
                     ratio=ratio,
                     theta1=270,
                     theta2=90,
-                    angle=self.shade_angle,
+                    angle=self._side_angle,
                 ))
                 self.apply_to_shape('set_path', key=key, path=path)
                 self.set_shape(

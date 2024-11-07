@@ -173,12 +173,13 @@ class VolumeTests(unittest.TestCase):
     '''
 
     def test_sphere(self):
-        self.vl.reset()
+        self.vl.shade_angle = 180
         self.vl.depth_shift = 0.05
         self.vl.depth_scale = 0.75
         self.vl.side_scale = 0.8
         num = 10
         self.vl.scale = 1/num
+        self.vl.reset()
         for y in range(num + 1):
             for x in range(num + 1):
                 if ((x + y) % 2) == 0:
