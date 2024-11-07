@@ -386,6 +386,7 @@ class Motion(Volume):
             start_pos: tuple[float] = None,
             end_pos: tuple[float] = None,
             vertices: list = None,
+            normalize: bool = True,
             **kwargs,
         ) -> None:
         # changes the radius of sphere
@@ -395,7 +396,13 @@ class Motion(Volume):
             vertices = [start_pos, end_pos]
         assert vertices is not None
         vertices = np.stack([self._normalize_pos(pos) for pos in vertices])
-        normers = self._vertices_to_normers(vertices)
+        if normalize:
+            normers = self._vertices_to_normers(vertices)
+        else:
+            normers = len(vertices)
+            if normers <= 1:
+                normers = 2
+            normers = np.arange(normers)/(normers - 1)
         motion = {
             'volume' : volume,
             'vertices' : vertices,

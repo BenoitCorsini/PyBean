@@ -261,8 +261,23 @@ class MotionTests(unittest.TestCase):
         self.mt._create_motion(
             'movement',
             only='main',
+            duration=2,
+            vertices=[(0.5, 0.5), (0.5, 0.5, 5)] + [(0.5, 0.5)]*10,
+            normalize=False,
+        ).run().wait(0.1)
+        self.mt._create_motion(
+            'movement',
+            only='main',
+            duration=2,
+            vertices=[(0.5, 0.5), (0.5, 0.5, 5)] + [(0.5, 0.5)]*10,
+            normalize=True,
+        ).run().wait(0.1)
+        self.mt._create_motion(
+            'movement',
+            only='main',
             duration=0.5,
-            end_pos=(0.5, 0),
+            vertices=[(0, 0.5), (0.5, 0.5, 1), (1, 0), (0.5, 0, 0.5), (0.5, 0)],
+            normalize=False,
         ).run()
         self.mt.video('video_movements')
 
