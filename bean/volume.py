@@ -255,12 +255,9 @@ class Volume(Shape):
             main: str,
             side: list[str],
             shade: str,
-            pos1: (float, float, float) = None,
-            xy1: (float, float) = (0, 0),
-            radius1: float = 1,
-            pos2: (float, float, float) = None,
-            xy2: (float, float) = (0, 0),
-            radius2: float = None,
+            pos1: tuple[float] = (0, 0),
+            pos2: tuple[float] = (0, 0),
+            radius: Any = 1,
             colour: str = None,
             shade_colour: str = None,
             slope: str = 'flat',
@@ -275,41 +272,34 @@ class Volume(Shape):
                 self.set_shape(key=key, visible=False)
             self.set_shape(key=shade, visible=False)
             return None
-        if radius2 is None:
-            radius2 = radius1
+        if isinstance(radius, tuple):
+            radius1, radius2 = radius
+        else:
+            radius1 = radius 
+            radius2 = radius 
         variables = {}
         zorder = 0
         for index in [1, 2]:
-            pos = locals()[f'pos{index}']
+            pos = self._normalize_pos(locals()[f'pos{index}'])
             radius = locals()[f'radius{index}']
-            if pos is not None:
-                if slope == 'down':
-                    height = radius
-                elif slope == 'up':
-                    height = 2*max(radius1, radius2) - radius
-                else:
-                    height = max(radius1, radius2)
-                variables[f'xy{index}'] = self._pos_to_xy(pos, height=height)
-                if not self.draft:
-                    shade_pos = self._pos_to_shade_pos(pos, height=height)
-                radius *= self.scale
-                scale = self._pos_to_scale(pos)
-                variables[f'radius{index}'] = radius*scale
-                zorder = max(zorder, scale)
-                if not self.draft:
-                    variables[f'shade_xy{index}'] = self._pos_to_xy(shade_pos)
-                    variables[f'shade_radius{index}'] = (
-                        radius*self._pos_to_scale(shade_pos)
-                    )
+            if slope == 'down':
+                height = radius
+            elif slope == 'up':
+                height = 2*max(radius1, radius2) - radius
             else:
-                xy = locals()[f'xy{index}']
-                xy = (xy[0]*self.scale, xy[1]*self.scale)
-                variables[f'xy{index}'] = xy
-                radius *= self.scale
-                variables[f'radius{index}'] = radius
-                if not self.draft:
-                    variables[f'shade_xy{index}'] = xy
-                    variables[f'shade_radius{index}'] = radius
+                height = max(radius1, radius2)
+            variables[f'xy{index}'] = self._pos_to_xy(pos, height=height)
+            if not self.draft:
+                shade_pos = self._pos_to_shade_pos(pos, height=height)
+            radius *= self.scale
+            scale = self._pos_to_scale(pos)
+            variables[f'radius{index}'] = radius*scale
+            zorder = max(zorder, scale)
+            if not self.draft:
+                variables[f'shade_xy{index}'] = self._pos_to_xy(shade_pos)
+                variables[f'shade_radius{index}'] = (
+                    radius*self._pos_to_scale(shade_pos)
+                )
         distance = self.distance_from_xy(variables['xy1'], variables['xy2'])
         delta_radius = variables['radius2'] - variables['radius1']
         is_sphere = np.abs(delta_radius) >= distance
@@ -340,10 +330,10 @@ class Volume(Shape):
         )
         if not self.draft:
             theta1 = self.normalize_angle(
-                90 + around_angle + angle - self.shade_angle
+                90 + around_angle + angle - self._side_angle
             )
             theta2 = self.normalize_angle(
-                270 - around_angle + angle - self.shade_angle
+                270 - around_angle + angle - self._side_angle
             )
             dark_index = 1 + int(self.normalize_angle(theta2 - theta1) > 0)
             for key, ratio in zip(side, self.round_sides):
@@ -389,7 +379,7 @@ class Volume(Shape):
                         crescent[s] = variables[f'{s}{index}']
                     paths.append(self.crescent_paths(
                         ratio=ratio,
-                        angle=self.shade_angle,
+                        angle=self._side_angle,
                         **crescent
                     ))
                 inners, outers = zip(*paths)

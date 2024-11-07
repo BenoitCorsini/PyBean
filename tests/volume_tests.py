@@ -198,84 +198,62 @@ class VolumeTests(unittest.TestCase):
         self.vl.update()
         self.vl.save('image_sphere')
 
-    # def test_tubes(self):
-    #     self.vl.reset()
-    #     self.vl.depth_shift = 0.05
-    #     self.vl.depth_scale = 0.75
-    #     self.vl.side_scale = 0.8
-    #     num = 10
-    #     self.vl.scale = 1/num
-    #     for y in range(num + 1):
-    #         self.vl._create_volume(
-    #             name='tube',
-    #             xy1=(0.5, 0.5 + y),
-    #             xy2=(0.5, 0.5 + y),
-    #             radius1=0.4,
-    #             radius2=0.2,
-    #             colour='gold',
-    #         )
-    #         self.vl._create_volume(
-    #             name='tube',
-    #             xy1=(num - 0.5, 0.5 + y),
-    #             xy2=(
-    #                 num - 0.5 + 0.35*np.cos(2*np.pi*y/num),
-    #                 0.5 + y + 0.35*np.sin(2*np.pi*y/num)
-    #             ),
-    #             radius1=0.35,
-    #             radius2=0.05,
-    #             colour='crimson',
-    #         )
-    #         for x in range(num + 1):
-    #             if ((x + y) % 2) == 0:
-    #                 if x > y:
-    #                     self.vl._create_volume(
-    #                         name='tube',
-    #                         pos1=(x, y, 0),
-    #                         pos2=(x, y, (x + y)/num),
-    #                         radius1=0.2,
-    #                         colour='forestgreen',
-    #                     )
-    #                 else:
-    #                     self.vl._create_volume(
-    #                         name='tube',
-    #                         pos1=(
-    #                             x + 0.3*np.cos((x + y)*np.pi/num),
-    #                             y + 0.3*np.sin((x + y)*np.pi/num),
-    #                             (x + y)/num,
-    #                         ),
-    #                         pos2=(
-    #                             x - 0.3*np.cos((x + y)*np.pi/num),
-    #                             y - 0.3*np.sin((x + y)*np.pi/num),
-    #                             (x + y)/num,
-    #                         ),
-    #                         radius1=0.3,
-    #                         colour='chocolate',
-    #                     )
-    #             else:
-    #                 if x > y:
-    #                     self.vl._create_volume(
-    #                         name='tube',
-    #                         pos1=(x, y, 0),
-    #                         pos2=(
-    #                             x + 0.35*np.cos(np.pi*(x + y)/num),
-    #                             y + 0.35*np.sin(np.pi*(x + y)/num),
-    #                             0,
-    #                         ),
-    #                         radius1=0.35,
-    #                         radius2=0.05,
-    #                         colour='purple',
-    #                     )
-    #                 else:
-    #                     self.vl._create_volume(
-    #                         name='tube',
-    #                         pos1=(x, y, 0),
-    #                         pos2=(x, y, 0),
-    #                         radius1=0.2,
-    #                         radius2=0.1,
-    #                         colour='royalblue',
-    #                     )
-    #     self.vl.update()
-    #     self.vl.save('image_tube')
+    def test_tubes(self):
+        self.vl.reset()
+        self.vl.depth_shift = 0.05
+        self.vl.depth_scale = 0.75
+        self.vl.side_scale = 0.8
+        num = 10
+        self.vl.scale = 1/num
+        for y in range(num + 1):
+            for x in range(num + 1):
+                if ((x + y) % 2) == 0:
+                    if x > y:
+                        self.vl._create_volume(
+                            name='tube',
+                            pos1=(x, y),
+                            pos2=(x, y, (x + y)/num),
+                            radius=0.2,
+                            colour='forestgreen',
+                        )
+                    else:
+                        self.vl._create_volume(
+                            name='tube',
+                            pos1=(
+                                x + 0.3*np.cos((x + y)*np.pi/num),
+                                y + 0.3*np.sin((x + y)*np.pi/num),
+                                (x + y)/num,
+                            ),
+                            pos2=(
+                                x - 0.3*np.cos((x + y)*np.pi/num),
+                                y - 0.3*np.sin((x + y)*np.pi/num),
+                                (x + y)/num,
+                            ),
+                            radius=0.3,
+                            colour='chocolate',
+                        )
+                else:
+                    if x > y:
+                        self.vl._create_volume(
+                            name='tube',
+                            pos1=(x, y),
+                            pos2=(
+                                x + 0.35*np.cos(np.pi*(x + y)/num),
+                                y + 0.35*np.sin(np.pi*(x + y)/num),
+                            ),
+                            radius=(0.35, 0.05),
+                            colour='purple',
+                        )
+                    else:
+                        self.vl._create_volume(
+                            name='tube',
+                            pos1=(x, y),
+                            pos2=(x, y),
+                            radius=(0.2, 0.1),
+                            colour='royalblue',
+                        )
+        self.vl.update()
+        self.vl.save('image_tube')
 
 
 if __name__ == '__main__':
