@@ -306,30 +306,39 @@ class Motion(Volume):
         alpha = start_alpha + (end_alpha - start_alpha)*step/duration
         self._volumes[volume]['alpha'] = alpha
 
-    # def _add_move_sphere(
-    #         self: Self,
-    #         volume: Any,
-    #         start_at: float = 1,
-    #         end_at: float = 1,
-    #         centred: bool = True,
-    #         **kwargs,
-    #     ) -> None:
-    #     # changes the radius of sphere
-    #     if start_with == end_with:
-    #         return None
-    #     motion = {
-    #         'volume' : volume,
-    #         'centred' : centred,
-    #     }
-    #     motion.update(kwargs)
-    #     radius = self._volumes[volume].get('radius', 1)
-    #     for timing in ['start', 'end']:
-    #         timing_with = locals()[f'{timing}_with']
-    #         if timing_with >= 0:
-    #             motion[f'{timing}_radius'] = radius*timing_with
-    #         else:
-    #             motion[f'{timing}_radius'] = abs(timing_with)
-    #     self._add_motion(motion)
+    def _add_movement_sphere(
+            self: Self,
+            volume: Any,
+            start_pos: tuple[float] = None,
+            end_pos: tuple[float] = None,
+            vertices: list = None,
+            **kwargs,
+        ) -> None:
+        # changes the radius of sphere
+        print()
+        print('IN ADD MOVEMENT')
+        if end_pos is not None:
+            if start_pos is None:
+                start_pos = self._volumes[volume].get('pos', (0, 0))
+            vertices = [start_pos, end_pos]
+        assert vertices is not None
+        vertices = np.stack([self._normalize_pos(pos) for pos in vertices])
+        normers = self._vertices_to_normers(vertices)
+        if start_with == end_with:
+            return None
+        motion = {
+            'volume' : volume,
+            'centred' : centred,
+        }
+        motion.update(kwargs)
+        radius = self._volumes[volume].get('radius', 1)
+        for timing in ['start', 'end']:
+            timing_with = locals()[f'{timing}_with']
+            if timing_with >= 0:
+                motion[f'{timing}_radius'] = radius*timing_with
+            else:
+                motion[f'{timing}_radius'] = abs(timing_with)
+        self._add_motion(motion)
 
     # def _apply_move_sphere(
     #         self: Self,
@@ -356,6 +365,49 @@ class Motion(Volume):
     #             pos[2] - delta_radius,
     #         )
     #     self._volumes[volume]['radius'] = radius
+
+    '''
+    static methods
+    '''
+
+    @staticmethod
+    def _vertices_to_normers(
+            vertices: np.array,
+        ) -> np.array:
+        assert len(vertices.shape) == 2
+        if vertices.shape[0] <= 1:
+            return np.array([0])
+        normers = np.sum((vertices[1:] - vertices[:-1])**2, axis=-1)**0.5
+        normers = np.concatenate([
+            np.array([0]),
+            np.cumsum(normers),
+        ])
+        divider = normers[-1]
+        if not divider:
+            divider = 1
+        return normers/divider
+
+    @staticmethod
+    def _normed_vertices_to_pos(
+            ratio: float,
+            vertices: np.array = np.array([[0], [0]]),
+            normer: np.array = np.array([0]),
+        ) -> (float, float, float):
+        assert normer[0] == 0
+        assert normer[-1] == 1 or normer[-1] == 0
+        if normer[-1] == 0:
+            return tuple(vertices[0])
+        ratio = max(0, min(1, ratio))
+        start = np.where(normer <= ratio)[0][-1]
+        end = np.where(normer >= ratio)[0][0]
+        divider = normer[end] - normer[start]
+        if not divider:
+            divider = 1
+        ratio = (ratio - normer[start])/divider
+        start = vertices[start]
+        end = vertices[end]
+        pos = start + ratio*(end - start)
+        return pos[0], pos[1], pos[2]
 
     '''
     general methods
