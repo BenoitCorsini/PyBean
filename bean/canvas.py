@@ -31,6 +31,24 @@ class Canvas(object):
         'figsize' : 2,
     }
 
+    def _new_canvas(
+            self: Self,
+        ) -> Self:
+        # new canvas instance
+        self.start_time = time()
+        npr.seed(self.seed)
+        self.fig = figure.Figure(figsize=self.figsize, dpi=self.dpi)
+        self.fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
+        self.ax = self.fig.add_subplot()
+        self.ax.set_xlim(self.xmin, self.xmax)
+        self.ax.set_ylim(self.ymin, self.ymax)
+        self.ax.set_axis_off()
+        return self
+
+    '''
+    dunder methods
+    '''
+
     def __init__(
             self: Self,
             **kwargs,
@@ -41,10 +59,6 @@ class Canvas(object):
         self._parser = argparse.ArgumentParser()
         self._set_params(**kwargs)
         self.reset()
-
-    '''
-    dunder methods
-    '''
 
     def __repr__(
             self: Self,
@@ -81,20 +95,6 @@ class Canvas(object):
             classes.append(current_class)
             classes_to_explore += list(current_class.__bases__)
         return classes[::-1]
-
-    def _new_canvas(
-            self: Self,
-        ) -> Self:
-        # new canvas instance
-        self.start_time = time()
-        npr.seed(self.seed)
-        self.fig = figure.Figure(figsize=self.figsize, dpi=self.dpi)
-        self.fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
-        self.ax = self.fig.add_subplot()
-        self.ax.set_xlim(self.xmin, self.xmax)
-        self.ax.set_ylim(self.ymin, self.ymax)
-        self.ax.set_axis_off()
-        return self
 
     def _set_params(
             self: Self,
