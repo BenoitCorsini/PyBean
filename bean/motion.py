@@ -315,8 +315,8 @@ class Motion(Volume):
     def _smooth_movement(
             self: Self,
             duration: int,
-            vertices: np.array,
-            normers: np.array,
+            path: np.array,
+            norm: np.array,
             initial_speed: np.array = np.zeros(3),
             frequency: float = None,
             damping: float = None,
@@ -346,15 +346,15 @@ class Motion(Volume):
         k3 = response*damping/2/np.pi/frequency
         positions = []
         speeds = []
-        current_pos = vertices[0]
+        current_pos = path[0]
         current_speed = initial_speed
-        current_puller = vertices[0]
+        current_puller = path[0]
         for index in range(duration + 1):
             for batch_index in range(batch_size):
-                next_puller = np.array(self._normed_vertices_to_pos(
+                next_puller = np.array(self._normed_path_to_pos(
                     ratio=(index + batch_index/batch_size)/duration,
-                    vertices=vertices,
-                    normers=normers,
+                    path=path,
+                    norm=norm,
                 ))
                 current_pos += current_speed/self.fps/batch_size
                 current_speed += k3*(next_puller - current_puller) + (
@@ -363,7 +363,7 @@ class Motion(Volume):
                 current_puller = next_puller.copy()
             positions.append(current_pos.copy())
             speeds.append(current_speed.copy())
-        end_pos = vertices[-1]
+        end_pos = path[-1]
         while (
                 np.sum((current_pos - end_pos)**2) > position_threshold
                 or
@@ -383,30 +383,31 @@ class Motion(Volume):
     def _add_movement_sphere(
             self: Self,
             volume: Any,
-            start_pos: tuple[float] = None,
-            end_pos: tuple[float] = None,
-            vertices: list = None,
+            pos: tuple[float] = None,
+            path: list = None,
+            shifted: bool = False,
             normalize: bool = True,
             **kwargs,
         ) -> None:
         # changes the radius of sphere
-        if end_pos is not None:
-            if start_pos is None:
-                start_pos = self._volumes[volume].get('pos', (0, 0))
-            vertices = [start_pos, end_pos]
-        assert vertices is not None
-        vertices = np.stack([self._normalize_pos(pos) for pos in vertices])
+        origin = self._normalize_pos(self._volumes[volume].get('pos', (0, 0)))
+        if pos is not None:
+            path = [origin, pos]
+        assert path is not None
+        path = np.stack([self._normalize_pos(pos) for pos in path])
+        if shifted:
+            path = np.array(origin).reshape(1, 3) + path
         if normalize:
-            normers = self._vertices_to_normers(vertices)
+            norm = self._path_to_norm(path)
         else:
-            normers = len(vertices)
-            if normers <= 1:
-                normers = 2
-            normers = np.arange(normers)/(normers - 1)
+            norm = len(path)
+            if norm <= 1:
+                norm = 2
+            norm = np.arange(norm)/(norm - 1)
         motion = {
             'volume' : volume,
-            'vertices' : vertices,
-            'normers' : normers,
+            'path' : path,
+            'norm' : norm,
         }
         motion.update(kwargs)
         self._add_motion(self._smooth_movement(**motion))
@@ -431,41 +432,41 @@ class Motion(Volume):
     '''
 
     @staticmethod
-    def _vertices_to_normers(
-            vertices: np.array,
+    def _path_to_norm(
+            path: np.array,
         ) -> np.array:
-        assert len(vertices.shape) == 2
-        if vertices.shape[0] <= 1:
+        assert len(path.shape) == 2
+        if path.shape[0] <= 1:
             return np.array([0])
-        normers = np.sum((vertices[1:] - vertices[:-1])**2, axis=-1)**0.5
-        normers = np.concatenate([
+        norm = np.sum((path[1:] - path[:-1])**2, axis=-1)**0.5
+        norm = np.concatenate([
             np.array([0]),
-            np.cumsum(normers),
+            np.cumsum(norm),
         ])
-        divider = normers[-1]
+        divider = norm[-1]
         if not divider:
             divider = 1
-        return normers/divider
+        return norm/divider
 
     @staticmethod
-    def _normed_vertices_to_pos(
+    def _normed_path_to_pos(
             ratio: float,
-            vertices: np.array = np.array([[0], [0]]),
-            normers: np.array = np.array([0]),
+            path: np.array = np.array([[0], [0]]),
+            norm: np.array = np.array([0]),
         ) -> (float, float, float):
-        assert normers[0] == 0
-        assert normers[-1] == 1 or normers[-1] == 0
-        if normers[-1] == 0:
-            return tuple(vertices[0])
+        assert norm[0] == 0
+        assert norm[-1] == 1 or norm[-1] == 0
+        if norm[-1] == 0:
+            return tuple(path[0])
         ratio = max(0, min(1, ratio))
-        start = np.where(normers <= ratio)[0][-1]
-        end = np.where(normers >= ratio)[0][0]
-        divider = normers[end] - normers[start]
+        start = np.where(norm <= ratio)[0][-1]
+        end = np.where(norm >= ratio)[0][0]
+        divider = norm[end] - norm[start]
         if not divider:
             divider = 1
-        ratio = (ratio - normers[start])/divider
-        start = vertices[start]
-        end = vertices[end]
+        ratio = (ratio - norm[start])/divider
+        start = path[start]
+        end = path[end]
         pos = start + ratio*(end - start)
         return pos[0], pos[1], pos[2]
 
@@ -617,6 +618,30 @@ class Motion(Volume):
         kwargs['start_with'] = 1
         kwargs['end_with'] = 0
         return self.change_alpha(*args, **kwargs)
+
+    def movement(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # moves a volume
+        return self._create_motion('movement', *args, **kwargs)
+
+    def move_to(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # moves a volume
+        return self.movement(*args, **kwargs)
+
+    def move_to(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # moves a volume
+        return self.movement(*args, **kwargs)
 
     '''
     main method

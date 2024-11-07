@@ -70,87 +70,87 @@ class MotionTests(unittest.TestCase):
     static methods
     '''
 
-    def test_vertices_to_normers(self):
+    def test_path_to_norm(self):
         with self.assertRaises(AssertionError):
-            self.mt._vertices_to_normers(np.array([0, 1]))
+            self.mt._path_to_norm(np.array([0, 1]))
         with self.assertRaises(AssertionError):
-            self.mt._vertices_to_normers(np.array([[[0, 1]]]))
-        vertices = np.array([[0]])
+            self.mt._path_to_norm(np.array([[[0, 1]]]))
+        path = np.array([[0]])
         self.assertTrue(np.all(
-            self.mt._vertices_to_normers(vertices) == np.array([0])
+            self.mt._path_to_norm(path) == np.array([0])
         ))
-        vertices = np.array([[0, 1]])
+        path = np.array([[0, 1]])
         self.assertTrue(np.all(
-            self.mt._vertices_to_normers(vertices) == np.array([0])
+            self.mt._path_to_norm(path) == np.array([0])
         ))
-        vertices = np.array([[0, 1, 2]])
+        path = np.array([[0, 1, 2]])
         self.assertTrue(np.all(
-            self.mt._vertices_to_normers(vertices) == np.array([0])
+            self.mt._path_to_norm(path) == np.array([0])
         ))
-        vertices = np.array([[0], [1]])
+        path = np.array([[0], [1]])
         self.assertTrue(np.all(
-            self.mt._vertices_to_normers(vertices) == np.array([0, 1])
+            self.mt._path_to_norm(path) == np.array([0, 1])
         ))
-        vertices = np.array([[0], [1], [3]])
+        path = np.array([[0], [1], [3]])
         self.assertTrue(np.all(
-            self.mt._vertices_to_normers(vertices) == np.array([0, 1/3, 1])
+            self.mt._path_to_norm(path) == np.array([0, 1/3, 1])
         ))
-        vertices = np.array([[0], [2], [4]])
+        path = np.array([[0], [2], [4]])
         self.assertTrue(np.all(
-            self.mt._vertices_to_normers(vertices) == np.array([0, 1/2, 1])
+            self.mt._path_to_norm(path) == np.array([0, 1/2, 1])
         ))
-        vertices = np.array([[0, 0], [2, 0], [4, 0]])
+        path = np.array([[0, 0], [2, 0], [4, 0]])
         self.assertTrue(np.all(
-            self.mt._vertices_to_normers(vertices) == np.array([0, 1/2, 1])
+            self.mt._path_to_norm(path) == np.array([0, 1/2, 1])
         ))
-        vertices = np.array([[0, 0], [0, 1], [0, 2]])
+        path = np.array([[0, 0], [0, 1], [0, 2]])
         self.assertTrue(np.all(
-            self.mt._vertices_to_normers(vertices) == np.array([0, 1/2, 1])
+            self.mt._path_to_norm(path) == np.array([0, 1/2, 1])
         ))
-        vertices = np.array([[0, 0, 1], [0, 1, 1], [0, 2, 1]])
+        path = np.array([[0, 0, 1], [0, 1, 1], [0, 2, 1]])
         self.assertTrue(np.all(
-            self.mt._vertices_to_normers(vertices) == np.array([0, 1/2, 1])
+            self.mt._path_to_norm(path) == np.array([0, 1/2, 1])
         ))
-        vertices = np.array([[0, 9, 0], [0, 9, 1], [0, 9, 2]])
+        path = np.array([[0, 9, 0], [0, 9, 1], [0, 9, 2]])
         self.assertTrue(np.all(
-            self.mt._vertices_to_normers(vertices) == np.array([0, 1/2, 1])
+            self.mt._path_to_norm(path) == np.array([0, 1/2, 1])
         ))
-        vertices = np.array([[1, 2, 3], [2, 3, 4], [4, 5, 6], [5, 6, 7]])
+        path = np.array([[1, 2, 3], [2, 3, 4], [4, 5, 6], [5, 6, 7]])
         self.assertTrue(np.all(
-            np.round(self.mt._vertices_to_normers(vertices), 10) == np.array([0, 1/4, 3/4, 1])
+            np.round(self.mt._path_to_norm(path), 10) == np.array([0, 1/4, 3/4, 1])
         ))
-        vertices = np.array([[1, 2, 3], [2, 3, 4], [2, 3, 4], [4, 5, 6], [4, 5, 6], [5, 6, 7]])
+        path = np.array([[1, 2, 3], [2, 3, 4], [2, 3, 4], [4, 5, 6], [4, 5, 6], [5, 6, 7]])
         self.assertTrue(np.all(
-            np.round(self.mt._vertices_to_normers(vertices), 10) == np.array([0, 1/4, 1/4, 3/4, 3/4, 1])
+            np.round(self.mt._path_to_norm(path), 10) == np.array([0, 1/4, 1/4, 3/4, 3/4, 1])
         ))
 
-    def test_normed_vertices_to_pos(self):
+    def test_normed_path_to_pos(self):
         with self.assertRaises(AssertionError):
-            self.mt._normed_vertices_to_pos(None, None, np.array([0, 0.5]))
+            self.mt._normed_path_to_pos(None, None, np.array([0, 0.5]))
         with self.assertRaises(AssertionError):
-            self.mt._normed_vertices_to_pos(None, None, np.array([0.5, 1]))
+            self.mt._normed_path_to_pos(None, None, np.array([0.5, 1]))
         with self.assertRaises(AssertionError):
-            self.mt._normed_vertices_to_pos(None, None, np.array([0.5]))
-        vertices = np.array([[1, 2, 3], [2, 3, 4], [4, 5, 6], [5, 6, 7]])
-        normers = np.round(self.mt._vertices_to_normers(vertices), 10)
+            self.mt._normed_path_to_pos(None, None, np.array([0.5]))
+        path = np.array([[1, 2, 3], [2, 3, 4], [4, 5, 6], [5, 6, 7]])
+        norm = np.round(self.mt._path_to_norm(path), 10)
         for i in range(17):
             self.assertEqual(
-                self.mt._normed_vertices_to_pos(i/16, vertices, np.array([0])),
+                self.mt._normed_path_to_pos(i/16, path, np.array([0])),
                 (1, 2, 3),
             )
             self.assertEqual(
-                self.mt._normed_vertices_to_pos(i/16, vertices, normers),
+                self.mt._normed_path_to_pos(i/16, path, norm),
                 (1 + i/4, 2 + i/4, 3 + i/4),
             )
-        vertices = np.array([[1, 1, 1], [1, 1, 1], [2.5, 2.5, 2.5], [5, 5, 5]])
-        normers = np.round(self.mt._vertices_to_normers(vertices), 10)
+        path = np.array([[1, 1, 1], [1, 1, 1], [2.5, 2.5, 2.5], [5, 5, 5]])
+        norm = np.round(self.mt._path_to_norm(path), 10)
         for i in range(17):
             self.assertEqual(
-                self.mt._normed_vertices_to_pos(i/16, vertices, np.array([0])),
+                self.mt._normed_path_to_pos(i/16, path, np.array([0])),
                 (1, 1, 1),
             )
             self.assertEqual(
-                self.mt._normed_vertices_to_pos(i/16, vertices, normers),
+                self.mt._normed_path_to_pos(i/16, path, norm),
                 (1 + i/4, 1 + i/4, 1 + i/4),
             )
 
@@ -252,31 +252,27 @@ class MotionTests(unittest.TestCase):
             pos=(0.5, 0),
             radius=0.1,
         ).grow(duration=0.1, centred=False).run()
-        self.mt._create_motion(
-            'movement',
-            only='main',
+        self.mt.movement(
+            'main',
             duration=0.5,
-            end_pos=(0.5, 0.5),
+            pos=(0.5, 0.5),
         ).run().wait(0.1)
-        self.mt._create_motion(
-            'movement',
-            only='main',
+        self.mt.movement(
+            'main',
             duration=2,
-            vertices=[(0.5, 0.5), (0.5, 0.5, 5)] + [(0.5, 0.5)]*10,
+            path=[(0.5, 0.5), (0.5, 0.5, 5)] + [(0.5, 0.5)]*10,
             normalize=False,
         ).run().wait(0.1)
-        self.mt._create_motion(
-            'movement',
-            only='main',
+        self.mt.movement(
+            'main',
             duration=2,
-            vertices=[(0.5, 0.5), (0.5, 0.5, 5)] + [(0.5, 0.5)]*10,
-            normalize=True,
+            path=[(0, 0), (0, 0, 5)] + [(0, 0)]*10,
+            shifted=True,
         ).run().wait(0.1)
-        self.mt._create_motion(
-            'movement',
-            only='main',
+        self.mt.movement(
+            'main',
             duration=0.5,
-            vertices=[(0, 0.5), (0.5, 0.5, 1), (1, 0), (0.5, 0, 0.5), (0.5, 0)],
+            path=[(0, 0.5), (0.5, 0.5, 1), (1, 0), (0.5, 0, 0.5), (0.5, 0)],
             normalize=False,
         ).run()
         self.mt.video('video_movements')
