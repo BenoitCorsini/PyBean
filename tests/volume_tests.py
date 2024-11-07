@@ -173,7 +173,6 @@ class VolumeTests(unittest.TestCase):
     '''
 
     def test_sphere(self):
-        self.vl.shade_angle = 180
         self.vl.depth_shift = 0.05
         self.vl.depth_scale = 0.75
         self.vl.side_scale = 0.8

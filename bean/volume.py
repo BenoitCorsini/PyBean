@@ -29,7 +29,9 @@ class Volume(Shape):
         self._volumes = {}
         self._volume_index = 0
         self._depth_exponent = 1 - np.tan(self.horizon_angle*np.pi/180)
-        self._side_angle = 0
+        self._side_angle = 180*np.arctan(self.altitude_to_shade)/np.pi
+        self._side_angle *= np.cos(self.shade_angle*np.pi/180)
+        self._side_angle -= 90
         self.add_axis()
         self.add_info()
         if self.draft:
@@ -108,7 +110,7 @@ class Volume(Shape):
         shade_shift = self._shade_shift()
         shade_shift *= (height + altitude)*self.altitude_to_shade
         return (
-            side + shade_shift[0]/self._depth_exponent,
+            side + shade_shift[0],
             depth + shade_shift[1],
         )
 
