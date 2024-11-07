@@ -233,20 +233,20 @@ class MotionTests(unittest.TestCase):
     #     self.mt.wait(0.1)
     #     self.mt.video('video_appear')
 
-    # def test_movement(self):
-    #     # self.mt.draft = True
-    #     # self.mt.levitation_mode = 'off'
-    #     self.mt.reset().wait(0.1)
-    #     self.mt.new_sphere(
-    #         pos=(0.5, 0),
-    #         radius=0.1,
-    #     ).grow(duration=0.5, centred=False).run().wait(0.1)
-    #     self.mt._create_motion(
-    #         'movement',
-    #         duration=0.5,
-    #         end_pos=(0.5, 0.5),
-    #     )
-    #     self.mt.video('video_movements')
+    def test_movement(self):
+        # self.mt.draft = True
+        # self.mt.levitation_mode = 'off'
+        self.mt.reset().wait(0.1)
+        self.mt.new_sphere(
+            pos=(0.5, 0),
+            radius=0.1,
+        ).grow(duration=0.5, centred=False).run().wait(0.1)
+        self.mt._create_motion(
+            'movement',
+            duration=0.5,
+            end_pos=(0.5, 0.5),
+        )
+        self.mt.video('video_movements')
 
 
 if __name__ == '__main__':

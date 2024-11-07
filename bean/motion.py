@@ -252,7 +252,7 @@ class Motion(Volume):
             start_radius: float,
             end_radius: float,
             centred: bool,
-        ) -> bool:
+        ) -> None:
         # changes the radius of sphere
         delta_radius = (end_radius - start_radius)/duration
         radius = start_radius + step*delta_radius
@@ -301,7 +301,7 @@ class Motion(Volume):
             duration: Any,
             start_alpha: float,
             end_alpha: float,
-        ) -> bool:
+        ) -> None:
         # changes the radius of sphere
         alpha = start_alpha + (end_alpha - start_alpha)*step/duration
         self._volumes[volume]['alpha'] = alpha
@@ -324,47 +324,38 @@ class Motion(Volume):
         assert vertices is not None
         vertices = np.stack([self._normalize_pos(pos) for pos in vertices])
         normers = self._vertices_to_normers(vertices)
-        if start_with == end_with:
-            return None
         motion = {
             'volume' : volume,
-            'centred' : centred,
+            'vertices' : vertices,
+            'normers' : normers,
         }
         motion.update(kwargs)
-        radius = self._volumes[volume].get('radius', 1)
-        for timing in ['start', 'end']:
-            timing_with = locals()[f'{timing}_with']
-            if timing_with >= 0:
-                motion[f'{timing}_radius'] = radius*timing_with
-            else:
-                motion[f'{timing}_radius'] = abs(timing_with)
         self._add_motion(motion)
 
-    # def _apply_move_sphere(
-    #         self: Self,
-    #         volume: Any,
-    #         step: int,
-    #         duration: Any,
-    #         start_radius: float,
-    #         end_radius: float,
-    #         centred: bool,
-    #     ) -> bool:
-    #     # changes the radius of sphere
-    #     delta_radius = (end_radius - start_radius)/duration
-    #     radius = start_radius + step*delta_radius
-    #     pos = self._volumes[volume].get('pos', None)
-    #     if pos is not None and centred:
-    #         if not step:
-    #             if start_radius != self._volumes[volume]['radius']:
-    #                 delta_radius = min(0, start_radius -  end_radius)
-    #             else:
-    #                 delta_radius = 0
-    #         self._volumes[volume]['pos'] = (
-    #             pos[0],
-    #             pos[1],
-    #             pos[2] - delta_radius,
-    #         )
-    #     self._volumes[volume]['radius'] = radius
+    def _apply_move_sphere(
+            self: Self,
+            volume: Any,
+            step: int,
+            duration: Any,
+            vertices: np.array,
+            normers: np.array,
+        ) -> None:
+        # changes the radius of sphere
+        delta_radius = (end_radius - start_radius)/duration
+        radius = start_radius + step*delta_radius
+        pos = self._volumes[volume].get('pos', None)
+        if pos is not None and centred:
+            if not step:
+                if start_radius != self._volumes[volume]['radius']:
+                    delta_radius = min(0, start_radius -  end_radius)
+                else:
+                    delta_radius = 0
+            self._volumes[volume]['pos'] = (
+                pos[0],
+                pos[1],
+                pos[2] - delta_radius,
+            )
+        self._volumes[volume]['radius'] = radius
 
     '''
     static methods
