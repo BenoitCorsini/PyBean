@@ -72,9 +72,9 @@ DEFAULT = {
     'levitation_height' : 5e-2,
     'levitation_freq' : 1,
     'movement_frequency' : 2,
-    'movement_damping' : 0.4, # < 1 fluctuates, > 1 converges
-    'movement_response' : 12, # 0 slow response, > 0 direct reponse, > 1 overshoot, < 0 anticipated response
+    'movement_damping' : 0.4,
+    'movement_response' : 12,
     'movement_batch_size' : 10,
-    'movement_position_threshold' : 5e-3,
-    'movement_speed_threshold' : 2e-3,
+    'movement_position_threshold' : 3e-3,
+    'movement_speed_threshold' : 5e-3,
 }

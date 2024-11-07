@@ -317,13 +317,14 @@ class Motion(Volume):
             duration: int,
             path: np.array,
             norm: np.array,
-            initial_speed: np.array = np.zeros(3),
+            initial_speed: Any = (0, 0, 0),
             frequency: float = None,
             damping: float = None,
             response: float = None,
             batch_size: int = None,
             position_threshold: float = None,
             speed_threshold: float = None,
+            rigid: bool = False,
             **kwargs
         ) -> dict:
         # see https://www.youtube.com/watch?v=KPoeNZZ6H4s
@@ -347,7 +348,7 @@ class Motion(Volume):
         positions = []
         speeds = []
         current_pos = path[0]
-        current_speed = initial_speed
+        current_speed = np.array(initial_speed, dtype=float)
         current_puller = path[0]
         for index in range(duration + 1):
             for batch_index in range(batch_size):
@@ -356,10 +357,14 @@ class Motion(Volume):
                     path=path,
                     norm=norm,
                 ))
-                current_pos += current_speed/self.fps/batch_size
-                current_speed += k3*(next_puller - current_puller) + (
-                    next_puller - current_pos - k1*current_speed
-                )/self.fps/batch_size/k2
+                if rigid:
+                    current_pos = next_puller
+                    current_speed = np.zeros(3)
+                else:
+                    current_pos += current_speed/self.fps/batch_size
+                    current_speed += k3*(next_puller - current_puller) + (
+                        next_puller - current_pos - k1*current_speed
+                    )/self.fps/batch_size/k2
                 current_puller = next_puller.copy()
             positions.append(current_pos.copy())
             speeds.append(current_speed.copy())
@@ -368,7 +373,7 @@ class Motion(Volume):
                 np.sum((current_pos - end_pos)**2) > position_threshold
                 or
                 np.sum(current_speed**2) > speed_threshold
-            ):
+            ) and not rigid:
             for batch_index in range(batch_size):
                 current_pos += current_speed/self.fps/batch_size
                 current_speed += (

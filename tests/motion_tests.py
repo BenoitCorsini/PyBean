@@ -237,6 +237,7 @@ class MotionTests(unittest.TestCase):
         # self.mt.draft = True
         self.mt.levitation_mode = 'off'
         self.mt.reset().wait(1)
+        self.mt.show_info('step1')
         self.mt.new_sphere(
             pos=(0.5, 0.5),
             radius=0.1,
@@ -252,32 +253,38 @@ class MotionTests(unittest.TestCase):
             pos=(0.5, 0),
             radius=0.1,
         ).grow(duration=0.1, centred=False).run()
+        self.mt.show_info('step2')
         self.mt.move_to(
             (0.5, 0.5),
             'main',
             duration=0.5,
         ).run().wait(0.1)
+        self.mt.show_info('step3')
         self.mt.movement(
             [(0.5, 0.5), (0.5, 0.5, 1)] + [(0.5, 0.5)]*9,
             'main',
             duration=2.,
             normalize=False,
         ).run().wait(0.1)
+        self.mt.show_info('step4')
         self.mt.jump(
             1,
             'main',
             duration=0.2,
         ).run().wait(0.1)
+        self.mt.show_info('step5')
         self.mt.shift(
             (0.5, 0),
             avoid='main',
             duration=0.5,
+            rigid=True,
         )
         self.mt.movement(
             [(0, 0.5), (0.5, 0.5, 1), (1, 0), (0.5, 0, 0.5), (0.5, 0)],
             'main',
             duration=0.5,
             normalize=False,
+            initial_speed=(-10, 0, 0),
         ).run().wait(0.1)
         self.mt.video('video_movements')
 
