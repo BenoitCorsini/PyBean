@@ -73,40 +73,87 @@ class MotionTests(unittest.TestCase):
     def test_appear_disappear(self):
         self.mt.draft = True
         self.mt.levitation_mode = 'off'
-        self.mt.reset().wait(0.1)
+        self.mt.reset()
+        self.mt.show_info('waiting')
+        self.mt.wait(0.1)
+        self.mt.show_info('blue grows')
         self.mt.new_sphere(
             'blue',
             pos=(0.2, 0.1, 0),
             radius=0.2,
             colour='royalblue',
-        ).grow('blue', duration=0.5, centred=False).run().wait(0.1)
+        ).grow('blue', duration=0.5, centred=False, early_stop=0.1).run()
+        self.mt.show_info('pause')
+        self.mt.wait(0.1)
+        self.mt.show_info('blue and shaded yellow grow, then yellow grows/appears')
         self.mt.new_sphere(
             'yellow',
             pos=(0.6, 0.3, 0),
             radius=0.2,
             colour='gold',
             alpha=0.1,
-        ).grow('yellow', duration=0.5).change_alpha('yellow', start_with=1, end_with=-1, duration=0.1, delay=0.4).run().wait(0.1)
+        ).grow('yellow', duration=0.5).change_alpha('yellow', start_with=1, end_with=-1, duration=0.1, delay=0.4).run()
+        self.mt.show_info('pause')
+        self.mt.wait(0.1)
+        self.mt.show_info('green grows and appears slowly')
         self.mt.new_sphere(
             'green',
             pos=(0.85, 0.15, 0),
             radius=0.2,
             colour='forestgreen',
             alpha=0.5,
-        ).appear('green', duration=1.).grow('green', duration=0.5, centred=False).run().wait(0.1)
+        ).appear('green', duration=1.).grow('green', duration=0.5, centred=False).run()
+        self.mt.show_info('pause')
+        self.mt.wait(0.1)
+        self.mt.show_info('all schrink')
+        self.mt.change_radius(
+            start_with=1,
+            end_with=0.5,
+            duration=0.1,
+        ).run()
+        self.mt.show_info('delay, then all grow, stop, grow, stop, grow')
+        self.mt.change_radius(
+            start_with=1,
+            end_with=2,
+            duration=0.5,
+            delay=0.1,
+            early_stop=[0.1, 0.2],
+        ).run().wait(0.1).run().wait(0.1).run()
+        self.mt.show_info('red appears')
         self.mt.new_sphere(
             'red',
             pos=(0.3, 0.5, 0.1),
             radius=0.1,
             colour='crimson',
-        ).grow('red', duration=0.5).run().wait(0.1)
+        ).grow('red', duration=0.5).run()
+        self.mt.show_info('pause')
+        self.mt.wait(0.1)
+        self.mt.show_info('green disappears')
         self.mt.disappear('green', duration=0.5).run()
+        self.mt.show_info('green appears')
         self.mt.appear('green', use_current_alpha=False, duration=0.5).run()
-        self.mt.schrink(avoid='blue', duration=0.5).run().wait(0.1)
+        self.mt.show_info('all but blue schrink')
+        self.mt.schrink(avoid='blue', duration=0.5).run()
+        self.mt.show_info('pause')
+        self.mt.wait(0.1)
         self.mt.update(alpha=1)
+        self.mt.show_info('all but blue grow')
         self.mt.change_radius(start_with=1, end_with=-0.2, duration=0.5).run()
-        self.mt.schrink(duration=0.5).disappear(duration=0.5).run().wait(0.1)
-        self.mt.video()
+        self.mt.show_info('all schrink and disappear')
+        self.mt.schrink(duration=0.5).disappear(duration=0.5).run()
+        self.mt.show_info('end')
+        self.mt.wait(0.1)
+        self.mt.video('video_appear')
+
+    # def test_movement(self):
+    #     # self.mt.draft = True
+    #     # self.mt.levitation_mode = 'off'
+    #     self.mt.reset().wait(0.1)
+    #     self.mt.new_sphere(
+    #         pos=(0.5, 0, 0),
+    #         radius=0.1,
+    #     ).grow(duration=0.5, centred=False).run().wait(0.1)
+    #     self.mt.video()
 
 
 if __name__ == '__main__':
