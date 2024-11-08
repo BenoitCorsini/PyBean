@@ -153,19 +153,17 @@ class Volume(Shape):
 
     def _create_sphere(
             self: Self,
-            *args,
-            **kwargs,
+            available_key: Any,
         ) -> dict:
         # creates the volume dictionary of a sphere
-        return self._round_volume(*args, **kwargs)
+        return self._round_volume(available_key=available_key)
 
     def _create_tube(
             self: Self,
-            *args,
-            **kwargs,
+            available_key: Any,
         ) -> dict:
         # creates the volume dictionary of a tube
-        return self._round_volume(*args, **kwargs)
+        return self._round_volume(available_key=available_key)
 
     def _create_volume(
             self: Self,
@@ -250,7 +248,7 @@ class Volume(Shape):
                 )
             self.set_shape(key=shade, color=shade_colour, alpha=alpha)
 
-    def _update_tube(
+    def _update_joint_spheres(
             self: Self,
             main: str,
             side: list[str],
@@ -263,7 +261,6 @@ class Volume(Shape):
             slope: str = 'flat',
             visible: bool = True,
             alpha: float = 1,
-
         ) -> None:
         # updates the tube
         if not visible:
@@ -272,7 +269,7 @@ class Volume(Shape):
                 self.set_shape(key=key, visible=False)
             self.set_shape(key=shade, visible=False)
             return None
-        if isinstance(radius, tuple):
+        if isinstance(radius, tuple) or isinstance(radius, list):
             radius1, radius2 = radius
         else:
             radius1 = radius 
@@ -294,7 +291,7 @@ class Volume(Shape):
             radius *= self.scale
             scale = self._pos_to_scale(pos)
             variables[f'radius{index}'] = radius*scale
-            zorder = max(zorder, scale)
+            zorder += scale/2
             if not self.draft:
                 variables[f'shade_xy{index}'] = self._pos_to_xy(shade_pos)
                 variables[f'shade_radius{index}'] = (
@@ -438,6 +435,48 @@ class Volume(Shape):
                     ),
                 ) for index in [1, 2]])
                 self.apply_to_shape('set_path', key=shade, path=path)
+
+    def _update_tube(
+            self: Self,
+            key1: Any = None,
+            key2: Any = None,
+            shift1: tuple[float] = (0, 0),
+            shift2: tuple[float] = (0, 0),
+            space: Any = 0,
+            collapse: bool = True,
+            **kwargs,
+        ) -> None:
+        # updates the link
+        if isinstance(space, tuple) or isinstance(space, list):
+            space1, space2 = space
+        else:
+            space1 = space
+            space2 = space
+        for index in [1, 2]:
+            kwargs[f'pos{index}'] = np.array(self._normalize_pos(
+                self._volumes.get(f'key{index}', {}).get('pos', (0, 0))
+            ))
+        vect = kwargs['pos2'] - kwargs['pos1']
+        norm = np.sum(vect**2)**0.5
+        if space1 < 0:
+            space1 *= -norm
+        if space2 < 0:
+            space2 *= -norm
+        if collapse and norm < space1 + space2:
+            kwargs['visible'] = False
+        if not norm:
+            norm = 1
+        vect = vect/norm
+        for index in [1, 2]:
+            kwargs[f'pos{index}'] = tuple(
+                kwargs[f'pos{index}']
+                + locals()[f'space{index}']*vect
+                + np.array(self._normalize_pos(
+                    locals()[f'shift{index}']
+                ))
+            )
+        kwargs['slope'] = 'flat'
+        self._update_joint_spheres(**kwargs)
 
     def _update_volume(
             self: Self,
