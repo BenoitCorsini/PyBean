@@ -405,6 +405,7 @@ class Motion(Volume):
         path = np.stack([self._normalize_pos(pos) for pos in path])
         if shifted:
             path = np.array(origin).reshape(1, 3) + path
+        path[:,-1] = path[:,-1]*(path[:,-1] > 0)
         if normalize:
             norm = self._path_to_norm(path)
         else:
@@ -675,13 +676,14 @@ class Motion(Volume):
             self: Self,
             height: float,
             *args,
+            end_height: float = 0,
             **kwargs,
         ) -> Self:
         # makes a volume jump
         shift = [
             (0, 0, 0),
             (0, 0, height),
-            (0, 0, 0),
+            (0, 0, end_height),
         ]
         return self.shift(shift, *args, **kwargs)
 

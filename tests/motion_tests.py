@@ -311,17 +311,21 @@ class MotionTests(unittest.TestCase):
                 delay = (x + num*y/2)/num**2
                 self.mt.appear(s, duration=0.5, delay=delay, use_current_alpha=False)
                 self.mt.grow(s, duration=0.5, delay=delay)
-                self.mt.jump(1, s, duration=0.5, delay=delay)
+                self.mt.jump(2, s, duration=0.5, delay=delay, end_height=1)
         self.mt.run()
         for y in range(num + 1):
             for x in range(num + 1):
                 s = f'{x}-{y}'
                 delay = (x + num*y/2)/num**2
-                self.mt.disappear(s, duration=0.2, delay=delay + 0.4)
-                self.mt.schrink(s, duration=0.2, delay=delay + 0.4)
-                self.mt.jump(1, s, duration=0.5, delay=delay, early_stop=2.)
+                self.mt.jump(1, s, duration=0.5, delay=delay, end_height=-2)
         self.mt.run()
-        self.mt.video()
+        for y in range(num + 1):
+            for x in range(num + 1):
+                s = f'{x}-{y}'
+                delay = (x + num*y/2)/num**2
+                self.mt.schrink(s, duration=0.5, delay=delay, centred=False)
+        self.mt.run()
+        self.mt.video('video_motion')
 
 
 
