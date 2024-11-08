@@ -438,7 +438,7 @@ class Volume(Shape):
             key2: Any = None,
             shift1: tuple[float] = (0, 0),
             shift2: tuple[float] = (0, 0),
-            radius: Any = 0,
+            radius: Any = 1,
             space: Any = 0,
             collapse: bool = True,
             **kwargs,
@@ -466,7 +466,16 @@ class Volume(Shape):
         if space2 < 0:
             space2 *= -norm
         if collapse and norm < space1 + space2:
-            kwargs['visible'] = False
+            negative_space = space1 + space2 - norm
+            radius_ratio = kwargs['radius1'] + kwargs['radius2']
+            if not radius_ratio:
+                radius_ratio = 1
+            radius_ratio = 1 - negative_space/radius_ratio
+            radius_ratio = max(0, radius_ratio)
+            for index in [1, 2]:
+                kwargs[f'radius{index}'] *= radius_ratio
+            space1 -= negative_space/2
+            space2 -= negative_space/2
         if not norm:
             norm = 1
         vect = vect/norm

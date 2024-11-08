@@ -299,12 +299,14 @@ class VolumeTests(unittest.TestCase):
             for y in range(num):
                 collapse = True
                 if x == 0 or x == 1:
-                    space = -0.15 - 0.2*y
+                    space = -0.49 - 0.02*y
                     collapse = bool(x)
+                elif x == 2:
+                    space = 0
                 else:
                     space = -0.15
                 if x == 2:
-                    shift1 = (y/num, y/num)
+                    shift1 = (y/(num - 1), y/(num - 1))
                     shift2 = (0, 0)
                 elif x == 3:
                     shift1 = (0, 0, y/num)
@@ -321,8 +323,9 @@ class VolumeTests(unittest.TestCase):
                     space=space,
                     shift1=shift1,
                     shift2=shift2,
-                    colour='gold',
+                    colour='orange',
                     collapse=collapse,
+                    alpha=0.5,
                 )
         self.vl.update()
         self.vl.save('image_edge')
