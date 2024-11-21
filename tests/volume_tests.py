@@ -172,88 +172,88 @@ class VolumeTests(unittest.TestCase):
     image methods
     '''
 
-    # def test_sphere(self):
-    #     self.vl.depth_shift = 0.05
-    #     self.vl.depth_scale = 0.75
-    #     self.vl.side_scale = 0.8
-    #     num = 10
-    #     self.vl.scale = 1/num
-    #     self.vl.reset()
-    #     for y in range(num + 1):
-    #         for x in range(num + 1):
-    #             if ((x + y) % 2) == 0:
-    #                 self.vl._create_volume(
-    #                     name='sphere',
-    #                     pos=(x, y, (x + y)/num),
-    #                     radius=0.4,
-    #                     colour='forestgreen',
-    #                 )
-    #             else:
-    #                 self.vl._create_volume(
-    #                     name='sphere',
-    #                     pos=(x, y, 0),
-    #                     radius=0.2,
-    #                     colour='royalblue',
-    #                 )
-    #     self.vl.update()
-    #     self.vl.save('image_sphere')
+    def test_sphere(self):
+        self.vl.depth_shift = 0.05
+        self.vl.depth_scale = 0.75
+        self.vl.side_scale = 0.8
+        num = 10
+        self.vl.scale = 1/num
+        self.vl.reset()
+        for y in range(num + 1):
+            for x in range(num + 1):
+                if ((x + y) % 2) == 0:
+                    self.vl._create_volume(
+                        name='sphere',
+                        pos=(x, y, (x + y)/num),
+                        radius=0.4,
+                        colour='forestgreen',
+                    )
+                else:
+                    self.vl._create_volume(
+                        name='sphere',
+                        pos=(x, y, 0),
+                        radius=0.2,
+                        colour='royalblue',
+                    )
+        self.vl.update()
+        self.vl.save('image_sphere')
 
-    # def test_tubes(self):
-    #     self.vl.reset()
-    #     self.vl.depth_shift = 0.05
-    #     self.vl.depth_scale = 0.75
-    #     self.vl.side_scale = 0.8
-    #     num = 10
-    #     self.vl.scale = 1/num
-    #     for y in range(num + 1):
-    #         for x in range(num + 1):
-    #             if ((x + y) % 2) == 0:
-    #                 if x > y:
-    #                     self.vl._create_volume(
-    #                         name='tube',
-    #                         shift1=(x, y),
-    #                         shift2=(x, y, (x + y)/num),
-    #                         radius=0.2,
-    #                         colour='forestgreen',
-    #                     )
-    #                 else:
-    #                     self.vl._create_volume(
-    #                         name='tube',
-    #                         shift1=(
-    #                             x + 0.3*np.cos((x + y)*np.pi/num),
-    #                             y + 0.3*np.sin((x + y)*np.pi/num),
-    #                             (x + y)/num,
-    #                         ),
-    #                         shift2=(
-    #                             x - 0.3*np.cos((x + y)*np.pi/num),
-    #                             y - 0.3*np.sin((x + y)*np.pi/num),
-    #                             (x + y)/num,
-    #                         ),
-    #                         radius=0.3,
-    #                         colour='chocolate',
-    #                     )
-    #             else:
-    #                 if x > y:
-    #                     self.vl._create_volume(
-    #                         name='tube',
-    #                         shift1=(x, y),
-    #                         shift2=(
-    #                             x + 0.35*np.cos(np.pi*(x + y)/num),
-    #                             y + 0.35*np.sin(np.pi*(x + y)/num),
-    #                         ),
-    #                         radius=(0.35, 0.05),
-    #                         colour='purple',
-    #                     )
-    #                 else:
-    #                     self.vl._create_volume(
-    #                         name='tube',
-    #                         shift1=(x, y),
-    #                         shift2=(x, y),
-    #                         radius=(0.2, 0.1),
-    #                         colour='royalblue',
-    #                     )
-    #     self.vl.update()
-    #     self.vl.save('image_tube')
+    def test_tubes(self):
+        self.vl.reset()
+        self.vl.depth_shift = 0.05
+        self.vl.depth_scale = 0.75
+        self.vl.side_scale = 0.8
+        num = 10
+        self.vl.scale = 1/num
+        for y in range(num + 1):
+            for x in range(num + 1):
+                if ((x + y) % 2) == 0:
+                    if x > y:
+                        self.vl._create_volume(
+                            name='tube',
+                            shift1=(x, y),
+                            shift2=(x, y, (x + y)/num),
+                            radius=0.2,
+                            colour='forestgreen',
+                        )
+                    else:
+                        self.vl._create_volume(
+                            name='tube',
+                            shift1=(
+                                x + 0.3*np.cos((x + y)*np.pi/num),
+                                y + 0.3*np.sin((x + y)*np.pi/num),
+                                (x + y)/num,
+                            ),
+                            shift2=(
+                                x - 0.3*np.cos((x + y)*np.pi/num),
+                                y - 0.3*np.sin((x + y)*np.pi/num),
+                                (x + y)/num,
+                            ),
+                            radius=0.3,
+                            colour='chocolate',
+                        )
+                else:
+                    if x > y:
+                        self.vl._create_volume(
+                            name='tube',
+                            shift1=(x, y),
+                            shift2=(
+                                x + 0.35*np.cos(np.pi*(x + y)/num),
+                                y + 0.35*np.sin(np.pi*(x + y)/num),
+                            ),
+                            radius=(0.35, 0.05),
+                            colour='purple',
+                        )
+                    else:
+                        self.vl._create_volume(
+                            name='tube',
+                            shift1=(x, y),
+                            shift2=(x, y),
+                            radius=(0.2, 0.1),
+                            colour='royalblue',
+                        )
+        self.vl.update()
+        self.vl.save('image_tube')
 
     def test_edge(self):
         self.vl.depth_shift = 0.05
