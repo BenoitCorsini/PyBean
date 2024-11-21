@@ -234,20 +234,24 @@ class MotionTests(unittest.TestCase):
         self.mt.video('video_appear')
 
     def test_movement(self):
-        # self.mt.draft = True
+        self.mt.draft = False
         self.mt.levitation_mode = 'off'
+        self.mt.depth_shift = 0.1
+        self.mt.depth_scale = 0.5
+        self.mt.side_scale = 0.8
+        self.mt.scale = 0.5
         self.mt.reset().wait(1)
         self.mt.show_info('step1')
         self.mt.new_sphere(
             pos=(0.5, 0.5),
             radius=0.1,
             alpha=0.1,
-        ).grow(duration=0.1, centred=False)
+        )
         self.mt.new_sphere(
             pos=(0.5, 0),
             radius=0.1,
             alpha=0.1,
-        ).grow(duration=0.1, centred=False)
+        )
         self.mt.new_sphere(
             'main',
             pos=(0.5, 0),
@@ -288,7 +292,8 @@ class MotionTests(unittest.TestCase):
         ).run().wait(0.1)
         self.mt.video('video_movements')
 
-    def test_main(self):
+    def test_tubes(self):
+        self.mt.draft = False
         self.mt.levitation_mode = 'off'
         self.mt.depth_shift = 0.1
         self.mt.depth_scale = 0.5
@@ -302,9 +307,19 @@ class MotionTests(unittest.TestCase):
                 self.mt.new_sphere(
                     f'{x}-{y}',
                     pos=(x, y),
-                    radius=0.25,
+                    radius=0.2,
                     alpha=0,
                 )
+                if y:
+                    self.mt.new_tube(
+                        f'{x}--{y}-{y}',
+                        key1=f'{x}-{y-1}',
+                        key2=f'{x}-{y}',
+                        radius=0.1,
+                        space=0.35,
+                        colour='skyblue',
+                        alpha=0,
+                    ) 
         for y in range(num + 1):
             for x in range(num + 1):
                 s = f'{x}-{y}'
@@ -312,20 +327,64 @@ class MotionTests(unittest.TestCase):
                 self.mt.appear(s, duration=0.5, delay=delay, use_current_alpha=False)
                 self.mt.grow(s, duration=0.5, delay=delay)
                 self.mt.jump(2, s, duration=0.5, delay=delay, end_height=1)
+                if y:
+                    self.mt.appear(f'{x}--{y}-{y}', duration=0.5, delay=delay, use_current_alpha=False)
+                    self.mt.grow(f'{x}--{y}-{y}', duration=0.5, delay=delay)
         self.mt.run()
+        for y in range(num + 1):
+            for x in range(1, num + 1):
+                if y > 1:
+                    self.mt.new_tube(
+                        f'{x}-{x}--{y}',
+                        key1=f'{x-1}-{y}',
+                        key2=f'{x}-{y}',
+                        radius=(0.1, 0.05),
+                        space=0.35,
+                        colour='skyblue',
+                    )
+                else:
+                    self.mt.new_tube(
+                        f'{x}-{x}--{y}',
+                        key1=f'{x-1}-{y}',
+                        key2=f'{x}-{y}',
+                        radius=0.1,
+                        space=0.35,
+                        colour='skyblue',
+                    ) 
+        for y in range(num + 1):
+            for x in range(1, num + 1):
+                self.mt.appear(f'{x}-{x}--{y}', duration=0.25)
+                if y == 0:
+                    self.mt.grow(f'{x}-{x}--{y}', duration=1.)
+                elif y == 1:
+                    self.mt.change_radius(f'{x}-{x}--{y}', duration=1., start_with=0, end_with=(1, 0.5))
+                elif y == 2:
+                    self.mt.change_radius(f'{x}-{x}--{y}', duration=1., start_with=-0.2, end_with=(1, 2))
+                elif y == 3:
+                    self.mt.change_radius(f'{x}-{x}--{y}', duration=1., start_with=(1, 0), end_with=(1, 2))
+                else:
+                    self.mt.change_radius(f'{x}-{x}--{y}', duration=1., start_with=-0.5, end_with=(-0.1, 2))
+        self.mt.run().wait(0.1)
+        for x in range(1, num + 1):
+            self.mt.change_radius(f'{x}-{x}--1', duration=0.5, start_with=1, end_with=-0.1)
+        self.mt.run().wait(0.1)
         for y in range(num + 1):
             for x in range(num + 1):
                 s = f'{x}-{y}'
                 delay = (x + num*y/2)/num**2
-                self.mt.jump(1, s, duration=0.5, delay=delay, end_height=-2)
+                self.mt.jump(1, s, duration=0.5, delay=delay, end_height=-2, position_threshold=100, speed_threshold=100, damping=0)
         self.mt.run()
         for y in range(num + 1):
             for x in range(num + 1):
                 s = f'{x}-{y}'
                 delay = (x + num*y/2)/num**2
                 self.mt.schrink(s, duration=0.5, delay=delay, centred=False)
+                if x:
+                    self.mt.schrink(f'{x}-{x}--{y}', duration=0.5, delay=delay)
+                if y:
+                    self.mt.schrink(f'{x}--{y}-{y}', duration=0.5, delay=delay)
         self.mt.run()
-        self.mt.video('video_motion')
+        self.mt.video('video_edges')
 
 
 

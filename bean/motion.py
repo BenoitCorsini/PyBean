@@ -233,7 +233,7 @@ class Motion(Volume):
             centred: bool = True,
             **kwargs,
         ) -> None:
-        # changes the radius of sphere
+        # creates a motion to change the radius of a sphere
         if start_with == end_with:
             return None
         motion = {
@@ -250,6 +250,41 @@ class Motion(Volume):
                 motion[f'{timing}_radius'] = abs(timing_with)
         self._add_motion(motion)
 
+    def _add_change_radius_tube(
+            self: Self,
+            volume: Any,
+            start_with: Any = 1,
+            end_with: Any = 1,
+            centred: Any = True,
+            **kwargs,
+        ) -> None:
+        # creates a motion to change the radius of a tube
+        if start_with == end_with:
+            return None
+        if isinstance(centred, bool):
+            centred = (centred, centred)
+        motion = {
+            'volume' : volume,
+            'centred1' : centred[0],
+            'centred2' : centred[1],
+        }
+        motion.update(kwargs)
+        radius = self._volumes[volume].get('radius', 1)
+        variables = {}
+        if isinstance(radius, int) or isinstance(radius, float):
+            radius = (radius, radius)
+        for timing in ['start', 'end']:
+            timing_with = locals()[f'{timing}_with']
+            if isinstance(timing_with, int) or isinstance(timing_with, float):
+                timing_with = (timing_with, timing_with)
+            for index in [0, 1]:
+                motion_key = f'{timing}_radius{1 + index}'
+                if timing_with[index] >= 0:
+                    motion[motion_key] = radius[index]*timing_with[index]
+                else:
+                    motion[motion_key] = abs(timing_with[index])
+        self._add_motion(motion)
+
     def _apply_change_radius_sphere(
             self: Self,
             volume: Any,
@@ -259,7 +294,7 @@ class Motion(Volume):
             end_radius: float,
             centred: bool,
         ) -> None:
-        # changes the radius of sphere
+        # changes the radius of a sphere
         delta_radius = (end_radius - start_radius)/duration
         radius = start_radius + step*delta_radius
         pos = self._normalize_pos(self._volumes[volume].get('pos', None))
@@ -277,14 +312,60 @@ class Motion(Volume):
             )
         self._volumes[volume]['radius'] = radius
 
-    def _add_change_alpha_sphere(
+    def _apply_change_radius_tube(
+            self: Self,
+            volume: Any,
+            step: int,
+            duration: int,
+            start_radius1: float,
+            end_radius1: float,
+            centred1: bool,
+            start_radius2: float,
+            end_radius2: float,
+            centred2: bool,
+        ) -> None:
+        # changes the radius of a tube
+        radius = self._volumes[volume]['radius']
+        if isinstance(radius, int) or isinstance(radius, float):
+            radius = (radius, radius)
+        variables = {}
+        for index in [1, 2]:
+            start_radius = locals()[f'start_radius{index}']
+            end_radius = locals()[f'end_radius{index}']
+            delta_radius = (end_radius - start_radius)/duration
+            radius = start_radius + step*delta_radius
+            if self._volumes[volume].get(f'key{index}', None) is not None:
+                pos = None
+            else:
+                pos = self._normalize_pos(
+                    self._volumes[volume].get(f'shift{index}', None)
+                )
+            if pos is not None and centred:
+                if step:
+                    delta_altitude = delta_radius
+                elif start_radius != radius[index - 1]:
+                    delta_altitude = min(0, start_radius -  end_radius)
+                else:
+                    delta_altitude = 0
+                self._volumes[volume][f'shift{index}'] = (
+                    pos[0],
+                    pos[1],
+                    pos[2] - delta_altitude,
+                )
+            variables[f'radius{index}'] = radius
+        self._volumes[volume]['radius'] = (
+            variables['radius1'],
+            variables['radius2'],
+        )
+
+    def _add_change_alpha_(
             self: Self,
             volume: Any,
             start_with: float = 1,
             end_with: float = 1,
             **kwargs,
         ) -> None:
-        # changes the radius of sphere
+        # creates the motion to change the alpha of any volume
         if start_with == end_with:
             return None
         motion = {
@@ -300,7 +381,23 @@ class Motion(Volume):
                 motion[f'{timing}_alpha'] = abs(timing_with)
         self._add_motion(motion)
 
-    def _apply_change_alpha_sphere(
+    def _add_change_alpha_sphere(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> None:
+        # changes the alpha of a sphere
+        self._add_change_alpha_(*args, **kwargs)
+
+    def _add_change_alpha_tube(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> None:
+        # changes the alpha of a tube
+        self._add_change_alpha_(*args, **kwargs)
+
+    def _apply_change_alpha_(
             self: Self,
             volume: Any,
             step: int,
@@ -308,9 +405,25 @@ class Motion(Volume):
             start_alpha: float,
             end_alpha: float,
         ) -> None:
-        # changes the radius of sphere
+        # changes the alpha of any volume
         alpha = start_alpha + (end_alpha - start_alpha)*step/duration
         self._volumes[volume]['alpha'] = alpha
+
+    def _apply_change_alpha_sphere(
+            self: Self,
+            *args,
+            **kwargs
+        ) -> None:
+        # changes the alpha of a sphere
+        self._apply_change_alpha_(*args, **kwargs)
+
+    def _apply_change_alpha_tube(
+            self: Self,
+            *args,
+            **kwargs
+        ) -> None:
+        # changes the alpha of a tube
+        self._apply_change_alpha_(*args, **kwargs)
 
     def _smooth_movement(
             self: Self,
@@ -346,7 +459,6 @@ class Motion(Volume):
         k2 = 1/(2*np.pi*frequency)**2
         k3 = response*damping/2/np.pi/frequency
         positions = []
-        speeds = []
         current_pos = path[0].astype(float)
         current_speed = np.array(initial_speed).astype(float)
         current_puller = path[0]
@@ -367,7 +479,6 @@ class Motion(Volume):
                     )/self.fps/batch_size/k2
                 current_puller = next_puller.copy()
             positions.append(current_pos.copy())
-            speeds.append(current_speed.copy())
         end_pos = path[-1]
         while (
                 np.sum((current_pos - end_pos)**2) > position_threshold
@@ -380,7 +491,7 @@ class Motion(Volume):
                     end_pos - current_pos - k1*current_speed
                 )/self.fps/batch_size/k2
             positions.append(current_pos.copy())
-            speeds.append(current_speed.copy())
+        positions.append(end_pos.copy())
         kwargs['duration'] = len(positions) - 1
         kwargs['pos_list'] = [tuple(pos) for pos in positions]
         return kwargs
