@@ -16,15 +16,15 @@ class VolumeTests(unittest.TestCase):
     '''
 
     def test_shade_shift(self):
-        self.vl.shade_angle = 0
+        self.vl.shade_angle = 90
         shift = self.vl._shade_shift()
         self.assertEqual(shift[0], 1)
         self.assertEqual(round(shift[1], 10), 0)
-        self.vl.shade_angle = 90
+        self.vl.shade_angle = 180
         shift = self.vl._shade_shift()
         self.assertEqual(round(shift[0], 10), 0)
         self.assertEqual(shift[1], 1)
-        self.vl.shade_angle = 180
+        self.vl.shade_angle = -90
         shift = self.vl._shade_shift()
         self.assertEqual(shift[0], -1)
         self.assertEqual(round(shift[1], 10), 0)
