@@ -285,12 +285,13 @@ class Shape(Canvas):
     def angle_from_xy(
             xy1: (float, float),
             xy2: (float, float),
+            default_angle: float = 0.
         ) -> float:
         # computes the angle formed by the two positions
         vector = np.array(xy2) - np.array(xy1)
         norm = np.sum(vector**2)**0.5
         if not norm:
-            return 0.
+            return default_angle
         vector = vector/norm
         angle = np.arccos(vector[0])
         if vector[1] < 0:
