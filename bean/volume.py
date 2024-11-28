@@ -29,9 +29,6 @@ class Volume(Shape):
         self._volumes = {}
         self._volume_index = 0
         self._depth_exponent = 1 - np.tan(self.horizon_angle*np.pi/180)
-        self._side_angle = 180*np.arctan(self.altitude_to_shade)/np.pi
-        self._side_angle *= np.cos(self.shade_angle*np.pi/180)
-        self._side_angle -= 90
         self.add_axis()
         self.add_info()
         if self.draft:
@@ -54,7 +51,7 @@ class Volume(Shape):
         ) -> np.array:
         # returns a vector for shade shifting
         return self.angle_shift(
-            angle=self.shade_angle,
+            angle=self.shade_angle - 90,
             two_dim=two_dim,
         )
 
@@ -220,6 +217,11 @@ class Volume(Shape):
             alpha=alpha,
         )
         if not self.draft:
+            side_angle = self.angle_from_xy(
+                xy1=xy,
+                xy2=shade_xy,
+                default_angle=self.shade_angle - 90,
+            )
             for key, ratio in zip(side, self.round_sides):
                 path = self.merge_curves(*self.crescent_paths(
                     xy=xy,
@@ -227,7 +229,7 @@ class Volume(Shape):
                     ratio=ratio,
                     theta1=270,
                     theta2=90,
-                    angle=self._side_angle,
+                    angle=side_angle,
                 ))
                 self.apply_to_shape('set_path', key=key, path=path)
                 self.set_shape(
@@ -322,11 +324,22 @@ class Volume(Shape):
             alpha=alpha,
         )
         if not self.draft:
+            side_angle1 = self.angle_from_xy(
+                xy1=variables['xy1'],
+                xy2=variables['shade_xy1'],
+                default_angle=self.shade_angle - 90,
+            )
+            side_angle2 = self.angle_from_xy(
+                xy1=variables['xy2'],
+                xy2=variables['shade_xy2'],
+                default_angle=self.shade_angle - 90,
+            )
+            side_angle = (side_angle1 + side_angle2)/2
             theta1 = self.normalize_angle(
-                90 + around_angle + angle - self._side_angle
+                90 + around_angle + angle - side_angle
             )
             theta2 = self.normalize_angle(
-                270 - around_angle + angle - self._side_angle
+                270 - around_angle + angle - side_angle
             )
             dark_index = 1 + int(self.normalize_angle(theta2 - theta1) > 0)
             for key, ratio in zip(side, self.round_sides):
@@ -372,7 +385,7 @@ class Volume(Shape):
                         crescent[s] = variables[f'{s}{index}']
                     paths.append(self.crescent_paths(
                         ratio=ratio,
-                        angle=self._side_angle,
+                        angle=side_angle,
                         **crescent
                     ))
                 inners, outers = zip(*paths)
