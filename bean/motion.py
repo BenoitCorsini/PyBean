@@ -15,7 +15,7 @@ class Motion(Volume):
     fundamental variables and function
     '''
 
-    _volume_params = {
+    _motion_params = {
         'fps' : int,
         'frames_dir' : str,
         'print_on' : str,
