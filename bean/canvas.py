@@ -113,7 +113,8 @@ class Canvas(object):
                     type=param_type,
                     default=getattr(self, param),
                 )
-        kwargs.update(self.get_kwargs())
+        # kwargs.update(self.get_kwargs())
+        kwargs = self.get_kwargs(**kwargs)
         for key, value in kwargs.items():
             setattr(self, key, value)
 
