@@ -44,19 +44,20 @@ class Shape(Canvas):
             self: Self,
         ) -> Path:
         # gets the path of the copyright
-        margin = self.copyright.get('margin', 0)
+        xshift = self.copyright.get('xshift', 0.5)
+        yshift = self.copyright.get('yshift', 0.5)
         xscale = (self.xmax - self.xmin)*self.figsize[1]/self.figsize[0]
         yscale = self.ymax - self.ymin
         xy = (
-            self.xmin + margin*xscale,
-            self.ymin + margin*yscale,
+            self.xmin + xshift*xscale,
+            self.ymin + yshift*yscale,
         )
         height = yscale*self.copyright.get('height', 1)
         return self.path_from_string(
             s=self.copyright.get('text', 'PyBean'),
             xy=xy,
             font_properties=self.copyright.get('font_properties', {}),
-            anchor='south west',
+            anchor=self.copyright.get('anchor', None),
             height=height,
         )
 
@@ -78,6 +79,19 @@ class Shape(Canvas):
             **getattr(self, 'axis_params', {})
         )
 
+    def _decimal_precision(
+            self: Self,
+            step: float,
+        ) -> (bool, bool):
+        # returns whether the ticks are integers, with one decimal, or more
+        is_integer = step == int(step)
+        is_integer = is_integer and self.xmin == int(self.xmin)
+        is_integer = is_integer and self.ymin == int(self.ymin)
+        single_decimal = 10*step == int(10*step)
+        single_decimal = single_decimal and 10*self.xmin == int(10*self.xmin)
+        single_decimal = single_decimal and 10*self.ymin == int(10*self.ymin)
+        return is_integer, single_decimal
+
     def _axis_ticks(
             self: Self,
             step: float,
@@ -88,12 +102,7 @@ class Shape(Canvas):
         height = self.axis_tick_ratio*step/self.lines_per_axis
         xticks = self._get_ticks(axis='x', step=step)
         yticks = self._get_ticks(axis='y', step=step)
-        is_integer = step == int(step)
-        is_integer = is_integer and self.xmin == int(self.xmin)
-        is_integer = is_integer and self.ymin == int(self.ymin)
-        single_decimal = 10*step == int(10*step)
-        single_decimal = single_decimal and 10*self.xmin == int(10*self.xmin)
-        single_decimal = single_decimal and 10*self.ymin == int(10*self.ymin)
+        is_integer, single_decimal = self._decimal_precision(step)
         for tick in xticks[1:]:
             paths.append(self.path_from_string(
                 s=self._num_to_string(tick, is_integer, single_decimal),

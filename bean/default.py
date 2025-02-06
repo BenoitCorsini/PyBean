@@ -12,7 +12,9 @@ DEFAULT = {
     'copyright' : {
         'text' : 'MathemaSixte',
         'height' : 0.07,
-        'margin' : 0.02,
+        'xshift' : 0.02,
+        'yshift' : 0.02,
+        'anchor' : 'south west',
         'lw' : 2,
         'ec' : 'grey',
         'fc' : 'black',

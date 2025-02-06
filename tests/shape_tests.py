@@ -17,6 +17,89 @@ class ShapeTests(unittest.TestCase):
     hidden methods
     '''
 
+    def test_decimal_precision(self):
+        xmin = self.sh.xmin
+        ymin = self.sh.ymin
+        for step in range(1, 10):
+            self.sh.xmin = step
+            self.sh.ymin = step
+            self.assertEqual(
+                self.sh._decimal_precision(step),
+                (True, True)
+            )
+            self.assertEqual(
+                self.sh._decimal_precision(float(step)),
+                (True, True)
+            )
+            self.assertEqual(
+                self.sh._decimal_precision(step/10),
+                (False, True)
+            )
+            self.assertEqual(
+                self.sh._decimal_precision(step + 0.5),
+                (False, True)
+            )
+            self.assertEqual(
+                self.sh._decimal_precision(step/100),
+                (False, False)
+            )
+            self.assertEqual(
+                self.sh._decimal_precision(step + 0.05),
+                (False, False)
+            )
+            self.sh.xmin /= 10
+            self.assertEqual(
+                self.sh._decimal_precision(step),
+                (False, True)
+            )
+            self.assertEqual(
+                self.sh._decimal_precision(float(step)),
+                (False, True)
+            )
+            self.assertEqual(
+                self.sh._decimal_precision(step/10),
+                (False, True)
+            )
+            self.assertEqual(
+                self.sh._decimal_precision(step + 0.5),
+                (False, True)
+            )
+            self.assertEqual(
+                self.sh._decimal_precision(step/100),
+                (False, False)
+            )
+            self.assertEqual(
+                self.sh._decimal_precision(step + 0.05),
+                (False, False)
+            )
+            self.sh.ymin /= 100
+            self.assertEqual(
+                self.sh._decimal_precision(step),
+                (False, False)
+            )
+            self.assertEqual(
+                self.sh._decimal_precision(float(step)),
+                (False, False)
+            )
+            self.assertEqual(
+                self.sh._decimal_precision(step/10),
+                (False, False)
+            )
+            self.assertEqual(
+                self.sh._decimal_precision(step + 0.5),
+                (False, False)
+            )
+            self.assertEqual(
+                self.sh._decimal_precision(step/100),
+                (False, False)
+            )
+            self.assertEqual(
+                self.sh._decimal_precision(step + 0.05),
+                (False, False)
+            )
+        self.sh.xmin = xmin
+        self.sh.ymin = ymin
+
     def test_get_ticks(self):
         self.assertTrue(np.all(self.sh._get_ticks(
             axis='x',
