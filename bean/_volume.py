@@ -5,9 +5,11 @@ from .shape import Shape
 
 
 '''
-Any subsequence volume-based class needs the following functions:
-    _create_volname
-    _update_volname
+Any subsequent volume-based class needs the following functions:
+    _create_ + 'volume name'
+    _update_ + 'volume name'
+    new_ + 'volume name'
+The latter function being preferably placed in the main Volume class.
 '''
 
 
