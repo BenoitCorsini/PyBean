@@ -553,7 +553,7 @@ class Volume(Shape):
         else:
             message = 'The value of only and avoid must be either '
             message += 'None, a key, a string, or a list: '
-            message ++ str(only_avoid)
+            message += str(only_avoid)
             raise ValueError(message)
         return only_avoid
 

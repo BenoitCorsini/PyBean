@@ -118,6 +118,8 @@ class VolumeTests(unittest.TestCase):
             self.vl._only_avoid_to_list('c'),
             []
         )
+        with self.assertRaises(ValueError):
+            self.vl._only_avoid_to_list(0)
 
     '''
     general methods
