@@ -143,8 +143,7 @@ class Shape(Canvas):
         ) -> None:
         # makes the copyright visible or not
         if hasattr(self, 'copyright') and self.copyright_on is None:
-            for key in ['_copyright_fill', '_copyright_line']:
-                self.set_shape(key=key, visible=visible)
+            self.set_shape(key='_copyright', visible=visible)
 
     def _axis_visible(
             self: Self,
@@ -556,20 +555,8 @@ class Shape(Canvas):
         path = self._copyright_path()
         self.add_shape(
             shape_name='PathPatch',
-            key='_copyright_fill',
+            key='_copyright',
             path=path,
-            lw=0,
-            color=self.copyright.get('fc', 'black'),
-            visible=self.copyright_on,
-            **self.copyright.get('params', {})
-        )
-        self.add_shape(
-            shape_name='PathPatch',
-            key='_copyright_line',
-            path=path,
-            lw=self.copyright.get('lw', 0),
-            color=self.copyright.get('ec', 'black'),
-            fill=False,
             visible=self.copyright_on,
             **self.copyright.get('params', {})
         )
