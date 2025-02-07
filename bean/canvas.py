@@ -54,10 +54,11 @@ class Canvas(object):
             **kwargs,
         ) -> None:
         # initiate class
+        self._parser = argparse.ArgumentParser()
         for key, value in DEFAULT.items():
             setattr(self, key, value)
-        self._parser = argparse.ArgumentParser()
-        self._set_params(**kwargs)
+        for key, value in kwargs.items():
+            setattr(self, key, value)
         self.reset()
 
     def __repr__(
@@ -95,28 +96,6 @@ class Canvas(object):
             classes.append(current_class)
             classes_to_explore += list(current_class.__bases__)
         return classes[::-1]
-
-    def _set_params(
-            self: Self,
-            **kwargs,
-        ) -> None:
-        # collects and sets up the parameters of the class and its parents
-        for current_class in self._get_classes():
-            class_name = current_class.__name__.lower()
-            class_params = getattr(self, f'_{class_name}_params', {})
-            class_nargs = getattr(self, f'_{class_name}_nargs', {})
-            for param, param_type in class_params.items():
-                assert hasattr(self, param)
-                self.add_param(
-                    f'--{param}',
-                    nargs=class_nargs.get(param, None),
-                    type=param_type,
-                    default=getattr(self, param),
-                )
-        # kwargs.update(self.get_kwargs())
-        kwargs = self.get_kwargs(**kwargs)
-        for key, value in kwargs.items():
-            setattr(self, key, value)
 
     def _get_new_methods(
             self: Self,
@@ -202,6 +181,29 @@ class Canvas(object):
         parser_kwargs = vars(self._parser.parse_args())
         parser_kwargs.update(kwargs)
         return parser_kwargs.copy()
+
+    def set_params(
+            self: Self,
+            include_all: bool = False,
+            **kwargs,
+        ) -> None:
+        # collects and sets up the argparse parameters
+        if include_all:
+            for current_class in self._get_classes():
+                class_name = current_class.__name__.lower()
+                class_params = getattr(self, f'_{class_name}_params', {})
+                class_nargs = getattr(self, f'_{class_name}_nargs', {})
+                for param, param_type in class_params.items():
+                    assert hasattr(self, param)
+                    self.add_param(
+                        f'--{param}',
+                        nargs=class_nargs.get(param, None),
+                        type=param_type,
+                        default=getattr(self, param),
+                    )
+        kwargs = self.get_kwargs(**kwargs)
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     def reset(
             self: Self,
