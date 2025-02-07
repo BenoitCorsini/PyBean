@@ -204,6 +204,7 @@ class Canvas(object):
         kwargs = self.get_kwargs(**kwargs)
         for key, value in kwargs.items():
             setattr(self, key, value)
+        self.reset()
 
     def reset(
             self: Self,
