@@ -215,7 +215,7 @@ class Canvas(object):
 
     def save(
             self: Self,
-            name: str = 'image',
+            name: Any = 'image',
             image_dir: str = '.',
             transparent: bool = False,
         ) -> None:
@@ -223,7 +223,7 @@ class Canvas(object):
         if not osp.exists(image_dir):
             os.makedirs(image_dir)
         self.fig.savefig(
-            osp.join(image_dir, name + '.png'),
+            osp.join(image_dir, f'{name}.png'),
             transparent=transparent
         )
 
@@ -244,7 +244,7 @@ class Canvas(object):
             key = f'{category}{index}'
             setattr(self, f'_{category}_index', index + 1)
         if key in getattr(self, f'_{category}s', {}):
-            if key.startswith('_'):
+            if isinstance(key, str) and key.startswith('_'):
                 return key, False
             else:
                 raise UserWarning(

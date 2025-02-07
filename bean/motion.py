@@ -59,13 +59,13 @@ class Motion(Volume):
 
     def _frames_to_video(
             self: Self,
-            name: str = 'video',
+            name: Any = 'video',
             video_dir: str = '.',
         ) -> str:
         # transforms the frames into a video
         if not osp.exists(video_dir):
             os.makedirs(video_dir)
-        video_file = osp.join(video_dir, name + '.mp4')
+        video_file = osp.join(video_dir, f'{name}.mp4')
         frames = [
             osp.join(self.frames_dir, file)
             for file in sorted(os.listdir(self.frames_dir))
