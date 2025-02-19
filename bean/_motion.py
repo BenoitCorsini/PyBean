@@ -9,6 +9,15 @@ from typing_extensions import Any, Self
 from .volume import Volume
 
 
+'''
+Any subsequent motion-based class needs the following functions:
+    _add_{motion name}_{volume name}
+    _apply_{motion name}_{volume name}
+    {motion name}
+The latter function being preferably placed in the main Motion class.
+'''
+
+
 class _Motion(Volume):
 
     '''
