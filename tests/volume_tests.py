@@ -333,13 +333,17 @@ class VolumeTests(unittest.TestCase):
     #     self.vl.save('image_edge')
 
     def test_polyhedron(self):
+        print()
         self.vl.depth_shift = 0.05
         self.vl.depth_scale = 0.75
         self.vl.side_scale = 0.8
-        num = 10
-        self.vl.scale = 1/num
         self.vl.reset()
-        self.vl.update()
+        self.vl._create_volume(
+            name='polyhedron',
+            n_faces=4,
+        )
+        print(self.vl._volumes)
+        # self.vl.update()
         self.vl.save('image_polyhedron')
 
 
