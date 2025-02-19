@@ -3,7 +3,7 @@ from typing_extensions import Any, Self
 from ._motion import _Motion
 
 
-class _MotionAppear(_Motion):
+class _MotionChangeAlpha(_Motion):
 
     '''
     hidden methods

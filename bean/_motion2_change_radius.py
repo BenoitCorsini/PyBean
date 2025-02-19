@@ -1,9 +1,9 @@
 from typing_extensions import Any, Self
 
-from ._motion1_appear import _MotionAppear
+from ._motion1_change_alpha import _MotionChangeAlpha
 
 
-class _MotionGrow(_MotionAppear):
+class _MotionChangeRadius(_MotionChangeAlpha):
 
     '''
     hidden methods

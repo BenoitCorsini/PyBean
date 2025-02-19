@@ -1,10 +1,10 @@
 import numpy as np
 from typing_extensions import Any, Self
 
-from ._motion2_grow import _MotionGrow
+from ._motion2_change_radius import _MotionChangeRadius
 
 
-class _MotionMove(_MotionGrow):
+class _MotionMovement(_MotionChangeRadius):
 
     '''
     hidden methods

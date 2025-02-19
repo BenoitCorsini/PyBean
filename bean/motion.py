@@ -1,9 +1,9 @@
 from typing_extensions import Any, Self
 
-from ._motion3_move import _MotionMove
+from ._motion3_movement import _MotionMovement
 
 
-class Motion(_MotionMove):
+class Motion(_MotionMovement):
 
     '''
     general methods
