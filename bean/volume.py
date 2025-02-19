@@ -1,9 +1,9 @@
 from typing_extensions import Any, Self
 
-from ._volume2_tube import _VolumeTube
+from ._volume3_polyhedron import _VolumePolyhedron
 
 
-class Volume(_VolumeTube):
+class Volume(_VolumePolyhedron):
 
     '''
     general methods
