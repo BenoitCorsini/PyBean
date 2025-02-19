@@ -111,24 +111,6 @@ class Motion(_MotionMove):
             self.new_frame()
         return self
 
-    def change_radius(
-            self: Self,
-            *args,
-            **kwargs,
-        ) -> Self:
-        # changes a volume radius
-        return self._create_motion('change_radius', *args, **kwargs)
-
-    def grow(
-            self: Self,
-            *args,
-            **kwargs,
-        ) -> Self:
-        # makes a volume appear
-        kwargs['start_with'] = 0
-        kwargs['end_with'] = 1
-        return self.change_radius(*args, **kwargs)
-
     def schrink(
             self: Self,
             *args,
@@ -169,6 +151,24 @@ class Motion(_MotionMove):
         kwargs['start_with'] = 1
         kwargs['end_with'] = 0
         return self.change_alpha(*args, **kwargs)
+
+    def change_radius(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # changes a volume radius
+        return self._create_motion('change_radius', *args, **kwargs)
+
+    def grow(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # makes a volume appear
+        kwargs['start_with'] = 0
+        kwargs['end_with'] = 1
+        return self.change_radius(*args, **kwargs)
 
     def movement(
             self: Self,
