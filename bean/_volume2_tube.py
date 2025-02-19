@@ -13,6 +13,7 @@ class _VolumeTube(_VolumeSphere):
     def _create_tube(
             self: Self,
             available_key: Any,
+            **kwargs,
         ) -> dict:
         # creates the volume dictionary of a tube
         return self._round_volume(available_key=available_key)

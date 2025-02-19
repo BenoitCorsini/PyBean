@@ -13,6 +13,7 @@ class _VolumeSphere(_Volume):
     def _create_sphere(
             self: Self,
             available_key: Any,
+            **kwargs,
         ) -> dict:
         # creates the volume dictionary of a sphere
         return self._round_volume(available_key=available_key)

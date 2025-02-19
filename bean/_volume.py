@@ -168,7 +168,12 @@ class _Volume(Shape):
         if available:
             volume = {'name' : name}
             volume.update(kwargs)
-            volume.update(getattr(self, f'_create_{name}')(available_key=key))
+            volume.update(
+                getattr(self, f'_create_{name}')(
+                    available_key=key,
+                    **kwargs,
+                )
+            )
             self._volumes[key] = volume
         else:
             volume = self._volumes[key]
