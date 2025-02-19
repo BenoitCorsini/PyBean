@@ -27,6 +27,7 @@ class _Motion(Volume):
     _motion_params = {
         'fps' : int,
         'frames_dir' : str,
+        'remove_frames' : bool,
         'print_on' : str,
         'levitation_mode' : str,
         'levitation_height' : float,
@@ -47,9 +48,10 @@ class _Motion(Volume):
         self._motion_index = 0
         self._frame_index = 0
         if osp.exists(self.frames_dir):
-            for file in os.listdir(self.frames_dir):
-                if file.endswith('.png'):
-                    os.remove(osp.join(self.frames_dir, file))
+            if self.remove_frames:
+                for file in os.listdir(self.frames_dir):
+                    if file.endswith('.png'):
+                        os.remove(osp.join(self.frames_dir, file))
         else:
             os.makedirs(self.frames_dir)
         return self

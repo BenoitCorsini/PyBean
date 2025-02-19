@@ -69,6 +69,7 @@ DEFAULT = {
     # motion
     'fps' : 20,
     'frames_dir' : 'frames',
+    'remove_frames' : True,
     'print_on' : False,
     'levitation_mode' : 'random',
     'levitation_height' : 5e-2,
