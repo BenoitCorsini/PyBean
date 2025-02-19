@@ -6,9 +6,9 @@ from .shape import Shape
 
 '''
 Any subsequent volume-based class needs the following functions:
-    _create_ + 'volume name'
-    _update_ + 'volume name'
-    new_ + 'volume name'
+    _create_{volume name}
+    _update_{volume name}
+    new_{volume name}
 The latter function being preferably placed in the main Volume class.
 '''
 
