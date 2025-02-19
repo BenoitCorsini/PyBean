@@ -46,26 +46,6 @@ class MotionTests(unittest.TestCase):
         self.assertEqual(1, self.mt._params_to_number_of_frames(time=1, key=''))
         self.assertEqual(1, self.mt._params_to_number_of_frames(nfs=2, time=1, key=''))
 
-    def test_get_nfs(self):
-        self.assertEqual(1, self.mt._get_number_of_frames())
-        self.assertEqual(1, self.mt._get_number_of_frames(1))
-        self.assertEqual(1, self.mt._get_number_of_frames(int(1.5)))
-        self.assertEqual(self.mt.fps, self.mt._get_number_of_frames(1.))
-        self.assertEqual(self.mt.fps, self.mt._get_number_of_frames(float(1)))
-        self.assertEqual(1, self.mt._get_number_of_frames(''))
-        self.assertEqual(1, self.mt._get_number_of_frames(str(1)))
-        self.assertEqual(1, self.mt._get_number_of_frames(1, nfs=2))
-        self.assertEqual(self.mt.fps, self.mt._get_number_of_frames(1, time=1))
-        self.assertEqual(1, self.mt._get_number_of_frames(1, key=''))
-        self.assertEqual(self.mt.fps, self.mt._get_number_of_frames(1., time=2))
-        self.assertEqual(1, self.mt._get_number_of_frames(1., key=''))
-        self.mt.times = {'test': 1}
-        self.assertEqual(self.mt.fps, self.mt._get_number_of_frames('test', key=''))
-        self.assertEqual(self.mt.fps, self.mt._get_number_of_frames('test'))
-        self.assertEqual(self.mt.fps, self.mt._get_number_of_frames('test', key='test'))
-        self.assertEqual(1, self.mt._get_number_of_frames('', key='test'))
-        self.assertEqual(self.mt.fps, self.mt._get_number_of_frames(key='test'))
-
     '''
     static methods
     '''
@@ -153,6 +133,30 @@ class MotionTests(unittest.TestCase):
                 self.mt._normed_path_to_pos(i/16, path, norm),
                 (1 + i/4, 1 + i/4, 1 + i/4),
             )
+
+    '''
+    general methods
+    '''
+
+    def test_get_nfs(self):
+        self.assertEqual(1, self.mt.get_number_of_frames())
+        self.assertEqual(1, self.mt.get_number_of_frames(1))
+        self.assertEqual(1, self.mt.get_number_of_frames(int(1.5)))
+        self.assertEqual(self.mt.fps, self.mt.get_number_of_frames(1.))
+        self.assertEqual(self.mt.fps, self.mt.get_number_of_frames(float(1)))
+        self.assertEqual(1, self.mt.get_number_of_frames(''))
+        self.assertEqual(1, self.mt.get_number_of_frames(str(1)))
+        self.assertEqual(1, self.mt.get_number_of_frames(1, nfs=2))
+        self.assertEqual(self.mt.fps, self.mt.get_number_of_frames(1, time=1))
+        self.assertEqual(1, self.mt.get_number_of_frames(1, key=''))
+        self.assertEqual(self.mt.fps, self.mt.get_number_of_frames(1., time=2))
+        self.assertEqual(1, self.mt.get_number_of_frames(1., key=''))
+        self.mt.times = {'test': 1}
+        self.assertEqual(self.mt.fps, self.mt.get_number_of_frames('test', key=''))
+        self.assertEqual(self.mt.fps, self.mt.get_number_of_frames('test'))
+        self.assertEqual(self.mt.fps, self.mt.get_number_of_frames('test', key='test'))
+        self.assertEqual(1, self.mt.get_number_of_frames('', key='test'))
+        self.assertEqual(self.mt.fps, self.mt.get_number_of_frames(key='test'))
 
     '''
     video methods
