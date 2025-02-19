@@ -35,6 +35,14 @@ class Volume(_VolumePolyhedron):
         # creates the basis for a new sphere
         return self._create_volume('tube', *args, **kwargs)
 
+    def new_polyhedron(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # creates the basis for a new sphere
+        return self._create_volume('polyhedron', *args, **kwargs)
+
     def update(
             self: Self,
             only: Any = None,
