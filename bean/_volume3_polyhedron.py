@@ -22,13 +22,12 @@ class _VolumePolyhedron(_VolumeTube):
                 f'{available_key}_main{index}'
                 for index, _ in enumerate(faces)
             ],
-            'shade' : f'{available_key}_shade',
+            'shade' : [
+                f'{available_key}_shade{index}'
+                for index, _ in enumerate(faces)
+            ],
         }
-        for shape_key in volume.values():
-            if isinstance(shape_key, str):
-                shape_keys = [shape_key]
-            else:
-                shape_keys = shape_key
+        for shape_type, shape_keys in volume.items():
             for shape_key in shape_keys:
                 patch = self.add_shape(
                     shape_name='Polygon',
@@ -37,7 +36,7 @@ class _VolumePolyhedron(_VolumeTube):
                     lw=0,
                     zorder=0,
                 )
-                if shape_key.endswith('_shade'):
+                if shape_type == 'shade':
                     patch.set_visible(not self.draft)
                     patch.set_zorder(-1)
         volume['faces'] = faces
@@ -93,68 +92,25 @@ class _VolumePolyhedron(_VolumeTube):
         orthos = [self._face_orthogonal(face) for face in faces]
         centres = [np.mean(face, axis=0) for face in faces]
         if not self.draft:
-            shade_xy = [
-                [self._pos_to_xy(self._pos_to_shade_pos(pos)) for pos in face]
-                for face in faces
-            ]
+            pass
+            # shade_xy = [
+            #     [self._pos_to_xy(self._pos_to_shade_pos(pos)) for pos in face]
+            #     for face in faces
+            # ]
         faces = [
             [self._pos_to_xy(pos) for pos in face]
             for face in faces
         ]
+        if colour is None:
+            colour = (lambda x : None)
+        else:
+            colour = self.get_cmap([colour, 'black'])
         for key, face, centre, ortho in zip(main, faces, centres, orthos):
+            sun_impact = (1 + np.sum(ortho*self.sun_direction))/2
             self.apply_to_shape('set_xy', key=key, xy=face)
             self.set_shape(
                 key=key,
-                color=colour,
+                color=colour(sun_impact*self.side_cmap_ratio),
                 zorder=self._pos_to_scale(centre),
                 alpha=alpha,
             )
-        return None
-        radius *= self.scale*self.side_scale
-        if not self.draft:
-            shade_xy = self._pos_to_xy(shade_pos)
-            shade_radius = radius*self._pos_to_scale(shade_pos)
-        scale = self._pos_to_scale(pos)
-        radius *= scale
-        zorder = scale
-        path = self.curve_path(xy=xy, a=radius)
-        self.apply_to_shape('set_path', key=main, path=path)
-        clipper = self.set_shape(
-            key=main,
-            color=colour,
-            zorder=zorder,
-            alpha=alpha,
-        )
-        if not self.draft:
-            side_angle = self.angle_from_xy(
-                xy1=xy,
-                xy2=shade_xy,
-                default_angle=self.shade_angle - 90,
-            )
-            for key, ratio in zip(side, self.round_sides):
-                path = self.merge_curves(*self.crescent_paths(
-                    xy=xy,
-                    radius=radius,
-                    ratio=ratio,
-                    theta1=270,
-                    theta2=90,
-                    angle=side_angle,
-                ))
-                self.apply_to_shape('set_path', key=key, path=path)
-                self.set_shape(
-                    key=key,
-                    clip_path=clipper,
-                    zorder=zorder,
-                    alpha=alpha*self.round_sides[ratio],
-                )
-            path = self.curve_path(
-                xy=shade_xy,
-                a=shade_radius,
-                b=shade_radius*np.cos(self.horizon_angle*np.pi/180),
-            )
-            self.apply_to_shape('set_path', key=shade, path=path)
-            if shade_colour is None:
-                shade_colour = self.get_cmap(['white', clipper.get_fc()])(
-                    self.shade_cmap_ratio
-                )
-            self.set_shape(key=shade, color=shade_colour, alpha=alpha)

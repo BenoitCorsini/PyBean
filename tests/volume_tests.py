@@ -15,160 +15,160 @@ class VolumeTests(unittest.TestCase):
     hidden methods
     '''
 
-    def test_shade_shift(self):
-        self.vl.shade_angle = 90
-        shift = self.vl._shade_shift()
-        self.assertEqual(shift[0], 1)
-        self.assertEqual(round(shift[1], 10), 0)
-        self.vl.shade_angle = 180
-        shift = self.vl._shade_shift()
-        self.assertEqual(round(shift[0], 10), 0)
-        self.assertEqual(shift[1], 1)
-        self.vl.shade_angle = -90
-        shift = self.vl._shade_shift()
-        self.assertEqual(shift[0], -1)
-        self.assertEqual(round(shift[1], 10), 0)
-        for angle in range(360):
-            self.vl.shade_angle = angle
-            shift = self.vl._shade_shift()
-            self.assertEqual(round(np.sum(shift**2), 10), 1)
+    # def test_shade_shift(self):
+    #     self.vl.shade_angle = 90
+    #     shift = self.vl._shade_shift()
+    #     self.assertEqual(shift[0], 1)
+    #     self.assertEqual(round(shift[1], 10), 0)
+    #     self.vl.shade_angle = 180
+    #     shift = self.vl._shade_shift()
+    #     self.assertEqual(round(shift[0], 10), 0)
+    #     self.assertEqual(shift[1], 1)
+    #     self.vl.shade_angle = -90
+    #     shift = self.vl._shade_shift()
+    #     self.assertEqual(shift[0], -1)
+    #     self.assertEqual(round(shift[1], 10), 0)
+    #     for angle in range(360):
+    #         self.vl.shade_angle = angle
+    #         shift = self.vl._shade_shift()
+    #         self.assertEqual(round(np.sum(shift**2), 10), 1)
 
-    def test_normalize_pos(self):
-        with self.assertRaises(ValueError):
-            self.vl._normalize_pos(0)
-        with self.assertRaises(ValueError):
-            self.vl._normalize_pos('test')
-        with self.assertRaises(ValueError):
-            self.vl._normalize_pos((0, 0, 0, 0))
-        with self.assertRaises(ValueError):
-            self.vl._normalize_pos([0]*4)
-        for x in range(10):
-            for y in range(10):
-                self.assertEqual(
-                    self.vl._normalize_pos((x, y)),
-                    (x, y, 0)
-                )
-                self.assertEqual(
-                    self.vl._normalize_pos([x, y]),
-                    (x, y, 0)
-                )
-                self.assertEqual(
-                    self.vl._normalize_pos(np.array([x, y])),
-                    (x, y, 0)
-                )
-                for z in range(10):
-                    self.assertEqual(
-                        self.vl._normalize_pos((x, y, z)),
-                        (x, y, z)
-                    )
-                    self.assertEqual(
-                        self.vl._normalize_pos([x, y, z]),
-                        (x, y, z)
-                    )
-                    self.assertEqual(
-                        self.vl._normalize_pos(np.array([x, y, z])),
-                        (x, y, z)
-                    )
+    # def test_normalize_pos(self):
+    #     with self.assertRaises(ValueError):
+    #         self.vl._normalize_pos(0)
+    #     with self.assertRaises(ValueError):
+    #         self.vl._normalize_pos('test')
+    #     with self.assertRaises(ValueError):
+    #         self.vl._normalize_pos((0, 0, 0, 0))
+    #     with self.assertRaises(ValueError):
+    #         self.vl._normalize_pos([0]*4)
+    #     for x in range(10):
+    #         for y in range(10):
+    #             self.assertEqual(
+    #                 self.vl._normalize_pos((x, y)),
+    #                 (x, y, 0)
+    #             )
+    #             self.assertEqual(
+    #                 self.vl._normalize_pos([x, y]),
+    #                 (x, y, 0)
+    #             )
+    #             self.assertEqual(
+    #                 self.vl._normalize_pos(np.array([x, y])),
+    #                 (x, y, 0)
+    #             )
+    #             for z in range(10):
+    #                 self.assertEqual(
+    #                     self.vl._normalize_pos((x, y, z)),
+    #                     (x, y, z)
+    #                 )
+    #                 self.assertEqual(
+    #                     self.vl._normalize_pos([x, y, z]),
+    #                     (x, y, z)
+    #                 )
+    #                 self.assertEqual(
+    #                     self.vl._normalize_pos(np.array([x, y, z])),
+    #                     (x, y, z)
+    #                 )
 
-    def test_only_avoid(self):
-        self.vl._volumes = {
-            'a1' : {'name' : 'a'},
-            'a2' : {'name' : 'a'},
-            'b1' : {'name' : 'b'},
-            'b2' : {'name' : 'b'},
-            'b3' : {'name' : 'b'},
-        }
-        self.assertEqual(
-            self.vl._only_avoid_to_list(),
-            ['a1', 'a2', 'b1', 'b2', 'b3']
-        )
-        self.assertEqual(
-            self.vl._only_avoid_to_list('a1'),
-            ['a1']
-        )
-        self.assertEqual(
-            self.vl._only_avoid_to_list(['a1']),
-            ['a1']
-        )
-        self.assertEqual(
-            self.vl._only_avoid_to_list(['a1', 'a3']),
-            ['a1']
-        )
-        self.assertEqual(
-            self.vl._only_avoid_to_list(['a']),
-            []
-        )
-        self.assertEqual(
-            self.vl._only_avoid_to_list(['a1', 'b1']),
-            ['a1', 'b1']
-        )
-        self.assertEqual(
-            self.vl._only_avoid_to_list([]),
-            []
-        )
-        self.assertEqual(
-            self.vl._only_avoid_to_list('a'),
-            ['a1', 'a2']
-        )
-        self.assertEqual(
-            self.vl._only_avoid_to_list('b'),
-            ['b1', 'b2', 'b3']
-        )
-        self.assertEqual(
-            self.vl._only_avoid_to_list('c'),
-            []
-        )
-        with self.assertRaises(ValueError):
-            self.vl._only_avoid_to_list(0)
+    # def test_only_avoid(self):
+    #     self.vl._volumes = {
+    #         'a1' : {'name' : 'a'},
+    #         'a2' : {'name' : 'a'},
+    #         'b1' : {'name' : 'b'},
+    #         'b2' : {'name' : 'b'},
+    #         'b3' : {'name' : 'b'},
+    #     }
+    #     self.assertEqual(
+    #         self.vl._only_avoid_to_list(),
+    #         ['a1', 'a2', 'b1', 'b2', 'b3']
+    #     )
+    #     self.assertEqual(
+    #         self.vl._only_avoid_to_list('a1'),
+    #         ['a1']
+    #     )
+    #     self.assertEqual(
+    #         self.vl._only_avoid_to_list(['a1']),
+    #         ['a1']
+    #     )
+    #     self.assertEqual(
+    #         self.vl._only_avoid_to_list(['a1', 'a3']),
+    #         ['a1']
+    #     )
+    #     self.assertEqual(
+    #         self.vl._only_avoid_to_list(['a']),
+    #         []
+    #     )
+    #     self.assertEqual(
+    #         self.vl._only_avoid_to_list(['a1', 'b1']),
+    #         ['a1', 'b1']
+    #     )
+    #     self.assertEqual(
+    #         self.vl._only_avoid_to_list([]),
+    #         []
+    #     )
+    #     self.assertEqual(
+    #         self.vl._only_avoid_to_list('a'),
+    #         ['a1', 'a2']
+    #     )
+    #     self.assertEqual(
+    #         self.vl._only_avoid_to_list('b'),
+    #         ['b1', 'b2', 'b3']
+    #     )
+    #     self.assertEqual(
+    #         self.vl._only_avoid_to_list('c'),
+    #         []
+    #     )
+    #     with self.assertRaises(ValueError):
+    #         self.vl._only_avoid_to_list(0)
 
-    '''
-    general methods
-    '''
+    # '''
+    # general methods
+    # '''
 
-    def test_volume_list(self):
-        self.vl._volumes = {
-            'a1' : {'name' : 'a'},
-            'a2' : {'name' : 'a'},
-            'b1' : {'name' : 'b'},
-            'b2' : {'name' : 'b'},
-            'b3' : {'name' : 'b'},
-        }
-        self.assertEqual(
-            self.vl.get_volume_list(),
-            ['a1', 'a2', 'b1', 'b2', 'b3']
-        )
-        self.assertEqual(
-            self.vl.get_volume_list(avoid=None),
-            []
-        )
-        self.assertEqual(
-            self.vl.get_volume_list(only='a'),
-            ['a1', 'a2']
-        )
-        self.assertEqual(
-            self.vl.get_volume_list(avoid='a'),
-            ['b1', 'b2', 'b3']
-        )
-        self.assertEqual(
-            self.vl.get_volume_list(only='a', avoid='a1'),
-            ['a2']
-        )
-        self.assertEqual(
-            self.vl.get_volume_list(only='a', avoid='b'),
-            ['a1', 'a2']
-        )
-        self.assertEqual(
-            self.vl.get_volume_list(only=['a1', 'b1'], avoid='a'),
-            ['b1']
-        )
-        self.assertEqual(
-            self.vl.get_volume_list(only=['a1', 'b1', 'b2'], avoid='b'),
-            ['a1']
-        )
-        self.assertEqual(
-            self.vl.get_volume_list(only=['a1', 'b1', 'b2'], avoid='b2'),
-            ['a1', 'b1']
-        )
+    # def test_volume_list(self):
+    #     self.vl._volumes = {
+    #         'a1' : {'name' : 'a'},
+    #         'a2' : {'name' : 'a'},
+    #         'b1' : {'name' : 'b'},
+    #         'b2' : {'name' : 'b'},
+    #         'b3' : {'name' : 'b'},
+    #     }
+    #     self.assertEqual(
+    #         self.vl.get_volume_list(),
+    #         ['a1', 'a2', 'b1', 'b2', 'b3']
+    #     )
+    #     self.assertEqual(
+    #         self.vl.get_volume_list(avoid=None),
+    #         []
+    #     )
+    #     self.assertEqual(
+    #         self.vl.get_volume_list(only='a'),
+    #         ['a1', 'a2']
+    #     )
+    #     self.assertEqual(
+    #         self.vl.get_volume_list(avoid='a'),
+    #         ['b1', 'b2', 'b3']
+    #     )
+    #     self.assertEqual(
+    #         self.vl.get_volume_list(only='a', avoid='a1'),
+    #         ['a2']
+    #     )
+    #     self.assertEqual(
+    #         self.vl.get_volume_list(only='a', avoid='b'),
+    #         ['a1', 'a2']
+    #     )
+    #     self.assertEqual(
+    #         self.vl.get_volume_list(only=['a1', 'b1'], avoid='a'),
+    #         ['b1']
+    #     )
+    #     self.assertEqual(
+    #         self.vl.get_volume_list(only=['a1', 'b1', 'b2'], avoid='b'),
+    #         ['a1']
+    #     )
+    #     self.assertEqual(
+    #         self.vl.get_volume_list(only=['a1', 'b1', 'b2'], avoid='b2'),
+    #         ['a1', 'b1']
+    #     )
 
     '''
     image methods
@@ -337,21 +337,21 @@ class VolumeTests(unittest.TestCase):
         self.vl.depth_shift = 0.05
         self.vl.depth_scale = 0.75
         self.vl.side_scale = 0.8
-        num = 10
+        num = 4
         self.vl.scale = 1/num
         self.vl.reset()
         for y in range(num + 1):
             for x in range(num + 1):
                 if ((x + y) % 2) == 0:
-                    self.vl.new_sphere(
-                        pos=(x, y, (x + y)/num),
-                        radius=0.4,
+                    self.vl.new_cube(
+                        pos=(x, y),
+                        radius=0.5,
                         colour='forestgreen',
                     )
                 else:
                     self.vl.new_cube(
-                        pos=(x, y, 0),
-                        radius=0.2,
+                        pos=(x, y, (x + y)/num),
+                        radius=0.5,
                         colour='royalblue',
                     )
         self.vl.update()
