@@ -94,6 +94,19 @@ class Volume(_VolumePolyhedron):
         kwargs['centre'] = (0.5, 0.5)
         return self._create_volume('polyhedron', *args, **kwargs)
 
+    def new_polysphere(
+            self: Self,
+            precision: int = 0,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # creates the basis for a new pyramid
+        points, faces = self._polyhedron_sphere(precision)
+        kwargs['points'] = 0.5 + points/2
+        kwargs['faces'] = faces
+        kwargs['centre'] = (0.5, 0.5)
+        return self._create_volume('polyhedron', *args, **kwargs)
+
     def update(
             self: Self,
             only: Any = None,

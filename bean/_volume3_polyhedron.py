@@ -58,6 +58,61 @@ class _VolumePolyhedron(_VolumeTube):
             norm = 1.
         return ortho/norm
 
+    @staticmethod
+    def _polyhedron_sphere(n):
+        if n:
+            (
+                previous_points,
+                previous_faces
+            ) = _VolumePolyhedron._polyhedron_sphere(n - 1)
+            points = list(previous_points)
+            faces = []
+            new_index = len(points)
+            for [a, b, c] in previous_faces:
+                middle = np.mean(previous_points[[a, b, c]], axis=0)
+                norm = np.sum(middle**2)**0.5
+                middle = middle/norm
+                points.append(middle)
+                midab = np.mean(previous_points[[a, b]], axis=0)
+                norm = np.sum(midab**2)**0.5
+                midab = midab/norm
+                points.append(midab)
+                midbc = np.mean(previous_points[[b, c]], axis=0)
+                norm = np.sum(midbc**2)**0.5
+                midbc = midbc/norm
+                points.append(midbc)
+                midac = np.mean(previous_points[[a, c]], axis=0)
+                norm = np.sum(midac**2)**0.5
+                midac = midac/norm
+                points.append(midac)
+                faces.append([a, new_index + 1, new_index])
+                faces.append([new_index + 1, b, new_index])
+                faces.append([b, new_index + 2, new_index])
+                faces.append([new_index + 2, c, new_index])
+                faces.append([c, new_index + 3, new_index])
+                faces.append([new_index + 3, a, new_index])
+                new_index += 4
+            return np.array(points), faces
+        points = np.array([
+            (1, 0, 0),
+            (0, 1, 0),
+            (0, 0, 1),
+            (-1, 0, 0),
+            (0, -1, 0),
+            (0, 0, -1),
+        ])
+        faces = [
+            [0, 1, 2],
+            [2, 1, 3],
+            [0, 2, 4],
+            [1, 0, 5],
+            [5, 4, 3],
+            [4, 5, 0],
+            [5, 3, 1],
+            [3, 4, 2],
+        ]
+        return np.array(points), faces
+
     def _update_polyhedron(
             self: Self,
             main: list[str],
