@@ -40,7 +40,33 @@ class Volume(_VolumePolyhedron):
             *args,
             **kwargs,
         ) -> Self:
-        # creates the basis for a new sphere
+        # creates the basis for a new polyhedron
+        return self._create_volume('polyhedron', *args, **kwargs)
+
+    def new_cube(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # creates the basis for a new cube
+        kwargs['points'] = [
+            (0, 0, 0),
+            (1, 0, 0),
+            (1, 1, 0),
+            (0, 1, 0),
+            (0, 0, 1),
+            (1, 0, 1),
+            (1, 1, 1),
+            (0, 1, 1),
+        ]
+        kwargs['faces'] = [
+            [3, 2, 1, 0],
+            [4, 5, 6, 7],
+            [0, 1, 5, 4],
+            [2, 3, 7, 6],
+            [3, 0, 4, 7],
+            [1, 2, 6, 5],
+        ]
         return self._create_volume('polyhedron', *args, **kwargs)
 
     def update(
