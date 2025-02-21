@@ -337,13 +337,24 @@ class VolumeTests(unittest.TestCase):
         self.vl.depth_shift = 0.05
         self.vl.depth_scale = 0.75
         self.vl.side_scale = 0.8
+        num = 10
+        self.vl.scale = 1/num
         self.vl.reset()
-        self.vl._create_volume(
-            name='polyhedron',
-            n_faces=4,
-        )
-        print(self.vl._volumes)
-        # self.vl.update()
+        for y in range(num + 1):
+            for x in range(num + 1):
+                if ((x + y) % 2) == 0:
+                    self.vl.new_sphere(
+                        pos=(x, y, (x + y)/num),
+                        radius=0.4,
+                        colour='forestgreen',
+                    )
+                else:
+                    self.vl.new_cube(
+                        pos=(x, y, 0),
+                        radius=0.2,
+                        colour='royalblue',
+                    )
+        self.vl.update()
         self.vl.save('image_polyhedron')
 
 
