@@ -53,6 +53,9 @@ DEFAULT = {
     # volume
     'draft' : False,
     'scale' : 1,
+    'view_pos' : (0.5, 5, 5),
+    'view_angle' : -45,
+    'screen_dist' : 1,
     'horizon_angle' : 42,
     'depth_scale' : 1,
     'depth_shift' : 0,

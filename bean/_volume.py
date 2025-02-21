@@ -22,6 +22,9 @@ class _Volume(Shape):
     _volume_params = {
         'draft' : bool,
         'scale' : float,
+        'view_pos' : float,
+        'view_angle' : float,
+        'screen_dist' : float,
         'horizon_angle' : float,
         'depth_scale' : float,
         'depth_shift' : float,
@@ -31,10 +34,26 @@ class _Volume(Shape):
         'shade_cmap_ratio' : float,
     }
 
+    _canvas_nargs = {
+        'view_pos' : 3,
+    }
+
     def _new_volume(
             self: Self,
         ) -> Self:
         # new volume instance
+        self.view_pos = np.array(self.view_pos)
+        self.screen_xdir = np.array([1, 0, 0]),
+        self.screen_ydir = np.array([
+            0,
+            -np.sin(self.view_angle*np.pi/180),
+            np.cos(self.view_angle*np.pi/180),
+        ])
+        self.screen_zdir = np.array([
+            0,
+            np.cos(self.view_angle*np.pi/180),
+            np.sin(self.view_angle*np.pi/180),
+        ])
         self._volumes = {}
         self._volume_index = 0
         self._depth_exponent = 1 - np.tan(self.horizon_angle*np.pi/180)
@@ -67,44 +86,78 @@ class _Volume(Shape):
     def _normalize_pos(
             self: Self,
             pos: tuple[float],
-        ) -> (float, float, float):
+            height: float = 0,
+        ) -> np.array:
         # normalize a position into a triplet
         if '__len__' not in dir(pos):
             raise ValueError(f'Position is not a tuple: {pos}')
         elif len(pos) == 2:
-            return pos[0], pos[1], 0
+            pos = pos[0], pos[1], 0
         elif len(pos) != 3:
             raise ValueError(f'Position with a wrong length: {pos}')
-        return tuple(pos)
+        return (np.array(pos) + np.array([0, 0, height]))*self.scale
+
+    def _project_to_screen(
+            self: Self,
+            pos: tuple[float],
+            height: float = 0,
+        ) -> np.array:
+        # project a position relative to the viewer and the screen
+        relative_pos = self._normalize_pos(pos, height) - self.view_pos
+        return (
+            np.sum(relative_pos*self.screen_xdir),
+            np.sum(relative_pos*self.screen_ydir),
+            np.sum(relative_pos*self.screen_zdir),
+        )
+
+    def _normalize_xy(
+            self: Self,
+            x: float,
+            y: float,
+        ) -> np.array:
+        # normalize an xy coordinate into the frame
+        return (
+            self.xmin + (self.xmax - self.xmin)*(0.5 + x),
+            (self.ymin + self.ymax)/2 + (self.xmax - self.xmin)*y,
+        )
 
     def _pos_to_scale(
             self: Self,
             pos: tuple[float],
+            height: float = 0,
         ) -> float:
         # transforms a position into the corresponding scale
-        _, depth, _ = self._normalize_pos(pos)
-        depth *= self.scale*self.depth_scale
-        depth += self.depth_shift
-        return self._depth_exponent**depth
+        pos = self._normalize_pos(pos)
+        return 1/np.sum((pos - self.view_pos)**2)**0.5
 
     def _pos_to_xy(
             self: Self,
             pos: tuple[float],
             height: float = 0,
+            screen_thr: float = 2,
         ) -> (float, float):
         # transforms a 3D position into a 2D coordinate
-        side, depth, altitude = self._normalize_pos(pos)
-        scale = self._pos_to_scale(pos)
-        if self.horizon_angle:
-            y = (1 - scale)/(1 - self._depth_exponent)
+        x, y, z = self._project_to_screen(pos, height)
+        if z < self.screen_dist/screen_thr:
+            mult = screen_thr*np.exp(self.screen_dist/screen_thr - z)
+            if not x and not y:
+                y = 1 
         else:
-            y = depth*self.scale*self.depth_scale + self.depth_shift
-        x = scale*self.side_scale*(side*self.scale - 0.5) + 0.5
-        x = self.xmin + (self.xmax - self.xmin)*x
-        y = self.ymin + (self.ymax - self.ymin)*y
-        sin = np.sin(self.horizon_angle*np.pi/180)
-        y += (altitude + height)*self.scale*scale*sin
-        return x, y
+           mult = self.screen_dist/z
+        return self._normalize_xy(mult*x, mult*y)
+
+        # side, depth, altitude = self._normalize_pos(pos)
+        # scale = self._pos_to_scale(pos)
+        # if self.horizon_angle:
+        #     y = (1 - scale)/(1 - self._depth_exponent)
+        # else:
+        #     y = depth*self.scale*self.depth_scale + self.depth_shift
+        # x = scale*self.side_scale*(side*self.scale - 0.5) + 0.5
+        # x = self.xmin + (self.xmax - self.xmin)*x
+        # y = self.ymin + (self.ymax - self.ymin)*y
+        # sin = np.sin(self.horizon_angle*np.pi/180)
+        # y += (altitude + height)*self.scale*scale*sin
+        # return x, y
 
     def _pos_to_shade_pos(
             self: Self,
