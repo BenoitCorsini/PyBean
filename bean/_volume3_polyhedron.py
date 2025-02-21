@@ -61,10 +61,11 @@ class _VolumePolyhedron(_VolumeTube):
     def _update_polyhedron(
             self: Self,
             main: list[str],
-            shade: str,
+            shade: list[str],
             pos: tuple[float] = None,
             points: list[tuple[float]] = [(0, 0)],
             faces: list[list[int]] = [[0]],
+            centre: tuple[float] = None,
             transform: np.array = np.eye(3),
             radius: float = 1,
             colour: str = None,
@@ -79,7 +80,10 @@ class _VolumePolyhedron(_VolumeTube):
             self.set_shape(key=shade, visible=False)
             return None
         points = np.array([self._normalize_pos(point) for point in points])
-        centre = np.mean(points, axis=0, keepdims=True)
+        if centre is None:
+            centre = np.mean(points, axis=0, keepdims=True)
+        else:
+            centre = np.array(self._normalize_pos(centre)).reshape((1, 3))
         points = radius*(points - centre)
         points = points @ transform.T
         if pos is None:
@@ -92,18 +96,25 @@ class _VolumePolyhedron(_VolumeTube):
         orthos = [self._face_orthogonal(face) for face in faces]
         centres = [np.mean(face, axis=0) for face in faces]
         if not self.draft:
-            pass
-            # shade_xy = [
-            #     [self._pos_to_xy(self._pos_to_shade_pos(pos)) for pos in face]
-            #     for face in faces
-            # ]
+            shades_xy = [
+                [self._pos_to_xy(self._pos_to_shade_pos(pos)) for pos in face]
+                for face in faces
+            ]
         faces = [
             [self._pos_to_xy(pos) for pos in face]
             for face in faces
         ]
         if colour is None:
+            if not self.draft and shade_colour is None:
+                shade_colour = self.get_cmap(['white', 'black'])(
+                    self.shade_cmap_ratio
+                )
             colour = (lambda x : None)
         else:
+            if not self.draft and shade_colour is None:
+                shade_colour = self.get_cmap(['white', colour])(
+                    self.shade_cmap_ratio
+                )
             colour = self.get_cmap([colour, 'black'])
         for key, face, centre, ortho in zip(main, faces, centres, orthos):
             sun_impact = (1 + np.sum(ortho*self.sun_direction))/2
@@ -114,3 +125,7 @@ class _VolumePolyhedron(_VolumeTube):
                 zorder=self._pos_to_scale(centre),
                 alpha=alpha,
             )
+        if not self.draft:
+            for key, shade_xy in zip(shade, shades_xy):
+                self.apply_to_shape('set_xy', key=key, xy=shade_xy)
+                self.set_shape(key=key, color=shade_colour, alpha=alpha)

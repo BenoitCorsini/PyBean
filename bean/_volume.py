@@ -94,7 +94,7 @@ class _Volume(Shape):
             height: float = 0,
         ) -> float:
         # transforms a position into the corresponding scale
-        pos = self._normalize_pos(pos)*self.scale
+        pos = self._normalize_pos(pos, height)*self.scale
         return 1/np.sum((pos - self.view_pos)**2)**0.5
 
     def _project_on_screen(
@@ -144,13 +144,12 @@ class _Volume(Shape):
             height: float = 0,
         ) -> (float, float):
         # transforms a 3D position into a 2D coordinate
-        side, depth, altitude = self._normalize_pos(pos)
-        shade_shift = self._shade_shift()
-        shade_shift *= (height + altitude)*self.altitude_to_shade
-        return (
-            side + shade_shift[0],
-            depth + shade_shift[1],
-        )
+        if self.sun_direction[2] >= 0:
+            return 0, 0
+        pos = self._normalize_pos(pos, height)
+        ground_dist = pos[2]/self.sun_direction[2]
+        pos = pos - ground_dist*self.sun_direction
+        return pos[0], pos[1]
 
     def _round_volume(
             self: Self,

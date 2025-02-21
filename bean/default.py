@@ -53,7 +53,7 @@ DEFAULT = {
     # volume
     'draft' : False,
     'scale' : 1,
-    'view_pos' : (0.5, -1.2, 0.8),
+    'view_pos' : (0.5, -1, 0.85),
     'view_angle' : -30,
     'screen_dist' : 1,
     'sun_direction' : (0.5, 0.1, -2),
