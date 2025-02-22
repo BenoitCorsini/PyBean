@@ -33,8 +33,10 @@ class _VolumePolyhedron(_VolumeTube):
                     shape_name='Polygon',
                     key=shape_key,
                     xy=[(0, 0)],
-                    lw=0,
+                    lw=1,
                     zorder=0,
+                    joinstyle='round',
+                    capstyle='round',
                 )
                 if shape_type == 'shade':
                     patch.set_visible(not self.draft)
@@ -69,10 +71,6 @@ class _VolumePolyhedron(_VolumeTube):
             faces = []
             new_index = len(points)
             for [a, b, c] in previous_faces:
-                middle = np.mean(previous_points[[a, b, c]], axis=0)
-                norm = np.sum(middle**2)**0.5
-                middle = middle/norm
-                points.append(middle)
                 midab = np.mean(previous_points[[a, b]], axis=0)
                 norm = np.sum(midab**2)**0.5
                 midab = midab/norm
@@ -85,13 +83,11 @@ class _VolumePolyhedron(_VolumeTube):
                 norm = np.sum(midac**2)**0.5
                 midac = midac/norm
                 points.append(midac)
-                faces.append([a, new_index + 1, new_index])
-                faces.append([new_index + 1, b, new_index])
-                faces.append([b, new_index + 2, new_index])
-                faces.append([new_index + 2, c, new_index])
-                faces.append([c, new_index + 3, new_index])
-                faces.append([new_index + 3, a, new_index])
-                new_index += 4
+                faces.append([a, new_index, new_index + 2])
+                faces.append([b, new_index + 1, new_index])
+                faces.append([c, new_index + 2, new_index + 1])
+                faces.append([new_index, new_index + 1, new_index + 2])
+                new_index += 3
             return np.array(points), faces
         points = np.array([
             (1, 0, 0),
