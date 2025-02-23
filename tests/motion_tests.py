@@ -240,9 +240,6 @@ class MotionTests(unittest.TestCase):
     def test_movement(self):
         self.mt.draft = False
         self.mt.levitation_mode = 'off'
-        self.mt.depth_shift = 0.1
-        self.mt.depth_scale = 0.5
-        self.mt.side_scale = 0.8
         self.mt.scale = 0.5
         self.mt.reset().wait(1)
         self.mt.show_info('step1')
@@ -299,9 +296,6 @@ class MotionTests(unittest.TestCase):
     def test_tubes(self):
         self.mt.draft = False
         self.mt.levitation_mode = 'off'
-        self.mt.depth_shift = 0.1
-        self.mt.depth_scale = 0.5
-        self.mt.side_scale = 0.8
         num = 4
         self.mt.scale = 1/num
         self.mt.reset()
