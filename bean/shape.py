@@ -35,6 +35,8 @@ class Shape(Canvas):
         if hasattr(self, 'copyright'):
             self.add_copyright()
             self.show_copyright()
+        self.add_axis()
+        self.add_info()
         return self
 
     '''
