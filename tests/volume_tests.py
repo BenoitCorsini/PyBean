@@ -157,9 +157,9 @@ class VolumeTests(unittest.TestCase):
     '''
 
     def test_sphere(self):
+        self.vl.reset()
         num = 10
         self.vl.scale = 1/num
-        self.vl.reset()
         for y in range(num + 1):
             for x in range(num + 1):
                 if ((x + y) % 2) == 0:
@@ -234,9 +234,9 @@ class VolumeTests(unittest.TestCase):
         self.vl.save('image_tube')
 
     def test_edge(self):
+        self.vl.reset()
         num = 4
         self.vl.scale = 1/num
-        self.vl.reset()
         for x in range(num + 1):
             for y in range(num + 1):
                 self.vl.new_sphere(
@@ -306,9 +306,9 @@ class VolumeTests(unittest.TestCase):
         self.vl.save('image_edge')
 
     def test_polyhedron(self):
+        self.vl.reset()
         num = 3
         self.vl.scale = 1/num
-        self.vl.reset()
         self.vl.new_cube(
             pos=(0.5, 0.5, 1.5),
             radius=0.8,
