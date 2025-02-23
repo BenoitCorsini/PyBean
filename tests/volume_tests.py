@@ -175,9 +175,6 @@ class VolumeTests(unittest.TestCase):
     '''
 
     # def test_sphere(self):
-    #     self.vl.depth_shift = 0.05
-    #     self.vl.depth_scale = 0.75
-    #     self.vl.side_scale = 0.8
     #     num = 10
     #     self.vl.scale = 1/num
     #     self.vl.reset()
@@ -187,14 +184,14 @@ class VolumeTests(unittest.TestCase):
     #                 self.vl._create_volume(
     #                     name='sphere',
     #                     pos=(x, y, (x + y)/num),
-    #                     radius=0.4,
+    #                     radius=0.2,
     #                     colour='forestgreen',
     #                 )
     #             else:
     #                 self.vl._create_volume(
     #                     name='sphere',
     #                     pos=(x, y, 0),
-    #                     radius=0.2,
+    #                     radius=0.3,
     #                     colour='royalblue',
     #                 )
     #     self.vl.update()
@@ -202,9 +199,6 @@ class VolumeTests(unittest.TestCase):
 
     # def test_tubes(self):
     #     self.vl.reset()
-    #     self.vl.depth_shift = 0.05
-    #     self.vl.depth_scale = 0.75
-    #     self.vl.side_scale = 0.8
     #     num = 10
     #     self.vl.scale = 1/num
     #     for y in range(num + 1):
@@ -258,9 +252,6 @@ class VolumeTests(unittest.TestCase):
     #     self.vl.save('image_tube')
 
     # def test_edge(self):
-    #     self.vl.depth_shift = 0.05
-    #     self.vl.depth_scale = 0.6
-    #     self.vl.side_scale = 0.8
     #     num = 4
     #     self.vl.scale = 1/num
     #     self.vl.reset()
@@ -333,27 +324,76 @@ class VolumeTests(unittest.TestCase):
     #     self.vl.save('image_edge')
 
     def test_polyhedron(self):
-        print()
-        self.vl.depth_shift = 0.05
-        self.vl.depth_scale = 0.75
-        self.vl.side_scale = 0.8
-        num = 4
+        num = 3
         self.vl.scale = 1/num
         self.vl.reset()
-        for y in range(num + 1):
-            for x in range(num + 1):
-                if ((x + y) % 2) == 0:
-                    self.vl.new_cube(
-                        pos=(x, y),
-                        radius=0.5,
-                        colour='forestgreen',
-                    )
-                else:
-                    self.vl.new_cube(
-                        pos=(x, y, (x + y)/num),
-                        radius=0.5,
-                        colour='royalblue',
-                    )
+        self.vl.new_cube(
+            pos=(0.5, 0.5, 1.5),
+            radius=0.8,
+            colour='sienna',
+            alpha=0.5,
+        )
+        self.vl.new_cube(
+            pos=(0.5, 1.5, 1),
+            radius=0.8,
+            colour='sienna',
+            alpha=0.8,
+        )
+        self.vl.new_cube(
+            pos=(0.5, 2.5, 0.5),
+            radius=0.8,
+            colour='sienna',
+        )
+        self.vl.new_pyramid(
+            pyramid_height=0.5,
+            transform=np.array([
+                [0, 0, -1],
+                [0, 1, 0],
+                [1, 0, 0],
+            ]),
+            pos=(1.75, 0.5, 0.5),
+            radius=1,
+            colour='forestgreen',
+            alpha=0.5,
+        )
+        self.vl.new_pylone(
+            basic_face=[
+                (0.1, 0),
+                (0.3, 0.6),
+                (0.5, 0.1),
+                (1, 0.5),
+                (0.5, 1),
+                (0, 0.8),
+            ],
+            pylone_height=0.5,
+            pos=(1.5, 1.5),
+            radius=0.8,
+            colour='gold',
+        )
+        self.vl.new_cube(
+            pos=(1.5, 2.5),
+            radius=0.5,
+            colour='royalblue',
+        )
+        self.vl.new_polysphere(
+            precision=0,
+            pos=(2.5, 0.5),
+            radius=0.5,
+            colour='crimson',
+            alpha=0.8,
+        )
+        self.vl.new_polysphere(
+            precision=1,
+            pos=(2.5, 1.5),
+            radius=0.5,
+            colour='crimson',
+        )
+        self.vl.new_polysphere(
+            precision=2,
+            pos=(2.5, 2.5),
+            radius=0.5,
+            colour='crimson',
+        )
         self.vl.update()
         self.vl.save('image_polyhedron')
 

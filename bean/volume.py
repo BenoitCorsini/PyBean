@@ -43,6 +43,35 @@ class Volume(_VolumePolyhedron):
         # creates the basis for a new polyhedron
         return self._create_volume('polyhedron', *args, **kwargs)
 
+    def new_pylone(
+            self: Self,
+            basic_face: list[float, float],
+            pylone_height: float = 1,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # creates the basis for a new pylone
+        n_points = len(basic_face)
+        kwargs['points'] = [
+            (x, y, pylone_height) for (x, y) in basic_face
+        ]
+        kwargs['points'] += [
+            (x, y, 0) for (x, y) in basic_face
+        ]
+        kwargs['faces'] = [
+            list(range(n_points)),
+            list(range(n_points, 2*n_points))[::-1],
+        ]
+        for index in range(n_points):
+            next_index = (index + 1) % n_points
+            kwargs['faces'].append([
+                next_index,
+                index,
+                index + n_points,
+                next_index + n_points,
+            ])
+        return self._create_volume('polyhedron', *args, **kwargs)
+
     def new_cube(
             self: Self,
             *args,
@@ -67,7 +96,6 @@ class Volume(_VolumePolyhedron):
             [3, 0, 4, 7],
             [1, 2, 6, 5],
         ]
-        kwargs['centre'] = (0.5, 0.5)
         return self._create_volume('polyhedron', *args, **kwargs)
 
     def new_pyramid(
@@ -91,7 +119,6 @@ class Volume(_VolumePolyhedron):
             [2, 3, 4],
             [3, 0, 4],
         ]
-        kwargs['centre'] = (0.5, 0.5)
         return self._create_volume('polyhedron', *args, **kwargs)
 
     def new_polysphere(
@@ -104,7 +131,6 @@ class Volume(_VolumePolyhedron):
         points, faces = self._polyhedron_sphere(precision)
         kwargs['points'] = 0.5 + points/2
         kwargs['faces'] = faces
-        kwargs['centre'] = (0.5, 0.5)
         return self._create_volume('polyhedron', *args, **kwargs)
 
     def update(
