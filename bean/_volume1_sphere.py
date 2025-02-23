@@ -40,12 +40,11 @@ class _VolumeSphere(_Volume):
         xy = self._pos_to_xy(pos, height=radius)
         if not self.draft:
             shade_pos = self._pos_to_shade_pos(pos, height=radius)
-        radius *= self.scale*self.side_scale
         if not self.draft:
             shade_xy = self._pos_to_xy(shade_pos)
-            shade_radius = radius*self._pos_to_scale(shade_pos)
+            shade_radius = radius
         scale = self._pos_to_scale(pos)
-        radius *= scale
+        radius *= self.screen_dist*self.scale*scale
         zorder = scale
         path = self.curve_path(xy=xy, a=radius)
         self.apply_to_shape('set_path', key=main, path=path)
@@ -59,7 +58,6 @@ class _VolumeSphere(_Volume):
             side_angle = self.angle_from_xy(
                 xy1=xy,
                 xy2=shade_xy,
-                default_angle=self.shade_angle - 90,
             )
             for key, ratio in zip(side, self.round_sides):
                 path = self.merge_curves(*self.crescent_paths(
@@ -78,13 +76,13 @@ class _VolumeSphere(_Volume):
                     alpha=alpha*self.round_sides[ratio],
                 )
             path = self.curve_path(
-                xy=shade_xy,
+                xy=shade_pos,
                 a=shade_radius,
-                b=shade_radius*np.cos(self.horizon_angle*np.pi/180),
             )
+            path.vertices = np.array([
+                self._pos_to_xy(pos) for pos in path.vertices
+            ])
             self.apply_to_shape('set_path', key=shade, path=path)
             if shade_colour is None:
-                shade_colour = self.get_cmap(['white', clipper.get_fc()])(
-                    self.shade_cmap_ratio
-                )
+                shade_colour = self._get_shade_colour(clipper.get_fc())
             self.set_shape(key=shade, color=shade_colour, alpha=alpha)

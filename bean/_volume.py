@@ -26,8 +26,9 @@ class _Volume(Shape):
         'view_angle' : float,
         'screen_dist' : float,
         'sun_direction' : float,
-        'side_cmap_ratio    ' : float,
-        'shade_cmap_ratio' : float,
+        'side_cmap_ratio' : float,
+        'shade_darkness_ratio' : float,
+        'shade_background_ratio' : float,
     }
 
     _canvas_nargs = {
@@ -58,16 +59,6 @@ class _Volume(Shape):
         if not norm:
             norm = 1
         self.sun_direction = self.sun_direction/norm**0.5
-        self.add_axis()
-        self.add_info()
-        if self.draft:
-            self.hide_copyright()
-            self.show_axis()
-            self.show_info(repr(self))
-        else:
-            self.show_copyright()
-            self.hide_axis()
-            self.hide_info()
         return self
 
     '''
@@ -106,9 +97,9 @@ class _Volume(Shape):
         relative_pos = self._normalize_pos(pos, height)
         relative_pos = relative_pos*self.scale - self.view_pos
         return (
-            np.sum(relative_pos*self.screen_xdir),
-            np.sum(relative_pos*self.screen_ydir),
-            np.sum(relative_pos*self.screen_zdir),
+            float(np.sum(relative_pos*self.screen_xdir)),
+            float(np.sum(relative_pos*self.screen_ydir)),
+            float(np.sum(relative_pos*self.screen_zdir)),
         )
 
     def _normalize_xy(
@@ -149,7 +140,7 @@ class _Volume(Shape):
         pos = self._normalize_pos(pos, height)
         ground_dist = pos[2]/self.sun_direction[2]
         pos = pos - ground_dist*self.sun_direction
-        return pos[0], pos[1]
+        return float(pos[0]), float(pos[1])
 
     def _round_volume(
             self: Self,
@@ -254,3 +245,16 @@ class _Volume(Shape):
             message += str(only_avoid)
             raise ValueError(message)
         return only_avoid
+
+    def _get_shade_colour(
+            self: Self,
+            colour: Any,
+            background: Any = 'white',
+            darkness: Any = 'black',
+        ) -> Any:
+        # obtains the shade colour of a volume on a given background
+        shade_colour = self.get_cmap([colour, darkness])
+        shade_colour = shade_colour(self.shade_darkness_ratio)
+        shade_colour = self.get_cmap([background, colour])
+        shade_colour = shade_colour(self.shade_background_ratio)
+        return shade_colour
