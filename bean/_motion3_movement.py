@@ -81,7 +81,7 @@ class _MotionMovement(_MotionChangeRadius):
         kwargs['pos_list'] = [tuple(pos) for pos in positions]
         return kwargs
 
-    def _add_movement_sphere(
+    def _add_movement_one_pos(
             self: Self,
             volume: Any,
             pos: tuple[float] = None,
@@ -90,7 +90,7 @@ class _MotionMovement(_MotionChangeRadius):
             normalize: bool = True,
             **kwargs,
         ) -> None:
-        # changes the radius of sphere
+        # creates the movement of a volume with a single pos
         origin = self._normalize_pos(self._volumes[volume].get('pos', (0, 0)))
         if pos is not None:
             if shifted:
@@ -117,17 +117,49 @@ class _MotionMovement(_MotionChangeRadius):
         motion.update(kwargs)
         self._add_motion(self._smooth_movement(**motion))
 
-    def _apply_movement_sphere(
+    def _add_movement_sphere(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> None:
+        # creates the movement of a sphere
+        self._add_movement_one_pos(*args, **kwargs)
+
+    def _add_movement_polyhedron(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> None:
+        # creates the movement of a polyhedron
+        self._add_movement_one_pos(*args, **kwargs)
+
+    def _apply_movement_one_pos(
             self: Self,
             volume: Any,
             step: int,
             duration: int,
             pos_list: list,
         ) -> None:
-        # changes the radius of sphere
+        # moves a volume with a single pos
         pos = pos_list[step]
         self._volumes[volume]['pos'] = (
             pos[0],
             pos[1],
             abs(pos[2]),
         )
+
+    def _apply_movement_sphere(
+            self: Self,
+            *args,
+            **kwargs
+        ) -> None:
+        # moves a sphere
+        self._apply_movement_one_pos(*args, **kwargs)
+
+    def _apply_movement_polyhedron(
+            self: Self,
+            *args,
+            **kwargs
+        ) -> None:
+        # moves a sphere
+        self._apply_movement_one_pos(*args, **kwargs)

@@ -48,6 +48,14 @@ class _MotionChangeAlpha(_Motion):
         # changes the alpha of a tube
         self._add_change_alpha_(*args, **kwargs)
 
+    def _add_change_alpha_polyhedron(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> None:
+        # changes the alpha of a tube
+        self._add_change_alpha_(*args, **kwargs)
+
     def _apply_change_alpha_(
             self: Self,
             volume: Any,
@@ -69,6 +77,14 @@ class _MotionChangeAlpha(_Motion):
         self._apply_change_alpha_(*args, **kwargs)
 
     def _apply_change_alpha_tube(
+            self: Self,
+            *args,
+            **kwargs
+        ) -> None:
+        # changes the alpha of a tube
+        self._apply_change_alpha_(*args, **kwargs)
+
+    def _apply_change_alpha_polyhedron(
             self: Self,
             *args,
             **kwargs

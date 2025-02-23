@@ -9,7 +9,7 @@ class _MotionChangeRadius(_MotionChangeAlpha):
     hidden methods
     '''
 
-    def _add_change_radius_sphere(
+    def _add_change_radius_one_pos(
             self: Self,
             volume: Any,
             start_with: float = 1,
@@ -17,7 +17,7 @@ class _MotionChangeRadius(_MotionChangeAlpha):
             centred: bool = True,
             **kwargs,
         ) -> None:
-        # creates a motion to change the radius of a sphere
+        # creates a motion to change the radius of a volume with a single pos
         if start_with == end_with:
             return None
         motion = {
@@ -34,7 +34,7 @@ class _MotionChangeRadius(_MotionChangeAlpha):
                 motion[f'{timing}_radius'] = abs(timing_with)
         self._add_motion(motion)
 
-    def _add_change_radius_tube(
+    def _add_change_radius_two_pos(
             self: Self,
             volume: Any,
             start_with: Any = 1,
@@ -42,7 +42,7 @@ class _MotionChangeRadius(_MotionChangeAlpha):
             centred: Any = True,
             **kwargs,
         ) -> None:
-        # creates a motion to change the radius of a tube
+        # creates a motion to change the radius of a volume with two pos
         if start_with == end_with:
             return None
         if isinstance(centred, bool):
@@ -69,7 +69,31 @@ class _MotionChangeRadius(_MotionChangeAlpha):
                     motion[motion_key] = abs(timing_with[index])
         self._add_motion(motion)
 
-    def _apply_change_radius_sphere(
+    def _add_change_radius_sphere(
+            self: Self,
+            *args,
+            **kwargs
+        ) -> None:
+        # creates a motion to change the radius of a sphere
+        self._add_change_radius_one_pos(*args, **kwargs)
+
+    def _add_change_radius_tube(
+            self: Self,
+            *args,
+            **kwargs
+        ) -> None:
+        # creates a motion to change the radius of a tube
+        self._add_change_radius_two_pos(*args, **kwargs)
+
+    def _add_change_radius_polyhedron(
+            self: Self,
+            *args,
+            **kwargs
+        ) -> None:
+        # creates a motion to change the radius of a polyhedron
+        self._add_change_radius_one_pos(*args, **kwargs)
+
+    def _apply_change_radius_one_pos(
             self: Self,
             volume: Any,
             step: int,
@@ -78,7 +102,7 @@ class _MotionChangeRadius(_MotionChangeAlpha):
             end_radius: float,
             centred: bool,
         ) -> None:
-        # changes the radius of a sphere
+        # changes the radius of a volume with a singe pos
         delta_radius = (end_radius - start_radius)/duration
         radius = start_radius + step*delta_radius
         pos = self._normalize_pos(self._volumes[volume].get('pos', None))
@@ -96,7 +120,7 @@ class _MotionChangeRadius(_MotionChangeAlpha):
             )
         self._volumes[volume]['radius'] = radius
 
-    def _apply_change_radius_tube(
+    def _apply_change_radius_two_pos(
             self: Self,
             volume: Any,
             step: int,
@@ -108,7 +132,7 @@ class _MotionChangeRadius(_MotionChangeAlpha):
             end_radius2: float,
             centred2: bool,
         ) -> None:
-        # changes the radius of a tube
+        # changes the radius of a volume with two pos
         radius = self._volumes[volume]['radius']
         if isinstance(radius, int) or isinstance(radius, float):
             radius = (radius, radius)
@@ -141,3 +165,27 @@ class _MotionChangeRadius(_MotionChangeAlpha):
             variables['radius1'],
             variables['radius2'],
         )
+
+    def _apply_change_radius_sphere(
+            self: Self,
+            *args,
+            **kwargs
+        ) -> None:
+        # changes the radius of a sphere
+        self._apply_change_radius_one_pos(*args, **kwargs)
+
+    def _apply_change_radius_tube(
+            self: Self,
+            *args,
+            **kwargs
+        ) -> None:
+        # changes the radius of a tube
+        self._apply_change_radius_two_pos(*args, **kwargs)
+
+    def _apply_change_radius_polyhedron(
+            self: Self,
+            *args,
+            **kwargs
+        ) -> None:
+        # changes the radius of a tube
+        self._apply_change_radius_one_pos(*args, **kwargs)
