@@ -63,7 +63,7 @@ class _VolumePolyhedron(_VolumeTube):
     @staticmethod
     def _polyhedron_sphere(
             precision: int,
-        ) -> np.array, list[list[int]]:
+        ) -> (np.array, list[list[int]]):
         # returns a polyhedron approximation of a sphere
         if precision:
             (
@@ -146,6 +146,7 @@ class _VolumePolyhedron(_VolumeTube):
             pos = np.array(self._normalize_pos(pos))
             shift = pos.reshape((1, 3)) - centre
         points = shift + centre + points
+        points[:, 2] -= min(np.min(points[:, 2]), 0)
         faces = [points[face] for face in faces]
         orthos = [self._face_orthogonal(face) for face in faces]
         centres = [np.mean(face, axis=0) for face in faces]
