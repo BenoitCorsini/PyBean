@@ -133,6 +133,10 @@ class _Motion(Volume):
             return kwargs
         pos_params = [key for key in kwargs if key.startswith('pos')]
         default_freq_shift = kwargs.pop('levit_freq_shift', None)
+        volume_key = kwargs.pop('key')
+        levitate = kwargs.pop('levitate', True)
+        if not levitate:
+            return kwargs
         for pos_param in pos_params:
             extra_info = pos_param.replace('pos', '', 1)
             freq_shift_key = 'levit_freq_shift' + extra_info
@@ -143,11 +147,6 @@ class _Motion(Volume):
                     freq_shift = npr.rand()*self.levitation_freq
                 else:
                     freq_shift = 0
-                volume_key = kwargs['main'][::-1].replace(
-                    'niam_',
-                    '',
-                    1,
-                )[::-1]
                 self._volumes[volume_key][freq_shift_key] = freq_shift
             else:
                 freq_shift = kwargs.pop(freq_shift_key)

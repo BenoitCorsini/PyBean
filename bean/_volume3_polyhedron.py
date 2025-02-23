@@ -33,7 +33,7 @@ class _VolumePolyhedron(_VolumeTube):
                     shape_name='Polygon',
                     key=shape_key,
                     xy=[(0, 0)],
-                    lw=1,
+                    lw=self.polyhedron_lw,
                     zorder=0,
                     joinstyle='round',
                     capstyle='round',
@@ -120,6 +120,7 @@ class _VolumePolyhedron(_VolumeTube):
             points: list[tuple[float]] = [(0, 0)],
             faces: list[list[int]] = [[0]],
             centre: tuple[float] = None,
+            height: float = 0,
             transform: np.array = np.eye(3),
             radius: float = 1,
             colour: str = None,
@@ -145,8 +146,7 @@ class _VolumePolyhedron(_VolumeTube):
         else:
             pos = np.array(self._normalize_pos(pos))
             shift = pos.reshape((1, 3)) - centre
-        points = shift + centre + points
-        points[:, 2] -= min(np.min(points[:, 2]), 0)
+        points = shift + centre + points + np.array([0, 0, height])
         faces = [points[face] for face in faces]
         orthos = [self._face_orthogonal(face) for face in faces]
         centres = [np.mean(face, axis=0) for face in faces]

@@ -29,6 +29,7 @@ class _Volume(Shape):
         'side_cmap_ratio' : float,
         'shade_darkness_ratio' : float,
         'shade_background_ratio' : float,
+        'polyhedron_lw' : float,
     }
 
     _canvas_nargs = {
@@ -148,6 +149,7 @@ class _Volume(Shape):
         ) -> dict:
         # creates the volume dictionary for a rounded object
         volume = {
+            'key' : available_key,
             'main' : f'{available_key}_main',
             'side' : [
                 f'{available_key}_side{index}'
@@ -188,7 +190,10 @@ class _Volume(Shape):
         # creates the basis for a new volume
         key, available = self.key_checker(key=key, category='volume')
         if available:
-            volume = {'name' : name}
+            volume = {
+                'key' : key,
+                'name' : name,
+            }
             volume.update(kwargs)
             volume.update(
                 getattr(self, f'_create_{name}')(
