@@ -40,10 +40,9 @@ class _VolumeSphere(_Volume):
         xy = self._pos_to_xy(pos, height=radius)
         if not self.draft:
             shade_pos = self._pos_to_shade_pos(pos, height=radius)
-        if not self.draft:
             shade_xy = self._pos_to_xy(shade_pos)
             shade_radius = radius
-        scale = self._pos_to_scale(pos)
+        scale = self._pos_to_scale(pos, height=radius)
         radius *= self.screen_dist*self.scale*scale
         zorder = scale
         path = self.curve_path(xy=xy, a=radius)

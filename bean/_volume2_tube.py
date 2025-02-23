@@ -43,7 +43,7 @@ class _VolumeTube(_VolumeSphere):
         variables = {}
         zorder = 0
         for index in [1, 2]:
-            pos = self._normalize_pos(locals()[f'pos{index}'])
+            pos = locals()[f'pos{index}']
             radius = locals()[f'radius{index}']
             if slope == 'down':
                 height = radius
@@ -54,15 +54,14 @@ class _VolumeTube(_VolumeSphere):
             variables[f'xy{index}'] = self._pos_to_xy(pos, height=height)
             if not self.draft:
                 shade_pos = self._pos_to_shade_pos(pos, height=height)
-            radius *= self.scale*self.side_scale
-            scale = self._pos_to_scale(pos)
-            variables[f'radius{index}'] = radius*scale
-            zorder += scale/2
-            if not self.draft:
+                variables[f'shade_pos{index}'] = shade_pos
                 variables[f'shade_xy{index}'] = self._pos_to_xy(shade_pos)
-                variables[f'shade_radius{index}'] = (
-                    radius*self._pos_to_scale(shade_pos)
-                )
+                variables[f'shade_radius{index}'] = radius
+            scale = self._pos_to_scale(pos)
+            variables[f'radius{index}'] = (
+                radius*self.screen_dist*self.scale*scale
+            )
+            zorder += scale/2
         distance = self.distance_from_xy(variables['xy1'], variables['xy2'])
         delta_radius = variables['radius2'] - variables['radius1']
         is_sphere = np.abs(delta_radius) >= distance
@@ -95,12 +94,10 @@ class _VolumeTube(_VolumeSphere):
             side_angle1 = self.angle_from_xy(
                 xy1=variables['xy1'],
                 xy2=variables['shade_xy1'],
-                default_angle=self.shade_angle - 90,
             )
             side_angle2 = self.angle_from_xy(
                 xy1=variables['xy2'],
                 xy2=variables['shade_xy2'],
-                default_angle=self.shade_angle - 90,
             )
             side_angle = (side_angle1 + side_angle2)/2
             theta1 = self.normalize_angle(
@@ -166,9 +163,7 @@ class _VolumeTube(_VolumeSphere):
                     alpha=alpha*self.round_sides[ratio],
                 )
             if shade_colour is None:
-                shade_colour = self.get_cmap(['white', clipper.get_fc()])(
-                    self.shade_cmap_ratio
-                )
+                shade_colour = self._get_shade_colour(clipper.get_fc())
             self.set_shape(key=shade, color=shade_colour, alpha=alpha)
             distance = self.distance_from_xy(
                 variables['shade_xy1'],
@@ -178,17 +173,11 @@ class _VolumeTube(_VolumeSphere):
                 variables['shade_radius2']
                 - variables['shade_radius1']
             )
-            cos = np.cos(self.horizon_angle*np.pi/180)
             if np.abs(delta_radius) >= distance:
                 index = 1 + int(delta_radius > 0)
-                self.apply_to_shape(
-                    method='set_path',
-                    key=shade,
-                    path=self.curve_path(
-                        xy=variables[f'shade_xy{index}'],
-                        a=variables[f'shade_radius{index}'],
-                        b=variables[f'shade_radius{index}']*cos,
-                    )
+                path = self.curve_path(
+                    xy=variables[f'shade_pos{index}'],
+                    a=variables[f'shade_radius{index}'],
                 )
             else:
                 shade_angle = self.angle_from_xy(
@@ -199,9 +188,8 @@ class _VolumeTube(_VolumeSphere):
                     np.arcsin(delta_radius/distance)*180/np.pi
                 )
                 path = self.merge_curves(*[self.curve_path(
-                    xy=variables[f'shade_xy{index}'],
+                    xy=variables[f'shade_pos{index}'],
                     a=variables[f'shade_radius{index}'],
-                    b=variables[f'shade_radius{index}']*cos,
                     theta1=(
                         (3 - 2*index)*(90 + shade_around_angle)
                         + shade_angle
@@ -211,7 +199,10 @@ class _VolumeTube(_VolumeSphere):
                         + shade_angle
                     ),
                 ) for index in [1, 2]])
-                self.apply_to_shape('set_path', key=shade, path=path)
+            path.vertices = np.array([
+                self._pos_to_xy(pos) for pos in path.vertices
+            ])
+            self.apply_to_shape('set_path', key=shade, path=path)
 
     def _update_tube(
             self: Self,

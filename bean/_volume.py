@@ -255,6 +255,6 @@ class _Volume(Shape):
         # obtains the shade colour of a volume on a given background
         shade_colour = self.get_cmap([colour, darkness])
         shade_colour = shade_colour(self.shade_darkness_ratio)
-        shade_colour = self.get_cmap([background, colour])
+        shade_colour = self.get_cmap([background, shade_colour])
         shade_colour = shade_colour(self.shade_background_ratio)
         return shade_colour

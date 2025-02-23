@@ -61,12 +61,15 @@ class _VolumePolyhedron(_VolumeTube):
         return ortho/norm
 
     @staticmethod
-    def _polyhedron_sphere(n):
-        if n:
+    def _polyhedron_sphere(
+            precision: int,
+        ) -> np.array, list[list[int]]:
+        # returns a polyhedron approximation of a sphere
+        if precision:
             (
                 previous_points,
                 previous_faces
-            ) = _VolumePolyhedron._polyhedron_sphere(n - 1)
+            ) = _VolumePolyhedron._polyhedron_sphere(precision - 1)
             points = list(previous_points)
             faces = []
             new_index = len(points)
@@ -157,15 +160,11 @@ class _VolumePolyhedron(_VolumeTube):
         ]
         if colour is None:
             if not self.draft and shade_colour is None:
-                shade_colour = self.get_cmap(['white', 'black'])(
-                    self.shade_cmap_ratio
-                )
+                shade_colour = self._get_shade_colour('black')
             colour = (lambda x : None)
         else:
             if not self.draft and shade_colour is None:
-                shade_colour = self.get_cmap(['white', colour])(
-                    self.shade_cmap_ratio
-                )
+                shade_colour = self._get_shade_colour(colour)
             colour = self.get_cmap([colour, 'black'])
         for key, face, centre, ortho in zip(main, faces, centres, orthos):
             sun_impact = (1 + np.sum(ortho*self.sun_direction))/2
