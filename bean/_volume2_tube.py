@@ -57,6 +57,12 @@ class _VolumeTube(_VolumeSphere):
                 variables[f'shade_pos{index}'] = shade_pos
                 variables[f'shade_xy{index}'] = self._pos_to_xy(shade_pos)
                 variables[f'shade_radius{index}'] = radius
+                variables[f'scaled_radius{index}'] = (
+                    radius
+                    *self.screen_dist
+                    *self.scale
+                    *self._pos_to_scale(shade_pos)
+                )
             scale = self._pos_to_scale(pos)
             variables[f'radius{index}'] = (
                 radius*self.screen_dist*self.scale*scale
@@ -170,8 +176,8 @@ class _VolumeTube(_VolumeSphere):
                 variables['shade_xy2'],
             )
             delta_radius = (
-                variables['shade_radius2']
-                - variables['shade_radius1']
+                variables['scaled_radius2']
+                - variables['scaled_radius1']
             )
             if np.abs(delta_radius) >= distance:
                 index = 1 + int(delta_radius > 0)

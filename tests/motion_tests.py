@@ -330,7 +330,7 @@ class MotionTests(unittest.TestCase):
                 delay = (x + num*y/2)/num**2
                 self.mt.appear(s, duration=0.5, delay=delay, use_current_alpha=False)
                 self.mt.grow(s, duration=0.5, delay=delay)
-                self.mt.jump(2, s, duration=0.5, delay=delay, end_height=1)
+                self.mt.jump(1, s, duration=0.5, delay=delay, end_height=0.5)
                 if y:
                     self.mt.appear(f'{x}--{y}-{y}', duration=0.5, delay=delay, use_current_alpha=False)
                     self.mt.grow(f'{x}--{y}-{y}', duration=0.5, delay=delay)
