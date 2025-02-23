@@ -207,17 +207,16 @@ class _Volume(Shape):
             **kwargs,
         ) -> None:
         # updates the volume
-        getattr(self, f'_update_{name}')(**self._volume_kwargs(kwargs))
+        getattr(self, f'_update_{name}')(**self._volume_kwargs(**kwargs))
 
     def _volume_kwargs(
             self: Self,
-            kwargs: dict,
+            **kwargs,
         ):
         # modifies the parameters used for a volume
-        kwargs = kwargs.copy()
         for method in dir(self):
             if method.startswith('_volume_kwargs_'):
-                kwargs = getattr(self, method)(kwargs)
+                kwargs = getattr(self, method)(**kwargs)
         return kwargs
 
     def _only_avoid_to_list(

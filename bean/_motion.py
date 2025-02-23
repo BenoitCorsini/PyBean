@@ -126,7 +126,7 @@ class _Motion(Volume):
 
     def _volume_kwargs_levitate(
             self: Self,
-            kwargs: dict,
+            **kwargs,
         ) -> dict:
         # adds the levitation effect to the volumes
         if self.levitation_mode == 'off' or self.draft:
