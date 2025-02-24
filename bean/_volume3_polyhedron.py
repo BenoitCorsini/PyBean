@@ -14,6 +14,7 @@ class _VolumePolyhedron(_VolumeTube):
             self: Self,
             available_key: Any,
             faces: list[list[int]] = [[0]],
+            transform: np.array = np.eye(3),
             **kwargs
         ) -> dict:
         # creates the volume dictionary for a polyhedron
@@ -42,6 +43,7 @@ class _VolumePolyhedron(_VolumeTube):
                     patch.set_visible(not self.draft)
                     patch.set_zorder(-1)
         volume['faces'] = faces
+        volume['transform'] = transform
         return volume
 
     @staticmethod

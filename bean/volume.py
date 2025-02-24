@@ -121,7 +121,7 @@ class Volume(_VolumePolyhedron):
             [2, 3, 4],
             [3, 0, 4],
         ]
-        kwargs['centre'] = (0.5, 0.5)
+        kwargs['centre'] = (0.5, 0.5, pyramid_height/2)
         return self._create_volume('polyhedron', *args, **kwargs)
 
     def new_polysphere(
