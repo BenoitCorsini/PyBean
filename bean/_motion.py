@@ -32,6 +32,8 @@ class _Motion(Volume):
         'levitation_mode' : str,
         'levitation_height' : float,
         'levitation_freq' : float,
+        'rotation_mode' : str,
+        'rotation_freq' : float,
         'movement_frequency' : float,
         'movement_damping' : float,
         'movement_response' : float,
@@ -129,39 +131,90 @@ class _Motion(Volume):
             **kwargs,
         ) -> dict:
         # adds the levitation effect to the volumes
-        if self.levitation_mode == 'off' or self.draft:
-            return kwargs
-        pos_params = [key for key in kwargs if key.startswith('pos')]
-        default_freq_shift = kwargs.pop('levit_freq_shift', None)
-        volume_key = kwargs.pop('key')
-        levitate = kwargs.pop('levitate', True)
+        levitate = self.levitation_mode != 'off' and not self.draft
+        levitate = kwargs.pop('levitate', levitate)
         if not levitate:
             return kwargs
+        pos_params = [key for key in kwargs if key.startswith('pos')]
+        volume_key = kwargs['key']
+        default_freq_shift = kwargs.pop('levitation_freq_shift', None)
+        levitation_freq = kwargs.pop(
+            'levitation_freq',
+            self.levitation_freq,
+        )
+        levitation_height = kwargs.pop(
+            'levitation_height',
+            self.levitation_height,
+        )
         for pos_param in pos_params:
             extra_info = pos_param.replace('pos', '', 1)
-            freq_shift_key = 'levit_freq_shift' + extra_info
+            freq_shift_key = 'levitation_freq_shift' + extra_info
             if freq_shift_key not in kwargs:
                 if default_freq_shift is not None:
                     freq_shift = default_freq_shift
                 elif self.levitation_mode == 'random':
-                    freq_shift = npr.rand()*self.levitation_freq
+                    freq_shift = npr.rand()/self.levitation_freq
                 else:
                     freq_shift = 0
                 self._volumes[volume_key][freq_shift_key] = freq_shift
             else:
                 freq_shift = kwargs.pop(freq_shift_key)
-            side, depth, altitude = self._normalize_pos(kwargs[pos_param])
             extra_altitude = (1 - np.cos(
                 2*np.pi*(
                     freq_shift + self._frame_index/self.fps
-                )/self.levitation_freq
-            ))*self.levitation_height/2
-            kwargs[pos_param] = (
-                side,
-                depth,
-                altitude + extra_altitude,
+                )*levitation_freq
+            ))*levitation_height/2
+            kwargs[pos_param] = self._normalize_pos(
+                kwargs[pos_param],
+                height=extra_altitude,
             )
         return kwargs
+
+    # def _volume_kwargs_rotate(
+    #         self: Self,
+    #         **kwargs,
+    #     ) -> dict:
+    #     # adds the rotation effect to the volumes
+    #     rotate = self.rotation_mode != 'off' and not self.draft
+    #     rotate = kwargs.pop('rotate', rotate)
+    #     if not rotate or kwargs['name'] != 'polyhedron':
+    #         return kwargs
+    #     volume_key = kwargs['key']
+    #     rotation_freq = kwargs.pop(
+    #         'rotation_freq',
+    #         self.rotation_freq,
+    #     )
+    #     if 'rotation_freq_shift' in kwargs:
+    #         freq_shift = kwargs.pop('rotation_freq_shift')
+    #     else:
+    #         if self.rotation_mode == 'random':
+    #             freq_shift = npr.rand()/rotation_freq
+    #         else:
+    #             freq_shift = 0
+    #         self._volumes[volume_key]['rotation_freq_shift'] = freq_shift
+    #     for pos_param in pos_params:
+    #         extra_info = pos_param.replace('pos', '', 1)
+    #         freq_shift_key = 'levitation_freq_shift' + extra_info
+    #         if freq_shift_key not in kwargs:
+    #             if default_freq_shift is not None:
+    #                 freq_shift = default_freq_shift
+    #             elif self.levitation_mode == 'random':
+    #                 freq_shift = npr.rand()/levitation_freq
+    #             else:
+    #                 freq_shift = 0
+    #             self._volumes[volume_key][freq_shift_key] = freq_shift
+    #         else:
+    #             freq_shift = kwargs.pop(freq_shift_key)
+    #         extra_altitude = (1 - np.cos(
+    #             2*np.pi*(
+    #                 freq_shift + self._frame_index/self.fps
+    #             )*levitation_freq
+    #         ))*levitation_height/2
+    #         kwargs[pos_param] = self._normalize_pos(
+    #             kwargs[pos_param],
+    #             height=extra_altitude,
+    #         )
+    #     return kwargs
 
     def _create_motion(
             self: Self,

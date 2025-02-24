@@ -105,8 +105,8 @@ class _MotionChangeRadius(_MotionChangeAlpha):
         # changes the radius of a volume with a singe pos
         delta_radius = (end_radius - start_radius)/duration
         radius = start_radius + step*delta_radius
-        pos = self._normalize_pos(self._volumes[volume].get('pos', None))
-        if pos is not None and centred:
+        pos = self._normalize_pos(self._volumes[volume]['pos'])
+        if centred:
             if step:
                 delta_altitude = delta_radius
             elif start_radius != self._volumes[volume]['radius']:
