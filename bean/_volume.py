@@ -191,8 +191,8 @@ class _Volume(Shape):
         key, available = self.key_checker(key=key, category='volume')
         if available:
             volume = {
-                'key' : key,
                 'name' : name,
+                'key' : key,
             }
             volume.update(kwargs)
             volume.update(
@@ -222,6 +222,7 @@ class _Volume(Shape):
         for method in dir(self):
             if method.startswith('_volume_kwargs_'):
                 kwargs = getattr(self, method)(**kwargs)
+        del kwargs['key']
         return kwargs
 
     def _only_avoid_to_list(
