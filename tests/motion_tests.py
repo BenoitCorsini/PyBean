@@ -387,35 +387,102 @@ class MotionTests(unittest.TestCase):
     def test_tubes(self):
         self.mt.draft = False
         self.mt.levitation_mode = 'random'
-        self.mt.scale = 1/4
+        self.mt.scale = 1/5
+        radius = 0.5
         self.mt.reset()
         self.mt.wait(1)
-        self.mt.new_cube(
+        self.mt.new_sphere(
             'BL',
-            pos=(1, 1),
+            pos=(0.5, 1),
+            radius=radius,
             colour='royalblue',
+            levitation_height=0.5,
         )
         self.mt.new_cube(
             'TL',
-            pos=(1, 3),
-            colour='royalblue',
+            pos=(0.5, 3),
+            radius=radius,
+            colour='gold',
+            levitate=False,
+            rotate=False,
         )
         self.mt.new_cube(
+            'BM',
+            pos=(2.5, 1, 0.5),
+            radius=radius,
+            colour='forestgreen',
+            levitate=False,
+            rotate=False,
+        )
+        self.mt.new_pyramid(
+            'TM',
+            pos=(2.5, 3),
+            radius=radius,
+            colour='crimson',
+            levitation_freq=7,
+            rotate=False,
+        )
+        self.mt.new_sphere(
             'BR',
-            pos=(3, 1),
-            colour='royalblue',
+            pos=(4.5, 1, 0.5),
+            radius=radius,
+            colour='sienna',
+            levitate=False,
+        )
+        self.mt.new_sphere(
+            'TR',
+            pos=(4.5, 3),
+            radius=radius,
+            colour='sienna',
             levitate=False,
         )
         self.mt.new_pyramid(
-            'TR',
-            pos=(3, 3),
-            colour='royalblue',
+            'L',
+            pos=(0.5, 5, 1),
+            radius=radius,
+            colour='grey',
+            transform=np.array([
+                [0, 0, -1],
+                [0, 1, 0],
+                [1, 0, 0],
+            ]),
+        )
+        self.mt.new_pyramid(
+            'M',
+            pos=(2.5, 5, 1),
+            radius=radius,
+            colour='grey',
+            transform=np.array([
+                [1, 0, 0],
+                [0, 0, -1],
+                [0, 1, 0],
+            ]),
+            rotation_freq=1,
+            rotation_clockwise=False,
+        )
+        self.mt.new_pyramid(
+            'R',
+            pos=(4.5, 5, 1),
+            radius=radius,
+            colour='grey',
+            transform=np.array([
+                [-1, 0, 0],
+                [0, 1, 0],
+                [0, 0, -1],
+            ]),
+            rotation_clockwise=True,
         )
         self.mt.appear('BL', duration=1.)
-        self.mt.jump(1, 'TL', end_height=0.5, duration=0.5, delay=0.5).grow('TL', duration=0.5, centred=False)
-        self.mt.grow('BR', duration=1., centred=False)
-        self.mt.appear('TR', duration=0.5)
+        self.mt.jump(1, 'TL', end_height=0.5, duration=1., delay=1.).grow('TL', duration=1., centred=False)
+        self.mt.grow('BM', duration=1., centred=True)
+        self.mt.appear('TM', duration=0.5)
+        self.mt.grow('BR', duration=1., centred=True)
+        self.mt.grow('TR', duration=1., centred=False)
+        self.mt.grow('L', duration=1., centred=True)
+        self.mt.grow('M', duration=1., centred=True)
+        self.mt.grow('R', duration=1., centred=True)
         self.mt.run()
+        self.mt.wait(1.)
         self.mt.video('video_polyhedron')
 
 
