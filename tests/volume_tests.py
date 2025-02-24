@@ -311,19 +311,19 @@ class VolumeTests(unittest.TestCase):
         self.vl.scale = 1/num
         self.vl.new_cube(
             pos=(0.5, 0.5, 1.5),
-            radius=0.8,
+            radius=0.4,
             colour='sienna',
             alpha=0.5,
         )
         self.vl.new_cube(
             pos=(0.5, 1.5, 1),
-            radius=0.8,
+            radius=0.4,
             colour='sienna',
             alpha=0.8,
         )
         self.vl.new_cube(
             pos=(0.5, 2.5, 0.5),
-            radius=0.8,
+            radius=0.4,
             colour='sienna',
         )
         self.vl.new_pyramid(
@@ -334,7 +334,7 @@ class VolumeTests(unittest.TestCase):
                 [1, 0, 0],
             ]),
             pos=(1.75, 0.5, 0.5),
-            radius=1,
+            radius=0.5,
             colour='forestgreen',
             alpha=0.5,
         )
@@ -349,31 +349,31 @@ class VolumeTests(unittest.TestCase):
             ],
             pylone_height=0.5,
             pos=(1.5, 1.5),
-            radius=0.8,
+            radius=0.4,
             colour='gold',
         )
         self.vl.new_cube(
             pos=(1.5, 2.5),
-            radius=0.5,
+            radius=0.25,
             colour='royalblue',
         )
         self.vl.new_polysphere(
             precision=0,
             pos=(2.5, 0.5),
-            radius=0.5,
+            radius=0.25,
             colour='crimson',
             alpha=0.8,
         )
         self.vl.new_polysphere(
             precision=1,
             pos=(2.5, 1.5),
-            radius=0.5,
+            radius=0.25,
             colour='crimson',
         )
         self.vl.new_polysphere(
             precision=2,
             pos=(2.5, 2.5),
-            radius=0.5,
+            radius=0.25,
             colour='crimson',
         )
         self.vl.update()

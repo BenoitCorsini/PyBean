@@ -139,14 +139,14 @@ class _VolumePolyhedron(_VolumeTube):
             centre = np.mean(points, axis=0, keepdims=True)
         else:
             centre = np.array(self._normalize_pos(centre)).reshape((1, 3))
-        points = radius*(points - centre)
+        points = 2*radius*(points - centre)
         points = points @ transform.T
         if pos is None:
             shift = np.zeros((1, 3))
         else:
             pos = np.array(self._normalize_pos(pos))
             shift = pos.reshape((1, 3)) - centre
-        points = shift + centre + points + np.array([0, 0, height])
+        points = shift + centre + points + np.array([0, 0, 2*radius*height])
         faces = [points[face] for face in faces]
         orthos = [self._face_orthogonal(face) for face in faces]
         centres = [np.mean(face, axis=0) for face in faces]
