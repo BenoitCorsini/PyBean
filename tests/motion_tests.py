@@ -446,6 +446,8 @@ class MotionTests(unittest.TestCase):
                 [0, 1, 0],
                 [1, 0, 0],
             ]),
+            rotate_relative=True,
+            levitate=False,
         )
         self.mt.new_pyramid(
             'M',

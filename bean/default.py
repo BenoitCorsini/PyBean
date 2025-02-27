@@ -1,3 +1,6 @@
+import inspect
+import os.path as osp
+
 DEFAULT = {
     # canvas
     'figsize' : (16, 9),
@@ -16,7 +19,16 @@ DEFAULT = {
         'yshift' : 0.02,
         'anchor' : 'south west',
         'font_properties' : {
-            'fname' : 'bean/font.otf',
+            'fname' : osp.join(
+                osp.dirname(
+                    osp.abspath(
+                        inspect.getfile(
+                            inspect.currentframe()
+                        )
+                    )
+                ),
+                'font.otf'
+            ),
         },
         'params' : {
             'lw' : 1.2,

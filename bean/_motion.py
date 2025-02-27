@@ -203,7 +203,10 @@ class _Motion(Volume):
             [-clockwise*np.sin(angle), np.cos(angle), 0],
             [0, 0, 1],
         ])
-        kwargs['transform'] = rotate_transform @ kwargs['transform']
+        if kwargs.pop('rotate_relative', False):
+            kwargs['transform'] = kwargs['transform'] @ rotate_transform
+        else:
+            kwargs['transform'] = rotate_transform @ kwargs['transform']
         return kwargs
 
     def _create_motion(
