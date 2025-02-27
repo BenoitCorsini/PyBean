@@ -7,6 +7,49 @@ from ._motion2_change_radius import _MotionChangeRadius
 class _MotionMovement(_MotionChangeRadius):
 
     '''
+    static methods
+    '''
+
+    @staticmethod
+    def _path_to_norm(
+            path: np.array,
+        ) -> np.array:
+        assert len(path.shape) == 2
+        if path.shape[0] <= 1:
+            return np.array([0])
+        norm = np.sum((path[1:] - path[:-1])**2, axis=-1)**0.5
+        norm = np.concatenate([
+            np.array([0]),
+            np.cumsum(norm),
+        ])
+        divider = norm[-1]
+        if not divider:
+            divider = 1
+        return norm/divider
+
+    @staticmethod
+    def _normed_path_to_pos(
+            ratio: float,
+            path: np.array = np.array([[0], [0]]),
+            norm: np.array = np.array([0]),
+        ) -> (float, float, float):
+        assert norm[0] == 0
+        assert norm[-1] == 1 or norm[-1] == 0
+        if norm[-1] == 0:
+            return tuple(path[0])
+        ratio = max(0, min(1, ratio))
+        start = np.where(norm <= ratio)[0][-1]
+        end = np.where(norm >= ratio)[0][0]
+        divider = norm[end] - norm[start]
+        if not divider:
+            divider = 1
+        ratio = (ratio - norm[start])/divider
+        start = path[start]
+        end = path[end]
+        pos = start + ratio*(end - start)
+        return pos[0], pos[1], pos[2]
+
+    '''
     hidden methods
     '''
 
