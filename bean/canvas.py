@@ -8,14 +8,20 @@ from matplotlib.colors import LinearSegmentedColormap as LSC
 from time import time
 from typing_extensions import Any, Self
 
-from .default import DEFAULT
-
 
 class Canvas(object):
 
     '''
     fundamental variables and function
     '''
+
+    figsize = (16, 9)
+    dpi = 100
+    xmin = 0
+    xmax = 1
+    ymin = 0
+    ymax = None
+    seed = None
 
     _canvas_params = {
         'figsize' : int,
@@ -35,13 +41,15 @@ class Canvas(object):
             self: Self,
         ) -> Self:
         # new canvas instance
-        self.start_time = time()
         npr.seed(self.seed)
         self.fig = figure.Figure(figsize=self.figsize, dpi=self.dpi)
         self.fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
         self.ax = self.fig.add_subplot()
         self.ax.set_xlim(self.xmin, self.xmax)
-        self.ax.set_ylim(self.ymin, self.ymax)
+        if self.ymax is None:
+            self.ax.set_ylim(self.ymin, self.figsize[0]/self.figsize[1])
+        else:
+            self.ax.set_ylim(self.ymin, self.ymax)
         self.ax.set_axis_off()
         return self
 
@@ -54,9 +62,8 @@ class Canvas(object):
             **kwargs,
         ) -> None:
         # initiate class
+        self._start_time = time()
         self._parser = argparse.ArgumentParser()
-        for key, value in DEFAULT.items():
-            setattr(self, key, value)
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.reset()
@@ -107,6 +114,32 @@ class Canvas(object):
                 if method.startswith('_new'):
                     new_methods.append(method)
         return new_methods
+
+    def _get_kwargs(
+            self: Self,
+        ) -> dict:
+        # returns the arguments of the parser as a dictionnary
+        return vars(self._parser.parse_args())
+
+    def _key_checker(
+            self: Self,
+            category: str,
+            key: Any = None,
+        ) -> (Any, bool):
+        # checks whether the key is available from the category
+        if key is None:
+            index = getattr(self, f'_{category}_index', 0)
+            key = f'{category}{index}'
+            setattr(self, f'_{category}_index', index + 1)
+        if key in getattr(self, f'_{category}s', {}):
+            if isinstance(key, str) and key.startswith('_'):
+                return key, False
+            else:
+                raise UserWarning(
+                    f'key \'{key}\' already used for a {category}.'
+                )
+                return key, False
+        return key, True
 
     '''
     static methods
@@ -165,28 +198,27 @@ class Canvas(object):
     general methods
     '''
 
-    def add_param(
+    def reset(
+            self: Self,
+        ) -> Self:
+        # resets self using _new methods in order of depth
+        for method in self._get_new_methods():
+            getattr(self, method)()
+        return self
+
+    def add_arg(
             self: Self,
             *args,
             **kwargs,
-        ) -> None:
+        ) -> Self:
         # adds a parameter to the parser
         self._parser.add_argument(*args, **kwargs)
+        return self
 
-    def get_kwargs(
-            self: Self,
-            **kwargs
-        ) -> dict:
-        # returns the arguments of the parser as a dictionnary
-        parser_kwargs = vars(self._parser.parse_args())
-        parser_kwargs.update(kwargs)
-        return parser_kwargs.copy()
-
-    def set_params(
+    def set_args(
             self: Self,
             include_all: bool = False,
-            **kwargs,
-        ) -> None:
+        ) -> Self:
         # collects and sets up the argparse parameters
         if include_all:
             for current_class in self._get_classes():
@@ -195,24 +227,16 @@ class Canvas(object):
                 class_nargs = getattr(self, f'_{class_name}_nargs', {})
                 for param, param_type in class_params.items():
                     assert hasattr(self, param)
-                    self.add_param(
+                    self.add_arg(
                         f'--{param}',
                         nargs=class_nargs.get(param, None),
                         type=param_type,
                         default=getattr(self, param),
                     )
-        kwargs = self.get_kwargs(**kwargs)
+        kwargs = self._get_kwargs()
         for key, value in kwargs.items():
             setattr(self, key, value)
-        self.reset()
-
-    def reset(
-            self: Self,
-        ) -> Self:
-        # resets self using _new methods in order of depth
-        for method in self._get_new_methods():
-            getattr(self, method)()
-        return self
+        return self.reset()
 
     def save(
             self: Self,
@@ -232,27 +256,7 @@ class Canvas(object):
             self: Self,
         ) -> str:
         # computes the current time duration of the algorithm
-        return self.time_to_string(time() - self.start_time)
-
-    def key_checker(
-            self: Self,
-            category: str,
-            key: Any = None,
-        ) -> (Any, bool):
-        # checks whether the key is available from the category
-        if key is None:
-            index = getattr(self, f'_{category}_index', 0)
-            key = f'{category}{index}'
-            setattr(self, f'_{category}_index', index + 1)
-        if key in getattr(self, f'_{category}s', {}):
-            if isinstance(key, str) and key.startswith('_'):
-                return key, False
-            else:
-                raise UserWarning(
-                    f'key \'{key}\' already used for a {category}.'
-                )
-                return key, False
-        return key, True
+        return self.time_to_string(time() - self._start_time)
 
     def help(
             self: Self,
@@ -266,13 +270,3 @@ class Canvas(object):
         print(f'\u279E Take a look at the documentation: {doc_page}')
         print(f'\u279E Take a look at the Github page: {github_page}')
         print(f'\u279E Take a look at common symbols: {symbol_page}')
-
-    '''
-    main method
-    '''
-
-    def main(
-            self: Self,
-        ) -> None:
-        # the main running function
-        pass
