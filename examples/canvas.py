@@ -17,7 +17,9 @@ for pos in np.arange(start=step, stop=0.5, step=step):
 		color=random_colour,
 		lw=linewidth,
 	)
+file_name = f'canvas {CV.cscale_colour}'
 CV.save(
-	name=f'canvas {CV.cscale_colour}',
+	name=file_name,
 	image_dir='examples',
 )
+print(f'Image created: {file_name}.png')
