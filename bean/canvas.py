@@ -47,7 +47,7 @@ class Canvas(object):
         self.ax = self.fig.add_subplot()
         self.ax.set_xlim(self.xmin, self.xmax)
         if self.ymax is None:
-            self.ax.set_ylim(self.ymin, self.figsize[0]/self.figsize[1])
+            self.ax.set_ylim(self.ymin, self.figsize[1]/self.figsize[0])
         else:
             self.ax.set_ylim(self.ymin, self.ymax)
         self.ax.set_axis_off()
