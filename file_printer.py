@@ -1,20 +1,26 @@
 import sys
 import os
 import os.path as osp
-import argparse
 import subprocess
 
 
 ARGS = {
-    'docs' : {
-        'value_arg' : ['', ' --dpi 50'],
-        'added' : [' --dpi 50'],
-        'added_default' : ['', ' --dpi 25'],
-        'overwrite_all' : ['', ' --dpi 10'],
-        'overwrite_default' : ['', ' --dpi 10'],
-        'args_default' : [' --help'],
-        'args_all' : [' --help'],
-        'args_none' : ['', ' --help', ' --dpi 50'],
+    # 'docs' : {
+    #     'value_arg' : ['', ' --dpi 50'],
+    #     'added' : [' --dpi 50'],
+    #     'added_default' : ['', ' --dpi 25'],
+    #     'overwrite_all' : ['', ' --dpi 10'],
+    #     'overwrite_default' : ['', ' --dpi 10'],
+    #     'args_default' : [' --help'],
+    #     'args_all' : [' --help'],
+    #     'args_none' : ['', ' --help', ' --dpi 50'],
+    # },
+    'examples' : {
+        'canvas' : [
+            ' --cscale_colour royalblue --dpi 50',
+            ' --cscale_colour forestgreen --ymax 1',
+            ' --cscale_colour crimson --figsize 10 10',
+        ],
     },
 }
 
@@ -47,9 +53,7 @@ def run_and_print(folder, file):
     os.system(f'rm __{file}')
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--folder', type=str)
-    parser = parser.parse_args()
-    for file in os.listdir(parser.folder):
-        if file.endswith('.py'):
-            run_and_print(parser.folder, file)
+    for folder in ARGS:
+        for file in os.listdir(folder):
+            if file.endswith('.py'):
+                run_and_print(folder, file)
