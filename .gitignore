@@ -7,3 +7,7 @@ video*.mp4
 
 # default folders
 frames/
+
+# LaTeX text files
+docs/*.txt
+examples/*.txt
