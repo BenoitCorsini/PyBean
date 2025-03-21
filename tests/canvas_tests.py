@@ -34,6 +34,30 @@ class CanvasTests(unittest.TestCase):
         self.assertEqual(len(methods), 1)
         self.assertEqual(methods[0], '_new_canvas')
 
+    def test_key_checker(self):
+        self.cv._pybeans = {}
+        for index in range(10):
+            key, is_available = self.cv._key_checker(
+                category='pybean',
+                key=None,
+            )
+            self.assertTrue(is_available)
+            self.assertEqual(key, f'pybean{index}')
+            self.assertEqual(self.cv._pybean_index, index + 1)
+            self.cv._pybeans[key] = None
+            self.cv._pybeans[f'_{key}'] = None
+        for index in range(10):
+            _, is_available = self.cv._key_checker(
+                category='pybean',
+                key=f'_pybean{index}',
+            )
+            self.assertFalse(is_available)
+            with self.assertRaises(UserWarning):
+                self.cv._key_checker(
+                    category='pybean',
+                    key=f'pybean{index}',
+                )
+
     '''
     static methods
     '''
@@ -101,30 +125,6 @@ class CanvasTests(unittest.TestCase):
     def test_time(self):
         self.cv.reset()
         self.assertEqual(self.cv.time(), '0s')
-
-    def test_key_checker(self):
-        self.cv._pybeans = {}
-        for index in range(10):
-            key, is_available = self.cv.key_checker(
-                category='pybean',
-                key=None,
-            )
-            self.assertTrue(is_available)
-            self.assertEqual(key, f'pybean{index}')
-            self.assertEqual(self.cv._pybean_index, index + 1)
-            self.cv._pybeans[key] = None
-            self.cv._pybeans[f'_{key}'] = None
-        for index in range(10):
-            _, is_available = self.cv.key_checker(
-                category='pybean',
-                key=f'_pybean{index}',
-            )
-            self.assertFalse(is_available)
-            with self.assertRaises(UserWarning):
-                self.cv.key_checker(
-                    category='pybean',
-                    key=f'pybean{index}',
-                )
 
     '''
     main method
