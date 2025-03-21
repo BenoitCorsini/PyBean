@@ -18,8 +18,8 @@ ARGS = {
     'examples' : {
         'canvas' : [
             ' --cscale_colour royalblue --dpi 50',
-            ' --cscale_colour forestgreen --ymax 1',
-            ' --cscale_colour crimson --figsize 10 10',
+            ' --cscale_colour gold --figsize 10 10',
+            ' --cscale_colour crimson --ymax 1',
         ],
     },
 }
