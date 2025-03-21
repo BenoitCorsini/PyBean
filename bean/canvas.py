@@ -45,11 +45,14 @@ class Canvas(object):
         self.fig = figure.Figure(figsize=self.figsize, dpi=self.dpi)
         self.fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
         self.ax = self.fig.add_subplot()
-        self.ax.set_xlim(self.xmin, self.xmax)
-        if self.ymax is None:
-            self.ax.set_ylim(self.ymin, self.figsize[1]/self.figsize[0])
-        else:
-            self.ax.set_ylim(self.ymin, self.ymax)
+        self.ax.set_xlim(
+            self._get_bound('xmin'),
+            self._get_bound('xmax'),
+        )
+        self.ax.set_ylim(
+            self._get_bound('ymin'),
+            self._get_bound('ymax'),
+        )
         self.ax.set_axis_off()
         return self
 
@@ -63,6 +66,7 @@ class Canvas(object):
         ) -> None:
         # initiate class
         self._start_time = time()
+        self._ymax_default = False
         self._parser = argparse.ArgumentParser()
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -140,6 +144,16 @@ class Canvas(object):
                 )
                 return key, False
         return key, True
+
+    def _get_bound(
+            self: Self,
+            bound_name: str,
+        ) -> float:
+        # returns the value of the bound on the given axis
+        if bound_name == 'ymax' and self.ymax is None:
+            return self.figsize[1]/self.figsize[0]
+        else:
+            return getattr(self, bound_name)
 
     '''
     static methods

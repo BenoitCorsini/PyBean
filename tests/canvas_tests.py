@@ -58,6 +58,28 @@ class CanvasTests(unittest.TestCase):
                     key=f'pybean{index}',
                 )
 
+    def test_get_bound(self):
+        self.cv.figsize = (4, 3)
+        self.cv.ymax = None
+        self.cv.reset()
+        for bound_name in ['xmin', 'xmax', 'ymin']:
+            self.assertEqual(
+                getattr(self.cv, bound_name),
+                self.cv._get_bound(bound_name)
+            )
+        self.assertEqual(self.cv._get_bound('ymax'), 0.75)
+        self.cv.ymax = 1
+        self.assertEqual(self.cv._get_bound('ymax'), 1)
+        self.cv.figsize = (1, 1)
+        self.cv.ymax = None
+        self.cv.reset()
+        for bound_name in ['xmin', 'xmax', 'ymin']:
+            self.assertEqual(
+                getattr(self.cv, bound_name),
+                self.cv._get_bound(bound_name)
+            )
+        self.assertEqual(self.cv._get_bound('ymax'), 1)
+
     '''
     static methods
     '''
