@@ -18,8 +18,8 @@ class BrushTests(unittest.TestCase):
     '''
 
     def test_decimal_precision(self):
-        xmin = self.bs.xmin
-        ymin = self.bs.ymin
+        xmin = self.bs._get_bound('xmin')
+        ymin = self.bs._get_bound('ymin')
         for step in range(1, 10):
             self.bs.xmin = step
             self.bs.ymin = step
@@ -103,10 +103,10 @@ class BrushTests(unittest.TestCase):
     def test_get_ticks(self):
         self.assertTrue(np.all(self.bs._get_ticks(
             axis='x',
-        ) == np.array([self.bs.xmin, self.bs.xmax])))
+        ) == np.array([self.bs._get_bound('xmin'), self.bs._get_bound('xmax')])))
         self.assertTrue(np.all(self.bs._get_ticks(
             axis='y',
-        ) == np.array([self.bs.ymin, self.bs.ymax])))
+        ) == np.array([self.bs._get_bound('ymin'), self.bs._get_bound('ymax')])))
         self.assertTrue(np.all(self.bs._get_ticks(
             start=1,
             end=2,
@@ -344,9 +344,9 @@ class BrushTests(unittest.TestCase):
 
     def test_main(self):
         self.bs.reset()
-        self.bs.add_shape(
+        self.bs.add_brush(
             key='rectangle',
-            shape_name='Rectangle',
+            brush_name='Rectangle',
             xy=(0.1, 0.1),
             width=0.2,
             height=0.1,
@@ -355,14 +355,14 @@ class BrushTests(unittest.TestCase):
             zorder=1,
             fill=False,
         )
-        self.bs.add_shape(
+        self.bs.add_brush(
             key='square',
-            shape_name='Rectangle',
+            brush_name='Rectangle',
             xy=(0.1, 0.1),
             width=0.2,
             height=0.2,
         )
-        self.bs.set_shape(
+        self.bs.set_brush(
             key='square',
             zorder=0,
             color='gold',
@@ -378,8 +378,8 @@ class BrushTests(unittest.TestCase):
         self.bs.add_path(
             path=self.bs.curve_path(
                 xy=(0, 0),
-                a=self.bs.xmax - self.bs.xmin,
-                b=self.bs.ymax - self.bs.ymin,
+                a=self.bs._get_bound('xmax') - self.bs._get_bound('xmin'),
+                b=self.bs._get_bound('ymax') - self.bs._get_bound('ymin'),
                 theta1=10,
                 theta2=80,
             ),
@@ -409,7 +409,7 @@ class BrushTests(unittest.TestCase):
             color='navy',
             zorder=-1,
         )
-        self.bs.apply_to_shape(
+        self.bs.apply_to_brush(
             key='path',
             method='set_path',
             path=self.bs.merge_curves(*self.bs.crescent_paths(
@@ -427,8 +427,8 @@ class BrushTests(unittest.TestCase):
         self.bs.grid(
             left=0.55,
             right=0.85,
-            top=self.bs.ymax,
-            bottom=self.bs.ymin,
+            top=self.bs._get_bound('ymax'),
+            bottom=self.bs._get_bound('ymin'),
             n_lines=4,
             lw=10,
             color='crimson',
@@ -437,8 +437,8 @@ class BrushTests(unittest.TestCase):
         self.bs.grid(
             left=0.55,
             right=0.85,
-            top=self.bs.ymax,
-            bottom=self.bs.ymin,
+            top=self.bs._get_bound('ymax'),
+            bottom=self.bs._get_bound('ymin'),
             n_lines=(8, 16),
             lw=2,
             color='darkred',
@@ -447,8 +447,8 @@ class BrushTests(unittest.TestCase):
         self.bs.grid(
             left=0.3,
             right=0.45,
-            top=self.bs.ymax - 0.1,
-            bottom=self.bs.ymax - 0.3,
+            top=self.bs._get_bound('ymax') - 0.1,
+            bottom=self.bs._get_bound('ymax') - 0.3,
             steps=4e-2,
             lw=10,
             color='crimson',
@@ -458,8 +458,8 @@ class BrushTests(unittest.TestCase):
         self.bs.grid(
             left=0.3,
             right=0.45,
-            top=self.bs.ymax - 0.1,
-            bottom=self.bs.ymax - 0.3,
+            top=self.bs._get_bound('ymax') - 0.1,
+            bottom=self.bs._get_bound('ymax') - 0.3,
             steps=(1e-2, 2e-2),
             lw=2,
             color='darkred',
@@ -474,7 +474,7 @@ class BrushTests(unittest.TestCase):
         self.bs.show_info('Testing')
         self.bs.hide_info()
         self.bs.show_info()
-        self.bs.save('image_shape')
+        self.bs.save('image_brush')
 
 
 if __name__ == '__main__':
