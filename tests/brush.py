@@ -6,122 +6,122 @@ from matplotlib.transforms import Affine2D, Bbox
 
 sys.path.append('.')
 
-from bean import Shape
+from bean import Brush
 
 
-class ShapeTests(unittest.TestCase):
+class BrushTests(unittest.TestCase):
 
-    sh = Shape()
+    bs = Brush()
 
     '''
     hidden methods
     '''
 
     def test_decimal_precision(self):
-        xmin = self.sh.xmin
-        ymin = self.sh.ymin
+        xmin = self.bs.xmin
+        ymin = self.bs.ymin
         for step in range(1, 10):
-            self.sh.xmin = step
-            self.sh.ymin = step
+            self.bs.xmin = step
+            self.bs.ymin = step
             self.assertEqual(
-                self.sh._decimal_precision(step),
+                self.bs._decimal_precision(step),
                 (True, True)
             )
             self.assertEqual(
-                self.sh._decimal_precision(float(step)),
+                self.bs._decimal_precision(float(step)),
                 (True, True)
             )
             self.assertEqual(
-                self.sh._decimal_precision(step/10),
+                self.bs._decimal_precision(step/10),
                 (False, True)
             )
             self.assertEqual(
-                self.sh._decimal_precision(step + 0.5),
+                self.bs._decimal_precision(step + 0.5),
                 (False, True)
             )
             self.assertEqual(
-                self.sh._decimal_precision(step/100),
+                self.bs._decimal_precision(step/100),
                 (False, False)
             )
             self.assertEqual(
-                self.sh._decimal_precision(step + 0.05),
+                self.bs._decimal_precision(step + 0.05),
                 (False, False)
             )
-            self.sh.xmin /= 10
+            self.bs.xmin /= 10
             self.assertEqual(
-                self.sh._decimal_precision(step),
+                self.bs._decimal_precision(step),
                 (False, True)
             )
             self.assertEqual(
-                self.sh._decimal_precision(float(step)),
+                self.bs._decimal_precision(float(step)),
                 (False, True)
             )
             self.assertEqual(
-                self.sh._decimal_precision(step/10),
+                self.bs._decimal_precision(step/10),
                 (False, True)
             )
             self.assertEqual(
-                self.sh._decimal_precision(step + 0.5),
+                self.bs._decimal_precision(step + 0.5),
                 (False, True)
             )
             self.assertEqual(
-                self.sh._decimal_precision(step/100),
+                self.bs._decimal_precision(step/100),
                 (False, False)
             )
             self.assertEqual(
-                self.sh._decimal_precision(step + 0.05),
+                self.bs._decimal_precision(step + 0.05),
                 (False, False)
             )
-            self.sh.ymin /= 100
+            self.bs.ymin /= 100
             self.assertEqual(
-                self.sh._decimal_precision(step),
-                (False, False)
-            )
-            self.assertEqual(
-                self.sh._decimal_precision(float(step)),
+                self.bs._decimal_precision(step),
                 (False, False)
             )
             self.assertEqual(
-                self.sh._decimal_precision(step/10),
+                self.bs._decimal_precision(float(step)),
                 (False, False)
             )
             self.assertEqual(
-                self.sh._decimal_precision(step + 0.5),
+                self.bs._decimal_precision(step/10),
                 (False, False)
             )
             self.assertEqual(
-                self.sh._decimal_precision(step/100),
+                self.bs._decimal_precision(step + 0.5),
                 (False, False)
             )
             self.assertEqual(
-                self.sh._decimal_precision(step + 0.05),
+                self.bs._decimal_precision(step/100),
                 (False, False)
             )
-        self.sh.xmin = xmin
-        self.sh.ymin = ymin
+            self.assertEqual(
+                self.bs._decimal_precision(step + 0.05),
+                (False, False)
+            )
+        self.bs.xmin = xmin
+        self.bs.ymin = ymin
 
     def test_get_ticks(self):
-        self.assertTrue(np.all(self.sh._get_ticks(
+        self.assertTrue(np.all(self.bs._get_ticks(
             axis='x',
-        ) == np.array([self.sh.xmin, self.sh.xmax])))
-        self.assertTrue(np.all(self.sh._get_ticks(
+        ) == np.array([self.bs.xmin, self.bs.xmax])))
+        self.assertTrue(np.all(self.bs._get_ticks(
             axis='y',
-        ) == np.array([self.sh.ymin, self.sh.ymax])))
-        self.assertTrue(np.all(self.sh._get_ticks(
+        ) == np.array([self.bs.ymin, self.bs.ymax])))
+        self.assertTrue(np.all(self.bs._get_ticks(
             start=1,
             end=2,
         ) == np.array([1, 2])))
-        self.assertTrue(np.all(self.sh._get_ticks(
+        self.assertTrue(np.all(self.bs._get_ticks(
             start=1,
             end=2,
             step=0.5,
         ) == np.array([1, 1.5, 2])))
-        self.assertTrue(np.all(self.sh._get_ticks(
+        self.assertTrue(np.all(self.bs._get_ticks(
             start=1,
             end=4,
             n_line=3,
         ) == np.array([1, 2, 3, 4])))
-        self.assertTrue(np.all(self.sh._get_ticks(
+        self.assertTrue(np.all(self.bs._get_ticks(
             start=0,
             end=1,
             step=0.5,
@@ -135,7 +135,7 @@ class ShapeTests(unittest.TestCase):
     def test_ticks_path(self):
         xticks = [0]
         yticks = [0]
-        path = self.sh._ticks_to_grid_path(xticks, yticks)
+        path = self.bs._ticks_to_grid_path(xticks, yticks)
         self.assertTrue(np.all(
             path.vertices == np.array([(0, 0)]*4)
         ))
@@ -144,7 +144,7 @@ class ShapeTests(unittest.TestCase):
         ))
         xticks = [0, 1]
         yticks = [0]
-        path = self.sh._ticks_to_grid_path(xticks, yticks)
+        path = self.bs._ticks_to_grid_path(xticks, yticks)
         self.assertTrue(np.all(
             path.vertices == np.array([
                 (0, 0),
@@ -160,7 +160,7 @@ class ShapeTests(unittest.TestCase):
         ))
         xticks = [0]
         yticks = [0, 1]
-        path = self.sh._ticks_to_grid_path(xticks, yticks)
+        path = self.bs._ticks_to_grid_path(xticks, yticks)
         self.assertTrue(np.all(
             path.vertices == np.array([
                 (0, 0),
@@ -176,7 +176,7 @@ class ShapeTests(unittest.TestCase):
         ))
         xticks = [0, 1]
         yticks = [0, 1]
-        path = self.sh._ticks_to_grid_path(xticks, yticks)
+        path = self.bs._ticks_to_grid_path(xticks, yticks)
         self.assertTrue(np.all(
             path.vertices == np.array([
                 (0, 0),
@@ -194,10 +194,10 @@ class ShapeTests(unittest.TestCase):
         ))
 
     def test_num_string(self):
-        self.assertEqual(self.sh._num_to_string(1.234, False, False), '1.23')
-        self.assertEqual(self.sh._num_to_string(1.234, True, False), '1')
-        self.assertEqual(self.sh._num_to_string(1.234, False, True), '1.2')
-        self.assertEqual(self.sh._num_to_string(1.234, True, True), '1')
+        self.assertEqual(self.bs._num_to_string(1.234, False, False), '1.23')
+        self.assertEqual(self.bs._num_to_string(1.234, True, False), '1')
+        self.assertEqual(self.bs._num_to_string(1.234, False, True), '1.2')
+        self.assertEqual(self.bs._num_to_string(1.234, True, True), '1')
 
     def test_angle_shift(self):
         angles = [0, 45, 90, 180, 225, 360, 720]
@@ -211,8 +211,8 @@ class ShapeTests(unittest.TestCase):
             np.array([1, 0]),
         ]
         for angle, array in zip(angles, arrays):
-            one_dim = self.sh.angle_shift(angle)
-            two_dim = self.sh.angle_shift(angle, two_dim=True)
+            one_dim = self.bs.angle_shift(angle)
+            two_dim = self.bs.angle_shift(angle, two_dim=True)
             self.assertTrue(np.all(np.abs(one_dim - array) < 1e-10))
             self.assertTrue(np.all(np.abs(two_dim - array) < 1e-10))
             self.assertEqual(one_dim.shape, (2, ))
@@ -222,28 +222,28 @@ class ShapeTests(unittest.TestCase):
         for mult in [0, 1, 2, 10]:
             for shift in [(0, 0), (1, 1), (1/3, -5**0.5)]:
                 self.assertEqual(
-                    round(self.sh.angle_from_xy(
+                    round(self.bs.angle_from_xy(
                         (shift[0], shift[1]),
                         (shift[0] + mult, shift[1]),
                     ), 10),
                     0
                 )
                 self.assertEqual(
-                    round(self.sh.angle_from_xy(
+                    round(self.bs.angle_from_xy(
                         (shift[0], shift[1]),
                         (shift[0] + mult, shift[1] + mult),
                     ), 10),
                     45*(mult > 0)
                 )
                 self.assertEqual(
-                    round(self.sh.angle_from_xy(
+                    round(self.bs.angle_from_xy(
                         (shift[0], shift[1]),
                         (shift[0] - mult, shift[1]),
                     ), 10),
                     180*(mult > 0)
                 )
                 self.assertEqual(
-                    round(self.sh.angle_from_xy(
+                    round(self.bs.angle_from_xy(
                         (shift[0], shift[1]),
                         (shift[0] - mult*3**0.5/2, shift[1] - mult/2),
                     ), 10),
@@ -254,28 +254,28 @@ class ShapeTests(unittest.TestCase):
         for mult in [0, 1, 2, 10]:
             for shift in [(0, 0), (1, 1), (1/3, -5**0.5)]:
                 self.assertEqual(
-                    round(self.sh.distance_from_xy(
+                    round(self.bs.distance_from_xy(
                         (shift[0], shift[1]),
                         (shift[0] + mult, shift[1]),
                     ), 10),
                     mult
                 )
                 self.assertEqual(
-                    round(self.sh.distance_from_xy(
+                    round(self.bs.distance_from_xy(
                         (shift[0], shift[1]),
                         (shift[0] + mult, shift[1] + mult),
                     ), 10),
                     round(mult*2**0.5, 10)
                 )
                 self.assertEqual(
-                    round(self.sh.distance_from_xy(
+                    round(self.bs.distance_from_xy(
                         (shift[0], shift[1]),
                         (shift[0] - mult, shift[1]),
                     ), 10),
                     mult
                 )
                 self.assertEqual(
-                    round(self.sh.distance_from_xy(
+                    round(self.bs.distance_from_xy(
                         (shift[0], shift[1]),
                         (shift[0] - mult*3**0.5/2, shift[1] - mult/2),
                     ), 10),
@@ -286,19 +286,19 @@ class ShapeTests(unittest.TestCase):
         for angle in [1e-5 - 180, -90, 0, 123, 180]:
             for mult in npr.randint(100, size=10):
                 self.assertEqual(
-                    round(self.sh.normalize_angle(angle + mult*360), 10),
+                    round(self.bs.normalize_angle(angle + mult*360), 10),
                     angle
                 )
         for angle in [1e-5, 90, 123, 360]:
             for mult in npr.randint(100, size=10):
                 self.assertEqual(
-                    round(self.sh.normalize_angle(angle + mult*360, 0), 10),
+                    round(self.bs.normalize_angle(angle + mult*360, 0), 10),
                     angle
                 )
         for angle in [1e-5 - 0.6, 0, 123, 359]:
             for mult in npr.randint(100, size=10):
                 self.assertEqual(
-                    round(self.sh.normalize_angle(
+                    round(self.bs.normalize_angle(
                         angle + mult*360,
                         -0.6,
                     ), 10),
@@ -307,35 +307,35 @@ class ShapeTests(unittest.TestCase):
 
     def test_anchor_shift(self):
         bbox = Bbox([[0, 0], [2, 2]])
-        self.assertTrue(np.all(self.sh.shift_from_anchor(bbox, 'north')
+        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'north')
             == np.array([0, -1])))
-        self.assertTrue(np.all(self.sh.shift_from_anchor(bbox, 'east')
+        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'east')
             == np.array([-1, 0])))
-        self.assertTrue(np.all(self.sh.shift_from_anchor(bbox, 'west')
+        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'west')
             == np.array([1, 0])))
-        self.assertTrue(np.all(self.sh.shift_from_anchor(bbox, 'south')
+        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'south')
             == np.array([0, 1])))
-        self.assertTrue(np.all(self.sh.shift_from_anchor(bbox, 'north east')
+        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'north east')
             == np.array([-1, -1])))
-        self.assertTrue(np.all(self.sh.shift_from_anchor(bbox, 'east north')
+        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'east north')
             == np.array([-1, -1])))
-        self.assertTrue(np.all(self.sh.shift_from_anchor(bbox, 'north west')
+        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'north west')
             == np.array([1, -1])))
-        self.assertTrue(np.all(self.sh.shift_from_anchor(bbox, 'west north')
+        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'west north')
             == np.array([1, -1])))
-        self.assertTrue(np.all(self.sh.shift_from_anchor(bbox, 'south east')
+        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'south east')
             == np.array([-1, 1])))
-        self.assertTrue(np.all(self.sh.shift_from_anchor(bbox, 'east south')
+        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'east south')
             == np.array([-1, 1])))
-        self.assertTrue(np.all(self.sh.shift_from_anchor(bbox, 'south west')
+        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'south west')
             == np.array([1, 1])))
-        self.assertTrue(np.all(self.sh.shift_from_anchor(bbox, 'west south')
+        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'west south')
             == np.array([1, 1])))
-        self.assertTrue(np.all(self.sh.shift_from_anchor(bbox, None)
+        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, None)
             ==np.array([0, 0])))
-        self.assertTrue(np.all(self.sh.shift_from_anchor(bbox, '')
+        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, '')
             == np.array([0, 0])))
-        self.assertTrue(np.all(self.sh.shift_from_anchor(bbox, 'not good...')
+        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'not good...')
             == np.array([0, 0])))
 
     '''
@@ -343,8 +343,8 @@ class ShapeTests(unittest.TestCase):
     '''
 
     def test_main(self):
-        self.sh.reset()
-        self.sh.add_shape(
+        self.bs.reset()
+        self.bs.add_shape(
             key='rectangle',
             shape_name='Rectangle',
             xy=(0.1, 0.1),
@@ -355,19 +355,19 @@ class ShapeTests(unittest.TestCase):
             zorder=1,
             fill=False,
         )
-        self.sh.add_shape(
+        self.bs.add_shape(
             key='square',
             shape_name='Rectangle',
             xy=(0.1, 0.1),
             width=0.2,
             height=0.2,
         )
-        self.sh.set_shape(
+        self.bs.set_shape(
             key='square',
             zorder=0,
             color='gold',
         )
-        self.sh.add_raw_path(
+        self.bs.add_raw_path(
             vertices=[(0, 0), (1, 1), (0.5, 0), (1, 1)],
             codes=[1, 2, 1, 2],
             lw=10,
@@ -375,11 +375,11 @@ class ShapeTests(unittest.TestCase):
             zorder=2,
             color='forestgreen',
         )
-        self.sh.add_path(
-            path=self.sh.curve_path(
+        self.bs.add_path(
+            path=self.bs.curve_path(
                 xy=(0, 0),
-                a=self.sh.xmax - self.sh.xmin,
-                b=self.sh.ymax - self.sh.ymin,
+                a=self.bs.xmax - self.bs.xmin,
+                b=self.bs.ymax - self.bs.ymin,
                 theta1=10,
                 theta2=80,
             ),
@@ -389,8 +389,8 @@ class ShapeTests(unittest.TestCase):
             zorder=2,
             fill=False,
         )
-        self.sh.add_paths(
-            paths=self.sh.crescent_paths(
+        self.bs.add_paths(
+            paths=self.bs.crescent_paths(
                 xy=(0.6, 0.3),
                 radius=0.2,
                 ratio=0.5,
@@ -402,17 +402,17 @@ class ShapeTests(unittest.TestCase):
             color='navy',
             zorder=-1,
         )
-        self.sh.add_raw_path(
+        self.bs.add_raw_path(
             key='path',
             vertices=[(0, 0)],
             lw=0,
             color='navy',
             zorder=-1,
         )
-        self.sh.apply_to_shape(
+        self.bs.apply_to_shape(
             key='path',
             method='set_path',
-            path=self.sh.merge_curves(*self.sh.crescent_paths(
+            path=self.bs.merge_curves(*self.bs.crescent_paths(
                 xy=(0.4, 0.3),
                 radius=0.2,
                 ratio=0.5,
@@ -421,60 +421,60 @@ class ShapeTests(unittest.TestCase):
                 angle=200,
             )),
         )
-        self.sh.add_copyright()
-        self.sh.hide_copyright()
-        self.sh.show_copyright()
-        self.sh.grid(
+        self.bs.add_copyright()
+        self.bs.hide_copyright()
+        self.bs.show_copyright()
+        self.bs.grid(
             left=0.55,
             right=0.85,
-            top=self.sh.ymax,
-            bottom=self.sh.ymin,
+            top=self.bs.ymax,
+            bottom=self.bs.ymin,
             n_lines=4,
             lw=10,
             color='crimson',
             zorder=2,
         )
-        self.sh.grid(
+        self.bs.grid(
             left=0.55,
             right=0.85,
-            top=self.sh.ymax,
-            bottom=self.sh.ymin,
+            top=self.bs.ymax,
+            bottom=self.bs.ymin,
             n_lines=(8, 16),
             lw=2,
             color='darkred',
             zorder=2,
         )
-        self.sh.grid(
+        self.bs.grid(
             left=0.3,
             right=0.45,
-            top=self.sh.ymax - 0.1,
-            bottom=self.sh.ymax - 0.3,
+            top=self.bs.ymax - 0.1,
+            bottom=self.bs.ymax - 0.3,
             steps=4e-2,
             lw=10,
             color='crimson',
             zorder=2,
             capstyle='round',
         )
-        self.sh.grid(
+        self.bs.grid(
             left=0.3,
             right=0.45,
-            top=self.sh.ymax - 0.1,
-            bottom=self.sh.ymax - 0.3,
+            top=self.bs.ymax - 0.1,
+            bottom=self.bs.ymax - 0.3,
             steps=(1e-2, 2e-2),
             lw=2,
             color='darkred',
             zorder=2,
             capstyle='round',
         )
-        self.sh.add_axis()
-        self.sh.hide_axis()
-        self.sh.show_axis()
-        self.sh.add_info()
-        self.sh.hide_info()
-        self.sh.show_info('Testing')
-        self.sh.hide_info()
-        self.sh.show_info()
-        self.sh.save('image_shape')
+        self.bs.add_axis()
+        self.bs.hide_axis()
+        self.bs.show_axis()
+        self.bs.add_info()
+        self.bs.hide_info()
+        self.bs.show_info('Testing')
+        self.bs.hide_info()
+        self.bs.show_info()
+        self.bs.save('image_shape')
 
 
 if __name__ == '__main__':

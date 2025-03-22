@@ -1,3 +1,4 @@
+import inspect
 import os.path as osp
 import numpy as np
 import matplotlib.patches as patches
@@ -10,11 +11,63 @@ from typing_extensions import Any, Self
 from .canvas import Canvas
 
 
-class Shape(Canvas):
+class Brush(Canvas):
 
     '''
     fundamental variables and function
     '''
+
+    copyright_on = None
+    axis_on = None
+    info_on = None
+    copyright = {
+        'text' : 'MathemaSixte',
+        'height' : 0.07,
+        'xshift' : 0.02,
+        'yshift' : 0.02,
+        'anchor' : 'south west',
+        'font_properties' : {
+            'fname' : osp.join(
+                osp.dirname(
+                    osp.abspath(
+                        inspect.getfile(
+                            inspect.currentframe()
+                        )
+                    )
+                ),
+                'font.otf'
+            ),
+        },
+        'params' : {
+            'lw' : 1.2,
+            'ec' : 'darkgrey',
+            'fc' : 'lightgrey',
+            'alpha' : 0.25,
+            'zorder' : 100,
+            'joinstyle' : 'round',
+            'capstyle' : 'round',
+        },
+    }
+    lines_per_axis = 5
+    axis_tick_ratio = 0.6
+    axis_params = {
+        'color' : 'black',
+        'lw' : 1,
+        'alpha' : 0.05,
+        'zorder' : 98,
+        'joinstyle' : 'round',
+        'capstyle' : 'round',
+    }
+    info_margin = 1e-2
+    info_height = 2e-2
+    info_params = {
+        'color' : 'black',
+        'lw' : 1,
+        'alpha' : 0.5,
+        'zorder' : 99,
+        'joinstyle' : 'round',
+        'capstyle' : 'round',
+    }
 
     _shape_params = {
         'copyright_on' : bool,
@@ -50,7 +103,7 @@ class Shape(Canvas):
         xshift = self.copyright.get('xshift', 0.5)
         yshift = self.copyright.get('yshift', 0.5)
         xscale = (self.xmax - self.xmin)*self.figsize[1]/self.figsize[0]
-        yscale = self.ymax - self.ymin
+        yscale = self._ymax - self.ymin
         xy = (
             self.xmin + xshift*xscale,
             self.ymin + yshift*yscale,
@@ -134,7 +187,7 @@ class Shape(Canvas):
             height: float = 1,
         ) -> Affine2D:
         # scales the transform to give the bbox a given height
-        xy_ratio = (self.xmax - self.xmin)/(self.ymax - self.ymin)
+        xy_ratio = (self.xmax - self.xmin)/(self._ymax - self.ymin)
         figsize_ratio = self.figsize[0]/self.figsize[1]
         transform.scale(height/bbox.size[1])
         transform.scale(xy_ratio/figsize_ratio, 1)
@@ -174,7 +227,7 @@ class Shape(Canvas):
         # modifies the text of the info
         anchor = ''
         if 'top' in corner:
-            y = self.ymax - self.info_margin
+            y = self._ymax - self.info_margin
             anchor += 'north '
         else:
             y = self.ymin + self.info_margin
@@ -440,7 +493,7 @@ class Shape(Canvas):
             **kwargs,
         ) -> patches.Patch:
         # adds a patch to the class
-        key, available = self.key_checker(key=key, category='shape')
+        key, available = self._key_checker(key=key, category='shape')
         if available:
             shape = self.ax.add_patch(
                 getattr(patches, shape_name)(*args, **kwargs)
@@ -624,7 +677,7 @@ class Shape(Canvas):
         # represents the axis along with the coordinates
         step = max(
             (self.xmax - self.xmin),
-            (self.ymax - self.ymin),
+            (self._ymax - self.ymin),
         )/max(self.figsize)
         self._axis_grid(step)
         self._axis_ticks(step)

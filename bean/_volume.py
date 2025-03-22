@@ -1,7 +1,7 @@
 import numpy as np
 from typing_extensions import Any, Self
 
-from .shape import Shape
+from .brush import Brush
 
 
 '''
@@ -13,7 +13,7 @@ The latter function being preferably placed in the main Volume class.
 '''
 
 
-class _Volume(Shape):
+class _Volume(Brush):
 
     '''
     fundamental variables and function
