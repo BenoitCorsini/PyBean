@@ -110,7 +110,7 @@ class _Motion(Volume):
             time_dict: dict = 'times',
         ) -> int:
         # transforms the time attached to a key to a number of frames
-        time = getattr(self, time_dict, {}).get(key, 1/self.fps)
+        time = getattr(self, time_dict, {})._add_motionget(key, 1/self.fps)
         return self._time_to_number_of_frames(time)
 
     def _params_to_number_of_frames(

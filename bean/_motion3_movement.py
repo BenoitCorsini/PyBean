@@ -206,3 +206,40 @@ class _MotionMovement(_MotionChangeRadius):
         ) -> None:
         # moves a sphere
         self._apply_movement_one_pos(*args, **kwargs)
+
+    def _add_rotate_polyhedron(
+            self: Self,
+            volume: Any,
+            pos: tuple[float] = None,
+            path: list = None,
+            shifted: bool = False,
+            normalize: bool = True,
+            **kwargs,
+        ) -> None:
+        # creates the rotation for a polyhedron
+        origin = self._normalize_pos(self._volumes[volume].get('pos', (0, 0)))
+        if pos is not None:
+            if shifted:
+                path = [(0, 0), pos]
+            else:
+                path = [origin, pos]
+        assert path is not None
+        path = np.stack([self._normalize_pos(pos) for pos in path])
+        if shifted:
+            path = np.array(origin).reshape(1, 3) + path
+        path[:,-1] = path[:,-1]*(path[:,-1] > 0)
+        if normalize:
+            norm = self._path_to_norm(path)
+        else:
+            norm = len(path)
+            if norm <= 1:
+                norm = 2
+            norm = np.arange(norm)/(norm - 1)
+        motion = {
+            'volume' : volume,
+            'path' : path,
+            'norm' : norm,
+        }
+        motion.update(kwargs)
+        self._add_motion(self._smooth_movement(**motion))
+

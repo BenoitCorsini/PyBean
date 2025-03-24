@@ -229,6 +229,14 @@ class Motion(_MotionMovement):
         ]
         return self.shift(shift, *args, **kwargs)
 
+    def rotate(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # moves a volume towards a specific position
+        return self._create_motion('rotate', *args, **kwargs)
+
     '''
     main method
     '''
