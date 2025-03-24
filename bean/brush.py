@@ -18,15 +18,14 @@ class Brush(Canvas):
     '''
 
     copyright = '@pybean'
-    cp_on = None
+    cpr_on = None
     axis_on = None
     info_on = None
 
-    cp_height = 0.07
-    cp_xshift = 0.02
-    cp_yshift = 0.02
-    cp_anchor = 'south west'
-    cp_font_properties = {
+    cpr_height = 0.07
+    cpr_shift = 0.02
+    cpr_anchor = 'south west'
+    cpr_font_properties = {
         'fname' : osp.join(
             osp.dirname(
                 osp.abspath(
@@ -38,7 +37,7 @@ class Brush(Canvas):
             'copyright.otf'
         ),
     }
-    cp_params = {
+    cpr_params = {
         'lw' : 1.2,
         'ec' : 'darkgrey',
         'fc' : 'lightgrey',
@@ -70,7 +69,7 @@ class Brush(Canvas):
 
     _brush_params = {
         'copyright' : str,
-        'cp_on' : bool,
+        'cpr_on' : bool,
         'axis_on' : bool,
         'info_on' : bool,
     }
@@ -81,11 +80,9 @@ class Brush(Canvas):
         # new brush instance
         self._brushs = {}
         self._brush_index = 0
-        if hasattr(self, 'copyright'):
-            self.add_copyright()
-            self.show_copyright()
-        self.add_axis()
-        self.add_info()
+        self._add_copyright()
+        self._add_axis()
+        self._add_info()
         return self
 
     '''
@@ -96,8 +93,12 @@ class Brush(Canvas):
             self: Self,
         ) -> Path:
         # gets the path of the copyright
-        xshift = self.cp_xshift
-        yshift = self.cp_yshift
+        if hasattr(self.cpr_shift, '__len__'):
+            xshift = self.cpr_shift[0]
+            yshift = self.cpr_shift[1]
+        else:
+            xshift = self.cpr_shift
+            yshift = self.cpr_shift
         xscale = (
             self._get_bound('xmax') - self._get_bound('xmin')
         )*self.figsize[1]/self.figsize[0]
@@ -106,12 +107,12 @@ class Brush(Canvas):
             self._get_bound('xmin') + xshift*xscale,
             self._get_bound('ymin') + yshift*yscale,
         )
-        height = yscale*self.cp_height
+        height = yscale*self.cpr_height
         return self.path_from_string(
             s=self.copyright,
             xy=xy,
-            font_properties=self.cp_font_properties,
-            anchor=self.cp_anchor,
+            font_properties=self.cpr_font_properties,
+            anchor=self.cpr_anchor,
             height=height,
         )
 
@@ -191,13 +192,37 @@ class Brush(Canvas):
         transform.scale(xy_ratio/figsize_ratio, 1)
         return transform
 
+    def _add_copyright(
+            self: Self,
+        ) -> None:
+        # adds a copyright stamp to the canvas
+        path = self._copyright_path()
+        self.add_brush(
+            brush_name='PathPatch',
+            key='_copyright',
+            path=path,
+            visible=self.cpr_on,
+            **self.cpr_params
+        )
+
     def _copyright_visible(
             self: Self,
             visible: bool,
         ) -> None:
         # makes the copyright visible or not
-        if hasattr(self, 'copyright') and self.cp_on is None:
+        if hasattr(self, 'copyright') and self.cpr_on is None:
             self.set_brush(key='_copyright', visible=visible)
+
+    def _add_axis(
+            self: Self,
+        ) -> None:
+        # represents the axis along with the coordinates
+        step = max(
+            (self._get_bound('xmax') - self._get_bound('xmin')),
+            (self._get_bound('ymax') - self._get_bound('ymin')),
+        )/max(self.figsize)
+        self._axis_grid(step)
+        self._axis_ticks(step)
 
     def _axis_visible(
             self: Self,
@@ -207,6 +232,18 @@ class Brush(Canvas):
         if self.axis_on is None:
             for key in ['_axis', '_subaxis', '_ticks']:
                 self.set_brush(key=key, visible=visible)
+
+    def _add_info(
+            self: Self,
+        ) -> None:
+        # represents the desired info
+        for corner in self._corners():
+            self.add_path(
+                path=Path([(0, 0)]),
+                key=f'_{corner}_info',
+                visible=self.info_on,
+                **self.info_params
+            )
 
     def _info_visible(
             self: Self,
@@ -328,59 +365,6 @@ class Brush(Canvas):
             'bottom_left',
             'top_right',
         ]
-
-    @staticmethod
-    def angle_shift(
-            angle: float = 0,
-            two_dim: bool = False,
-        ) -> np.array:
-        # returns a vector for shifting in the angle direction
-        shift = np.array([
-            np.cos(np.pi*angle/180),
-            np.sin(np.pi*angle/180),
-        ])
-        if two_dim:
-            shift = shift.reshape((1, 2))
-        return shift
-
-    @staticmethod
-    def angle_from_xy(
-            xy1: (float, float),
-            xy2: (float, float),
-            default_angle: float = 0.
-        ) -> float:
-        # computes the angle formed by the two positions
-        vector = np.array(xy2) - np.array(xy1)
-        norm = np.sum(vector**2)**0.5
-        if not norm:
-            return default_angle
-        vector = vector/norm
-        angle = np.arccos(vector[0])
-        if vector[1] < 0:
-            angle *= -1
-        return angle*180/np.pi
-
-    @staticmethod
-    def distance_from_xy(
-            xy1: (float, float),
-            xy2: (float, float),
-        ) -> float:
-        # computes the angle formed by the two positions
-        distance = np.array(xy2) - np.array(xy1)
-        distance = np.sum(distance**2)**0.5
-        return distance
-
-    @staticmethod
-    def normalize_angle(
-            angle: float,
-            lower_bound: float = -180,
-        ) -> float:
-        # sets an angle to (lower_bound, lower_bound + 360]
-        while angle <= lower_bound:
-            angle += 360
-        while angle > lower_bound + 360:
-            angle -= 360
-        return angle
 
     @staticmethod
     def shift_from_anchor(
@@ -602,19 +586,6 @@ class Brush(Canvas):
             path = path.transformed(transform)
         return path
 
-    def add_copyright(
-            self: Self,
-        ) -> None:
-        # adds a copyright stamp to the canvas
-        path = self._copyright_path()
-        self.add_brush(
-            brush_name='PathPatch',
-            key='_copyright',
-            path=path,
-            visible=self.cp_on,
-            **self.cp_params
-        )
-
     def show_copyright(
             self: Self,
         ) -> None:
@@ -669,17 +640,6 @@ class Brush(Canvas):
             **kwargs
         )
 
-    def add_axis(
-            self: Self,
-        ) -> None:
-        # represents the axis along with the coordinates
-        step = max(
-            (self._get_bound('xmax') - self._get_bound('xmin')),
-            (self._get_bound('ymax') - self._get_bound('ymin')),
-        )/max(self.figsize)
-        self._axis_grid(step)
-        self._axis_ticks(step)
-
     def show_axis(
             self: Self,
         ) -> None:
@@ -691,18 +651,6 @@ class Brush(Canvas):
         ) -> None:
         # makes the axis invisible
         self._axis_visible(False)
-
-    def add_info(
-            self: Self,
-        ) -> None:
-        # represents the desired info
-        for corner in self._corners():
-            self.add_path(
-                path=Path([(0, 0)]),
-                key=f'_{corner}_info',
-                visible=self.info_on,
-                **self.info_params
-            )
 
     def show_info(
             self: Self,
