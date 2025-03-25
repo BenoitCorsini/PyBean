@@ -349,7 +349,7 @@ class Brush(Canvas):
         ) -> Affine2D:
         # shifts the transform to move the bbox according to the anchor
         transform.translate(*(-(bbox.size/2 + bbox.p0)))
-        transform.translate(*Brush.shift_from_anchor(
+        transform.translate(*Brush._shift_from_anchor(
             bbox=bbox,
             anchor=anchor
         ))
@@ -361,13 +361,13 @@ class Brush(Canvas):
         # returns a list of corners in inverse order of importance
         return [
             'bottom_right',
-            'top_left',
             'bottom_left',
             'top_right',
+            'top_left',
         ]
 
     @staticmethod
-    def shift_from_anchor(
+    def _shift_from_anchor(
             bbox: Bbox,
             anchor: str = None,
         ) -> np.array:
@@ -385,22 +385,22 @@ class Brush(Canvas):
         elif ' ' in anchor:
             anchors = anchor.strip().split(' ')
             shifts = [
-                Brush.shift_from_anchor(bbox, anchor) for anchor in anchors
+                Brush._shift_from_anchor(bbox, anchor) for anchor in anchors
             ]
             return np.sum(shifts, axis=0)
         else:
             return np.array([0, 0])
 
     @staticmethod
-    def arc_path(
-            theta1: float,
-            theta2: float,
+    def _arc_path(
+            theta1: float = 0,
+            theta2: float = 360,
         ) -> Path:
         # creates an arc path
         return Path.arc(theta1, theta2)
 
     @staticmethod
-    def curve_path(
+    def _curve_path(
             xy: (float, float) = (0, 0),
             a: float = 1,
             b: float = None,
@@ -415,7 +415,7 @@ class Brush(Canvas):
         if reverse:
             theta1, theta2 = 180 - theta2, 180 - theta1
             a *= -1
-        path = Brush.arc_path(theta1, theta2)
+        path = Brush._arc_path(theta1, theta2)
         transform = Affine2D()
         transform.scale(a, b)
         transform.rotate(np.pi*angle/180)
@@ -424,7 +424,7 @@ class Brush(Canvas):
         return path
 
     @staticmethod
-    def crescent_paths(
+    def _crescent_paths(
             xy: (float, float) = (0, 0),
             radius: float = 1,
             ratio: float = 1,
@@ -433,26 +433,26 @@ class Brush(Canvas):
             angle: float = 0,
         ) -> Path:
         # creates the two parts of a crescent
-        outer = Brush.curve_path(
+        outer = Brush._curve_path(
             xy=xy,
             a=radius,
             theta1=theta1,
             theta2=theta2,
-            angle=angle
+            angle=angle,
         )
-        inner = Brush.curve_path(
+        inner = Brush._curve_path(
             xy=xy,
             a=radius*(1 - ratio),
             b=radius,
             theta1=theta1,
             theta2=theta2,
             reverse=True,
-            angle=angle
+            angle=angle,
         )
         return inner, outer
 
     @staticmethod
-    def merge_curves(
+    def _merge_curves(
             *curves
         ) -> Path:
         # combines multiple curves
@@ -485,28 +485,6 @@ class Brush(Canvas):
             brush = self._brushs[key]
         return brush
 
-    def add_raw_path(
-            self: Self,
-            vertices: list = None,
-            codes: list = None,
-            closed: bool = False,
-            key: Any = None,
-            *args,
-            **kwargs,
-        ) -> patches.PathPatch:
-        # adds a path patch from raw path parameters to the class
-        return self.add_brush(
-            brush_name='PathPatch',
-            key=key,
-            path=Path(
-                vertices=vertices,
-                codes=codes,
-                closed=closed,
-            ),
-            *args,
-            **kwargs
-        )
-
     def add_path(
             self: Self,
             path: Path,
@@ -519,6 +497,27 @@ class Brush(Canvas):
             brush_name='PathPatch',
             key=key,
             path=path,
+            *args,
+            **kwargs
+        )
+
+    def add_raw_path(
+            self: Self,
+            vertices: list,
+            codes: list = None,
+            closed: bool = False,
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.PathPatch:
+        # adds a path patch from raw path parameters to the class
+        return self.add_path(
+            key=key,
+            path=Path(
+                vertices=vertices,
+                codes=codes,
+                closed=closed,
+            ),
             *args,
             **kwargs
         )
@@ -586,6 +585,48 @@ class Brush(Canvas):
             path = path.transformed(transform)
         return path
 
+    def grid(
+            self: Self,
+            key: Any = None,
+            left: float = None,
+            right: float = None,
+            top: float = None,
+            bottom: float = None,
+            steps: tuple[float] = None,
+            n_blocks: tuple[int] = 1,
+            *args,
+            **kwargs,
+        ) -> patches.PathPatch:
+        # creates a grid
+        if steps is None:
+            steps = (None, None)
+        elif isinstance(steps, float) or isinstance(steps, int):
+            steps = (steps, steps)
+        if n_blocks is None:
+            n_blocks = (None, None)
+        elif isinstance(n_blocks, int):
+            n_blocks = (n_blocks, n_blocks)
+        xticks = self._get_ticks(
+            axis='x',
+            start=left,
+            end=right,
+            step=steps[0],
+            n_line=n_blocks[0],
+        )
+        yticks = self._get_ticks(
+            axis='y',
+            start=bottom,
+            end=top,
+            step=steps[1],
+            n_line=n_blocks[1],
+        )
+        return self.add_path(
+            key=key,
+            path=self._ticks_to_grid_path(xticks, yticks),
+            *args,
+            **kwargs
+        )
+
     def show_copyright(
             self: Self,
         ) -> None:
@@ -597,48 +638,6 @@ class Brush(Canvas):
         ) -> None:
         # makes the copyright invisible
         self._copyright_visible(False)
-
-    def grid(
-            self: Self,
-            key: Any = None,
-            left: float = None,
-            right: float = None,
-            top: float = None,
-            bottom: float = None,
-            steps: tuple[float] = None,
-            n_lines: tuple[int] = None,
-            *args,
-            **kwargs,
-        ) -> patches.PathPatch:
-        # creates a grid
-        if steps is None:
-            steps = (None, None)
-        elif isinstance(steps, float):
-            steps = (steps, steps)
-        if n_lines is None:
-            n_lines = (None, None)
-        elif isinstance(n_lines, int):
-            n_lines = (n_lines, n_lines)
-        xticks = self._get_ticks(
-            axis='x',
-            start=left,
-            end=right,
-            step=steps[0],
-            n_line=n_lines[0],
-        )
-        yticks = self._get_ticks(
-            axis='y',
-            start=bottom,
-            end=top,
-            step=steps[1],
-            n_line=n_lines[1],
-        )
-        return self.add_path(
-            key=key,
-            path=self._ticks_to_grid_path(xticks, yticks),
-            *args,
-            **kwargs
-        )
 
     def show_axis(
             self: Self,
@@ -654,30 +653,21 @@ class Brush(Canvas):
 
     def show_info(
             self: Self,
-            top_right_info: str = None,
-            bottom_left_info: str = None,
             top_left_info: str = None,
+            top_right_info: str = None,
             bottom_right_info: str = None,
+            bottom_left_info: str = None,
         ) -> None:
         # makes the info visible and possibly update the text
-        self._info_visible(True)
-        for corner in self._corners():
-            info = locals()[f'{corner}_info']
-            if info is not None:
-                self._info_text(info, corner)
+        if self.info_on is not False:
+            self._info_visible(True)
+            for corner in self._corners():
+                info = locals()[f'{corner}_info']
+                if info is not None:
+                    self._info_text(info, corner)
 
     def hide_info(
             self: Self,
         ) -> None:
         # makes the info visible
         self._info_visible(False)
-
-    '''
-    main method
-    '''
-
-    def main(
-            self: Self,
-        ) -> None:
-        # the main running function
-        pass

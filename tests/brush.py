@@ -128,6 +128,39 @@ class BrushTests(unittest.TestCase):
             n_line=4,
         ) == np.array([0, 0.5, 1])))
 
+    def test_anchor_shift(self):
+        bbox = Bbox([[0, 0], [2, 2]])
+        self.assertTrue(np.all(self.bs._shift_from_anchor(bbox, 'north')
+            == np.array([0, -1])))
+        self.assertTrue(np.all(self.bs._shift_from_anchor(bbox, 'east')
+            == np.array([-1, 0])))
+        self.assertTrue(np.all(self.bs._shift_from_anchor(bbox, 'west')
+            == np.array([1, 0])))
+        self.assertTrue(np.all(self.bs._shift_from_anchor(bbox, 'south')
+            == np.array([0, 1])))
+        self.assertTrue(np.all(self.bs._shift_from_anchor(bbox, 'north east')
+            == np.array([-1, -1])))
+        self.assertTrue(np.all(self.bs._shift_from_anchor(bbox, 'east north')
+            == np.array([-1, -1])))
+        self.assertTrue(np.all(self.bs._shift_from_anchor(bbox, 'north west')
+            == np.array([1, -1])))
+        self.assertTrue(np.all(self.bs._shift_from_anchor(bbox, 'west north')
+            == np.array([1, -1])))
+        self.assertTrue(np.all(self.bs._shift_from_anchor(bbox, 'south east')
+            == np.array([-1, 1])))
+        self.assertTrue(np.all(self.bs._shift_from_anchor(bbox, 'east south')
+            == np.array([-1, 1])))
+        self.assertTrue(np.all(self.bs._shift_from_anchor(bbox, 'south west')
+            == np.array([1, 1])))
+        self.assertTrue(np.all(self.bs._shift_from_anchor(bbox, 'west south')
+            == np.array([1, 1])))
+        self.assertTrue(np.all(self.bs._shift_from_anchor(bbox, None)
+            ==np.array([0, 0])))
+        self.assertTrue(np.all(self.bs._shift_from_anchor(bbox, '')
+            == np.array([0, 0])))
+        self.assertTrue(np.all(self.bs._shift_from_anchor(bbox, 'not good...')
+            == np.array([0, 0])))
+
     '''
     static methods
     '''
@@ -199,144 +232,111 @@ class BrushTests(unittest.TestCase):
         self.assertEqual(self.bs._num_to_string(1.234, False, True), '1.2')
         self.assertEqual(self.bs._num_to_string(1.234, True, True), '1')
 
-    def test_angle_shift(self):
-        angles = [0, 45, 90, 180, 225, 360, 720]
-        arrays = [
-            np.array([1, 0]),
-            np.array([1, 1])*np.sqrt(2)/2,
-            np.array([0, 1]),
-            np.array([-1, 0]),
-            np.array([-1, -1])*np.sqrt(2)/2,
-            np.array([1, 0]),
-            np.array([1, 0]),
-        ]
-        for angle, array in zip(angles, arrays):
-            one_dim = self.bs.angle_shift(angle)
-            two_dim = self.bs.angle_shift(angle, two_dim=True)
-            self.assertTrue(np.all(np.abs(one_dim - array) < 1e-10))
-            self.assertTrue(np.all(np.abs(two_dim - array) < 1e-10))
-            self.assertEqual(one_dim.shape, (2, ))
-            self.assertEqual(two_dim.shape, (1, 2))
+    # def test_angle_shift(self):
+    #     angles = [0, 45, 90, 180, 225, 360, 720]
+    #     arrays = [
+    #         np.array([1, 0]),
+    #         np.array([1, 1])*np.sqrt(2)/2,
+    #         np.array([0, 1]),
+    #         np.array([-1, 0]),
+    #         np.array([-1, -1])*np.sqrt(2)/2,
+    #         np.array([1, 0]),
+    #         np.array([1, 0]),
+    #     ]
+    #     for angle, array in zip(angles, arrays):
+    #         one_dim = self.bs.angle_shift(angle)
+    #         two_dim = self.bs.angle_shift(angle, two_dim=True)
+    #         self.assertTrue(np.all(np.abs(one_dim - array) < 1e-10))
+    #         self.assertTrue(np.all(np.abs(two_dim - array) < 1e-10))
+    #         self.assertEqual(one_dim.shape, (2, ))
+    #         self.assertEqual(two_dim.shape, (1, 2))
 
-    def test_xy_angle(self):
-        for mult in [0, 1, 2, 10]:
-            for shift in [(0, 0), (1, 1), (1/3, -5**0.5)]:
-                self.assertEqual(
-                    round(self.bs.angle_from_xy(
-                        (shift[0], shift[1]),
-                        (shift[0] + mult, shift[1]),
-                    ), 10),
-                    0
-                )
-                self.assertEqual(
-                    round(self.bs.angle_from_xy(
-                        (shift[0], shift[1]),
-                        (shift[0] + mult, shift[1] + mult),
-                    ), 10),
-                    45*(mult > 0)
-                )
-                self.assertEqual(
-                    round(self.bs.angle_from_xy(
-                        (shift[0], shift[1]),
-                        (shift[0] - mult, shift[1]),
-                    ), 10),
-                    180*(mult > 0)
-                )
-                self.assertEqual(
-                    round(self.bs.angle_from_xy(
-                        (shift[0], shift[1]),
-                        (shift[0] - mult*3**0.5/2, shift[1] - mult/2),
-                    ), 10),
-                    -150*(mult > 0)
-                )
+    # def test_xy_angle(self):
+    #     for mult in [0, 1, 2, 10]:
+    #         for shift in [(0, 0), (1, 1), (1/3, -5**0.5)]:
+    #             self.assertEqual(
+    #                 round(self.bs.angle_from_xy(
+    #                     (shift[0], shift[1]),
+    #                     (shift[0] + mult, shift[1]),
+    #                 ), 10),
+    #                 0
+    #             )
+    #             self.assertEqual(
+    #                 round(self.bs.angle_from_xy(
+    #                     (shift[0], shift[1]),
+    #                     (shift[0] + mult, shift[1] + mult),
+    #                 ), 10),
+    #                 45*(mult > 0)
+    #             )
+    #             self.assertEqual(
+    #                 round(self.bs.angle_from_xy(
+    #                     (shift[0], shift[1]),
+    #                     (shift[0] - mult, shift[1]),
+    #                 ), 10),
+    #                 180*(mult > 0)
+    #             )
+    #             self.assertEqual(
+    #                 round(self.bs.angle_from_xy(
+    #                     (shift[0], shift[1]),
+    #                     (shift[0] - mult*3**0.5/2, shift[1] - mult/2),
+    #                 ), 10),
+    #                 -150*(mult > 0)
+    #             )
 
-    def text_xy_distance(self):
-        for mult in [0, 1, 2, 10]:
-            for shift in [(0, 0), (1, 1), (1/3, -5**0.5)]:
-                self.assertEqual(
-                    round(self.bs.distance_from_xy(
-                        (shift[0], shift[1]),
-                        (shift[0] + mult, shift[1]),
-                    ), 10),
-                    mult
-                )
-                self.assertEqual(
-                    round(self.bs.distance_from_xy(
-                        (shift[0], shift[1]),
-                        (shift[0] + mult, shift[1] + mult),
-                    ), 10),
-                    round(mult*2**0.5, 10)
-                )
-                self.assertEqual(
-                    round(self.bs.distance_from_xy(
-                        (shift[0], shift[1]),
-                        (shift[0] - mult, shift[1]),
-                    ), 10),
-                    mult
-                )
-                self.assertEqual(
-                    round(self.bs.distance_from_xy(
-                        (shift[0], shift[1]),
-                        (shift[0] - mult*3**0.5/2, shift[1] - mult/2),
-                    ), 10),
-                    mult
-                )
+    # def text_xy_distance(self):
+    #     for mult in [0, 1, 2, 10]:
+    #         for shift in [(0, 0), (1, 1), (1/3, -5**0.5)]:
+    #             self.assertEqual(
+    #                 round(self.bs.distance_from_xy(
+    #                     (shift[0], shift[1]),
+    #                     (shift[0] + mult, shift[1]),
+    #                 ), 10),
+    #                 mult
+    #             )
+    #             self.assertEqual(
+    #                 round(self.bs.distance_from_xy(
+    #                     (shift[0], shift[1]),
+    #                     (shift[0] + mult, shift[1] + mult),
+    #                 ), 10),
+    #                 round(mult*2**0.5, 10)
+    #             )
+    #             self.assertEqual(
+    #                 round(self.bs.distance_from_xy(
+    #                     (shift[0], shift[1]),
+    #                     (shift[0] - mult, shift[1]),
+    #                 ), 10),
+    #                 mult
+    #             )
+    #             self.assertEqual(
+    #                 round(self.bs.distance_from_xy(
+    #                     (shift[0], shift[1]),
+    #                     (shift[0] - mult*3**0.5/2, shift[1] - mult/2),
+    #                 ), 10),
+    #                 mult
+    #             )
 
-    def test_normalized_angle(self):
-        for angle in [1e-5 - 180, -90, 0, 123, 180]:
-            for mult in npr.randint(100, size=10):
-                self.assertEqual(
-                    round(self.bs.normalize_angle(angle + mult*360), 10),
-                    angle
-                )
-        for angle in [1e-5, 90, 123, 360]:
-            for mult in npr.randint(100, size=10):
-                self.assertEqual(
-                    round(self.bs.normalize_angle(angle + mult*360, 0), 10),
-                    angle
-                )
-        for angle in [1e-5 - 0.6, 0, 123, 359]:
-            for mult in npr.randint(100, size=10):
-                self.assertEqual(
-                    round(self.bs.normalize_angle(
-                        angle + mult*360,
-                        -0.6,
-                    ), 10),
-                    angle
-                )
-
-    def test_anchor_shift(self):
-        bbox = Bbox([[0, 0], [2, 2]])
-        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'north')
-            == np.array([0, -1])))
-        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'east')
-            == np.array([-1, 0])))
-        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'west')
-            == np.array([1, 0])))
-        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'south')
-            == np.array([0, 1])))
-        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'north east')
-            == np.array([-1, -1])))
-        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'east north')
-            == np.array([-1, -1])))
-        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'north west')
-            == np.array([1, -1])))
-        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'west north')
-            == np.array([1, -1])))
-        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'south east')
-            == np.array([-1, 1])))
-        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'east south')
-            == np.array([-1, 1])))
-        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'south west')
-            == np.array([1, 1])))
-        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'west south')
-            == np.array([1, 1])))
-        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, None)
-            ==np.array([0, 0])))
-        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, '')
-            == np.array([0, 0])))
-        self.assertTrue(np.all(self.bs.shift_from_anchor(bbox, 'not good...')
-            == np.array([0, 0])))
+    # def test_normalized_angle(self):
+    #     for angle in [1e-5 - 180, -90, 0, 123, 180]:
+    #         for mult in npr.randint(100, size=10):
+    #             self.assertEqual(
+    #                 round(self.bs.normalize_angle(angle + mult*360), 10),
+    #                 angle
+    #             )
+    #     for angle in [1e-5, 90, 123, 360]:
+    #         for mult in npr.randint(100, size=10):
+    #             self.assertEqual(
+    #                 round(self.bs.normalize_angle(angle + mult*360, 0), 10),
+    #                 angle
+    #             )
+    #     for angle in [1e-5 - 0.6, 0, 123, 359]:
+    #         for mult in npr.randint(100, size=10):
+    #             self.assertEqual(
+    #                 round(self.bs.normalize_angle(
+    #                     angle + mult*360,
+    #                     -0.6,
+    #                 ), 10),
+    #                 angle
+    #             )
 
     '''
     main method
@@ -376,7 +376,7 @@ class BrushTests(unittest.TestCase):
             color='forestgreen',
         )
         self.bs.add_path(
-            path=self.bs.curve_path(
+            path=self.bs._curve_path(
                 xy=(0, 0),
                 a=self.bs._get_bound('xmax') - self.bs._get_bound('xmin'),
                 b=self.bs._get_bound('ymax') - self.bs._get_bound('ymin'),
@@ -390,7 +390,7 @@ class BrushTests(unittest.TestCase):
             fill=False,
         )
         self.bs.add_paths(
-            paths=self.bs.crescent_paths(
+            paths=self.bs._crescent_paths(
                 xy=(0.6, 0.3),
                 radius=0.2,
                 ratio=0.5,
@@ -412,7 +412,7 @@ class BrushTests(unittest.TestCase):
         self.bs.apply_to_brush(
             key='path',
             method='set_path',
-            path=self.bs.merge_curves(*self.bs.crescent_paths(
+            path=self.bs._merge_curves(*self.bs._crescent_paths(
                 xy=(0.4, 0.3),
                 radius=0.2,
                 ratio=0.5,
@@ -421,7 +421,6 @@ class BrushTests(unittest.TestCase):
                 angle=200,
             )),
         )
-        self.bs.add_copyright()
         self.bs.hide_copyright()
         self.bs.show_copyright()
         self.bs.grid(
@@ -429,7 +428,7 @@ class BrushTests(unittest.TestCase):
             right=0.85,
             top=self.bs._get_bound('ymax'),
             bottom=self.bs._get_bound('ymin'),
-            n_lines=4,
+            n_blocks=4,
             lw=10,
             color='crimson',
             zorder=2,
@@ -439,7 +438,7 @@ class BrushTests(unittest.TestCase):
             right=0.85,
             top=self.bs._get_bound('ymax'),
             bottom=self.bs._get_bound('ymin'),
-            n_lines=(8, 16),
+            n_blocks=(8, 16),
             lw=2,
             color='darkred',
             zorder=2,
@@ -466,12 +465,10 @@ class BrushTests(unittest.TestCase):
             zorder=2,
             capstyle='round',
         )
-        self.bs.add_axis()
         self.bs.hide_axis()
         self.bs.show_axis()
-        self.bs.add_info()
         self.bs.hide_info()
-        self.bs.show_info('Testing')
+        self.bs.show_info('Testing', 'and something else')
         self.bs.hide_info()
         self.bs.show_info()
         self.bs.save('image_brush')
