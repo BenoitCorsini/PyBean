@@ -19,6 +19,24 @@ class _Volume(Brush):
     fundamental variables and function
     '''
 
+    draft = False
+    scale = 1
+    view_pos = (0.5, -1.5, 2)
+    view_angle = -45
+    screen_dist = 1.5
+    sun_direction = (0.5, 0.25, -1)
+    altitude_to_shade = 0.2
+    side_cmap_ratio = 0.7
+    shade_darkness_ratio = 0.5
+    shade_background_ratio = 0.1
+    round_sides = {
+        0.49 : 0.05,
+        0.25 : 0.07,
+        0.09 : 0.12,
+        0.02 : 0.25,
+    },
+    polyhedron_lw = 1
+
     _volume_params = {
         'draft' : bool,
         'scale' : float,

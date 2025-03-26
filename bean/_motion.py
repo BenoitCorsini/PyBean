@@ -24,6 +24,23 @@ class _Motion(Volume):
     fundamental variables and function
     '''
 
+    fps = 20
+    frames_dir = 'frames'
+    remove_frames = True
+    print_on = False
+    levitation_mode = 'random'
+    levitation_height = 7e-2
+    levitation_freq = 1
+    rotation_mode = 'normal'
+    rotation_freq = 1e-1
+    rotation_clockwise = False
+    movement_frequency = 2
+    movement_damping = 0.4
+    movement_response = 12
+    movement_batch_size = 10
+    movement_position_threshold = 3e-3
+    movement_speed_threshold = 5e-3
+
     _motion_params = {
         'fps' : int,
         'frames_dir' : str,
