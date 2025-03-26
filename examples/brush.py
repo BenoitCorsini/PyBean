@@ -37,7 +37,7 @@ BS.grid(right=0, top=0, blocks=3, lw=30, **grid_params)
 # in the bottom-right corner, plots some text and a grid
 path = BS.path_from_string(s='B', xy=(1, -1), height=1.25)
 BS.add_path(path)
-BS.grid(left=0, top=0, blocks=3, steps=.5, lw=10, **grid_params)
+BS.grid(left=0, top=0, blocks=3, steps=0.5, lw=10, **grid_params)
 
 # adds the info of the different blocks
 BS.show_info('square', 'triangle', 'diamond', '\'B\'')
