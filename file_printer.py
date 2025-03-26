@@ -21,6 +21,11 @@ ARGS = {
             ' --cscale_colour gold --figsize 10 10',
             ' --cscale_colour crimson --ymax 1',
         ],
+        'brush' : [
+            '',
+            ' --axis_on True',
+            ' --cpr_on True --info_on \'\'',
+        ],
     },
 }
 
