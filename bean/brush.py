@@ -593,7 +593,7 @@ class Brush(Canvas):
             top: float = None,
             bottom: float = None,
             steps: tuple[float] = None,
-            n_blocks: tuple[int] = 1,
+            blocks: tuple[int] = 1,
             *args,
             **kwargs,
         ) -> patches.PathPatch:
@@ -602,23 +602,23 @@ class Brush(Canvas):
             steps = (None, None)
         elif isinstance(steps, float) or isinstance(steps, int):
             steps = (steps, steps)
-        if n_blocks is None:
-            n_blocks = (None, None)
-        elif isinstance(n_blocks, int):
-            n_blocks = (n_blocks, n_blocks)
+        if blocks is None:
+            blocks = (None, None)
+        elif isinstance(blocks, int):
+            blocks = (blocks, blocks)
         xticks = self._get_ticks(
             axis='x',
             start=left,
             end=right,
             step=steps[0],
-            n_line=n_blocks[0],
+            n_line=blocks[0],
         )
         yticks = self._get_ticks(
             axis='y',
             start=bottom,
             end=top,
             step=steps[1],
-            n_line=n_blocks[1],
+            n_line=blocks[1],
         )
         return self.add_path(
             key=key,
@@ -655,8 +655,8 @@ class Brush(Canvas):
             self: Self,
             top_left_info: str = None,
             top_right_info: str = None,
-            bottom_right_info: str = None,
             bottom_left_info: str = None,
+            bottom_right_info: str = None,
         ) -> None:
         # makes the info visible and possibly update the text
         if self.info_on is not False:
