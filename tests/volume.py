@@ -116,39 +116,39 @@ class VolumeTests(unittest.TestCase):
             'b3' : {'name' : 'b'},
         }
         self.assertEqual(
-            self.vl.get_volume_list(),
+            self.vl._get_volume_list(),
             ['a1', 'a2', 'b1', 'b2', 'b3']
         )
         self.assertEqual(
-            self.vl.get_volume_list(avoid=None),
+            self.vl._get_volume_list(avoid=None),
             []
         )
         self.assertEqual(
-            self.vl.get_volume_list(only='a'),
+            self.vl._get_volume_list(only='a'),
             ['a1', 'a2']
         )
         self.assertEqual(
-            self.vl.get_volume_list(avoid='a'),
+            self.vl._get_volume_list(avoid='a'),
             ['b1', 'b2', 'b3']
         )
         self.assertEqual(
-            self.vl.get_volume_list(only='a', avoid='a1'),
+            self.vl._get_volume_list(only='a', avoid='a1'),
             ['a2']
         )
         self.assertEqual(
-            self.vl.get_volume_list(only='a', avoid='b'),
+            self.vl._get_volume_list(only='a', avoid='b'),
             ['a1', 'a2']
         )
         self.assertEqual(
-            self.vl.get_volume_list(only=['a1', 'b1'], avoid='a'),
+            self.vl._get_volume_list(only=['a1', 'b1'], avoid='a'),
             ['b1']
         )
         self.assertEqual(
-            self.vl.get_volume_list(only=['a1', 'b1', 'b2'], avoid='b'),
+            self.vl._get_volume_list(only=['a1', 'b1', 'b2'], avoid='b'),
             ['a1']
         )
         self.assertEqual(
-            self.vl.get_volume_list(only=['a1', 'b1', 'b2'], avoid='b2'),
+            self.vl._get_volume_list(only=['a1', 'b1', 'b2'], avoid='b2'),
             ['a1', 'b1']
         )
 
@@ -300,7 +300,7 @@ class VolumeTests(unittest.TestCase):
                     shift2=shift2,
                     colour='orange',
                     collapse=collapse,
-                    alpha=0.5,
+                    opacity=0.5,
                 )
         self.vl.update()
         self.vl.save('image_edge')
@@ -313,13 +313,13 @@ class VolumeTests(unittest.TestCase):
             pos=(0.5, 0.5, 1.5),
             radius=0.4,
             colour='sienna',
-            alpha=0.5,
+            opacity=0.5,
         )
         self.vl.new_cube(
             pos=(0.5, 1.5, 1),
             radius=0.4,
             colour='sienna',
-            alpha=0.8,
+            opacity=0.8,
         )
         self.vl.new_cube(
             pos=(0.5, 2.5, 0.5),
@@ -336,9 +336,9 @@ class VolumeTests(unittest.TestCase):
             pos=(1.75, 0.5, 0.5),
             radius=0.5,
             colour='forestgreen',
-            alpha=0.5,
+            opacity=0.5,
         )
-        self.vl.new_pylone(
+        self.vl.new_pylon(
             basic_face=[
                 (0.1, 0),
                 (0.3, 0.6),
@@ -347,7 +347,7 @@ class VolumeTests(unittest.TestCase):
                 (0.5, 1),
                 (0, 0.8),
             ],
-            pylone_height=0.5,
+            pylon_height=0.5,
             pos=(1.5, 1.5),
             radius=0.4,
             colour='gold',
@@ -362,7 +362,7 @@ class VolumeTests(unittest.TestCase):
             pos=(2.5, 0.5),
             radius=0.25,
             colour='crimson',
-            alpha=0.8,
+            opacity=0.5,
         )
         self.vl.new_polysphere(
             precision=1,
