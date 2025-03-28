@@ -12,3 +12,6 @@ frames/
 docs/*.txt
 examples/*.txt
 examples/*.png
+
+# polyspheres
+bean/__ps*__.json
