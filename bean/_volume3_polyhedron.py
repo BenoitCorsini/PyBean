@@ -72,7 +72,10 @@ class _VolumePolyhedron(_VolumeTube):
             precision: int,
         ) -> (np.array, list[list[int]]):
         # returns a polyhedron approximation of a sphere
-        file_name = _VolumeTube.to_bean(f'__ps{precision}__.json')
+        if not precision:
+            file_name = _VolumeTube.to_bean('__polysphere_init__.json')
+        else:
+            file_name = _VolumeTube.to_bean(f'__ps{precision}__.json')
         if osp.exists(file_name):
             with open(file_name) as ps:
                 ps_dict = json.load(ps)
