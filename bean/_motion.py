@@ -46,18 +46,6 @@ class _Motion(Volume):
         'frames_dir' : str,
         'remove_frames' : bool,
         'print_on' : str,
-        'levitation_mode' : str,
-        'levitation_height' : float,
-        'levitation_freq' : float,
-        'rotation_mode' : str,
-        'rotation_freq' : float,
-        'rotation_clockwise' : bool,
-        'movement_frequency' : float,
-        'movement_damping' : float,
-        'movement_response' : float,
-        'movement_batch_size' : int,
-        'movement_position_threshold' : float,
-        'movement_speed_threshold' : float,
     }
 
     def _new_motion(
@@ -237,7 +225,7 @@ class _Motion(Volume):
             **kwargs,
         ) -> Self:
         # change the radius of the volume according to the given parameters
-        volume_list = self.get_volume_list(only, avoid)
+        volume_list = self._get_volume_list(only, avoid)
         for volume in volume_list:
             volume_name = self._volumes[volume]['name']
             motion = {

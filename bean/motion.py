@@ -121,26 +121,26 @@ class Motion(_MotionMovement):
         kwargs['end_with'] = 0
         return self.change_radius(*args, **kwargs)
 
-    def change_alpha(
+    def change_opacity(
             self: Self,
             *args,
             **kwargs,
         ) -> Self:
         # changes a volume radius
-        return self._create_motion('change_alpha', *args, **kwargs)
+        return self._create_motion('change_opacity', *args, **kwargs)
 
     def appear(
             self: Self,
             *args,
-            use_current_alpha: bool = True,
+            use_current_opacity: bool = True,
             **kwargs,
         ) -> Self:
         # makes a volume appear
         kwargs['start_with'] = 0
         kwargs['end_with'] = 1
-        if not use_current_alpha:
+        if not use_current_opacity:
             kwargs['end_with'] *= -1
-        return self.change_alpha(*args, **kwargs)
+        return self.change_opacity(*args, **kwargs)
 
     def disappear(
             self: Self,
@@ -150,7 +150,7 @@ class Motion(_MotionMovement):
         # makes a volume disappear
         kwargs['start_with'] = 1
         kwargs['end_with'] = 0
-        return self.change_alpha(*args, **kwargs)
+        return self.change_opacity(*args, **kwargs)
 
     def change_radius(
             self: Self,
@@ -236,13 +236,3 @@ class Motion(_MotionMovement):
         ) -> Self:
         # moves a volume towards a specific position
         return self._create_motion('rotate', *args, **kwargs)
-
-    '''
-    main method
-    '''
-
-    def main(
-            self: Self,
-        ) -> None:
-        # the main running function
-        pass
