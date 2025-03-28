@@ -1,6 +1,5 @@
 from bean import Brush
 
-
 # initiates the class
 BS = Brush(
     figsize=(10, 10),

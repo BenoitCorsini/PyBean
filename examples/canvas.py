@@ -2,7 +2,6 @@ import numpy as np
 
 from bean import Canvas
 
-
 # initiates the class and adds a colour argument
 CV = Canvas(seed=0)
 CV.add_arg('--cscale_colour')
