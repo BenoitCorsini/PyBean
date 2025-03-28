@@ -26,6 +26,11 @@ ARGS = {
             ' --axis_on True',
             ' --cpr_on True --info_on \'\'',
         ],
+        'volume' : [
+            '',
+            ' --draft True',
+            ' --precision 4',
+        ],
     },
 }
 
