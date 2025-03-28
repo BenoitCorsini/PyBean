@@ -20,22 +20,24 @@ class _VolumeSphere(_Volume):
 
     def _update_sphere(
             self: Self,
-            main: str,
-            side: list[str],
-            shade: str,
+            _main: str,
+            _side: list[str],
+            _shade: str,
+            _text: str,
             pos: tuple[float] = (0, 0),
             radius: float = 1,
-            colour: str = None,
+            colour: Any = None,
             shade_colour: str = None,
             visible: bool = True,
-            alpha: float = 1,
+            opacity: float = 1,
         ) -> None:
         # updates the sphere
+        self.set_brush(key=_text, visible=False)
         if not visible:
-            self.set_shape(key=main, visible=False)
-            for key in side:
-                self.set_shape(key=key, visible=False)
-            self.set_shape(key=shade, visible=False)
+            self.set_brush(key=_main, visible=False)
+            for key in _side:
+                self.set_brush(key=key, visible=False)
+            self.set_brush(key=_shade, visible=False)
             return None
         xy = self._pos_to_xy(pos, height=radius)
         if not self.draft:
@@ -45,21 +47,32 @@ class _VolumeSphere(_Volume):
         scale = self._pos_to_scale(pos, height=radius)
         radius *= self.screen_dist*self.scale*scale
         zorder = scale
-        path = self.curve_path(xy=xy, a=radius)
-        self.apply_to_shape('set_path', key=main, path=path)
-        clipper = self.set_shape(
-            key=main,
+        path = self._curve_path(xy=xy, a=radius)
+        self.apply_to_brush('set_path', key=_main, path=path)
+        clipper = self.set_brush(
+            key=_main,
             color=colour,
             zorder=zorder,
-            alpha=alpha,
+            alpha=opacity,
         )
-        if not self.draft:
+        if self.draft:
+            self.set_brush(key=_text, zorder=zorder, **self._text_params)
+            self.apply_to_brush(
+                'set_path',
+                key=_text,
+                path=self.path_from_string(
+                    s=_text[:-5],
+                    xy=xy,
+                    height=self._text_height_ratio*radius,
+                )
+            )
+        else:
             side_angle = self.angle_from_xy(
                 xy1=xy,
                 xy2=shade_xy,
             )
-            for key, ratio in zip(side, self.round_sides):
-                path = self.merge_curves(*self.crescent_paths(
+            for key, ratio in zip(_side, self._round_sides):
+                path = self._merge_curves(*self._crescent_paths(
                     xy=xy,
                     radius=radius,
                     ratio=ratio,
@@ -67,21 +80,21 @@ class _VolumeSphere(_Volume):
                     theta2=90,
                     angle=side_angle,
                 ))
-                self.apply_to_shape('set_path', key=key, path=path)
-                self.set_shape(
+                self.apply_to_brush('set_path', key=key, path=path)
+                self.set_brush(
                     key=key,
                     clip_path=clipper,
                     zorder=zorder,
-                    alpha=alpha*self.round_sides[ratio],
+                    alpha=opacity*self._round_sides[ratio],
                 )
-            path = self.curve_path(
+            path = self._curve_path(
                 xy=shade_pos,
                 a=shade_radius,
             )
             path.vertices = np.array([
                 self._pos_to_xy(pos) for pos in path.vertices
             ])
-            self.apply_to_shape('set_path', key=shade, path=path)
+            self.apply_to_brush('set_path', key=_shade, path=path)
             if shade_colour is None:
                 shade_colour = self._get_shade_colour(clipper.get_fc())
-            self.set_shape(key=shade, color=shade_colour, alpha=alpha)
+            self.set_brush(key=_shade, color=shade_colour, alpha=opacity)

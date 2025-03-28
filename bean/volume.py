@@ -9,7 +9,7 @@ class Volume(_VolumePolyhedron):
     general methods
     '''
 
-    def get_volume_list(
+    def _get_volume_list(
             self: Self,
             only: Any = None,
             avoid: Any = [],
@@ -43,17 +43,17 @@ class Volume(_VolumePolyhedron):
         # creates the basis for a new polyhedron
         return self._create_volume('polyhedron', *args, **kwargs)
 
-    def new_pylone(
+    def new_pylon(
             self: Self,
             *args,
-            basic_face: list[float, float],
-            pylone_height: float = 1,
+            basic_face: list[float, float] = [(0, 0)],
+            pylon_height: float = 1,
             **kwargs,
         ) -> Self:
         # creates the basis for a new pylone
         n_points = len(basic_face)
         kwargs['points'] = [
-            (x, y, pylone_height) for (x, y) in basic_face
+            (x, y, pylon_height) for (x, y) in basic_face
         ]
         kwargs['points'] += [
             (x, y, 0) for (x, y) in basic_face
@@ -70,7 +70,6 @@ class Volume(_VolumePolyhedron):
                 index + n_points,
                 next_index + n_points,
             ])
-        kwargs['height'] = pylone_height/2
         return self._create_volume('polyhedron', *args, **kwargs)
 
     def new_cube(
@@ -97,7 +96,7 @@ class Volume(_VolumePolyhedron):
             [3, 0, 4, 7],
             [1, 2, 6, 5],
         ]
-        kwargs['height'] = 0.5
+        kwargs['centre'] = (0.5, 0.5, 0.5)
         return self._create_volume('polyhedron', *args, **kwargs)
 
     def new_pyramid(
@@ -126,14 +125,15 @@ class Volume(_VolumePolyhedron):
 
     def new_polysphere(
             self: Self,
-            precision: int = 0,
             *args,
+            precision: int = 0,
             **kwargs,
         ) -> Self:
         # creates the basis for a new pyramid
         points, faces = self._polyhedron_sphere(precision)
         kwargs['points'] = 0.5 + points/2
         kwargs['faces'] = faces
+        kwargs['centre'] = (0.5, 0.5, 0.5)
         return self._create_volume('polyhedron', *args, **kwargs)
 
     def update(
@@ -143,19 +143,9 @@ class Volume(_VolumePolyhedron):
             **kwargs,
         ) -> Self:
         # updates the state of the image
-        volume_list = self.get_volume_list(only, avoid)
+        volume_list = self._get_volume_list(only, avoid)
         for volume in volume_list:
             volume_kwargs = self._volumes[volume]
             volume_kwargs.update(kwargs)
             self._update_volume(**volume_kwargs)
         return self
-
-    '''
-    main method
-    '''
-
-    def main(
-            self: Self,
-        ) -> None:
-        # the main running function
-        pass

@@ -20,9 +20,10 @@ class _VolumeTube(_VolumeSphere):
 
     def _update_joint_spheres(
             self: Self,
-            main: str,
-            side: list[str],
-            shade: str,
+            _main: str,
+            _side: list[str],
+            _shade: str,
+            _text: str,
             pos1: tuple[float] = (0, 0),
             pos2: tuple[float] = (0, 0),
             radius1: float = 1,
@@ -31,14 +32,15 @@ class _VolumeTube(_VolumeSphere):
             shade_colour: str = None,
             slope: str = 'flat',
             visible: bool = True,
-            alpha: float = 1,
+            opacity: float = 1,
         ) -> None:
         # updates the volume created by two spheres
+        self.set_brush(key=_text, visible=False)
         if not visible:
-            self.set_shape(key=main, visible=False)
-            for key in side:
-                self.set_shape(key=key, visible=False)
-            self.set_shape(key=shade, visible=False)
+            self.set_brush(key=_main, visible=False)
+            for key in _side:
+                self.set_brush(key=key, visible=False)
+            self.set_brush(key=_shade, visible=False)
             return None
         variables = {}
         zorder = 0
@@ -73,7 +75,7 @@ class _VolumeTube(_VolumeSphere):
         is_sphere = np.abs(delta_radius) >= distance
         if is_sphere:
             sphere_index = 1 + int(delta_radius > 0)
-            self.apply_to_shape('set_path', key=main, path=self.curve_path(
+            self.apply_to_brush('set_path', key=_main, path=self._curve_path(
                 xy=variables[f'xy{sphere_index}'],
                 a=variables[f'radius{sphere_index}'],
             ))
@@ -82,21 +84,37 @@ class _VolumeTube(_VolumeSphere):
         else:
             angle = self.angle_from_xy(variables['xy1'], variables['xy2'])
             around_angle = np.arcsin(delta_radius/distance)*180/np.pi
-            path = self.merge_curves(*[self.curve_path(
+            path = self._merge_curves(*[self._curve_path(
                 xy=variables[f'xy{index}'],
                 a=variables[f'radius{index}'],
                 angle=angle,
                 theta1=(3 - 2*index)*(90 + around_angle),
                 theta2=(2*index - 3)*(90 + around_angle),
             ) for index in [1, 2]])
-            self.apply_to_shape('set_path', key=main, path=path)
-        clipper = self.set_shape(
-            key=main,
+            self.apply_to_brush('set_path', key=_main, path=path)
+        clipper = self.set_brush(
+            key=_main,
             color=colour,
             zorder=zorder,
-            alpha=alpha,
+            alpha=opacity,
         )
-        if not self.draft:
+        if self.draft:
+            self.set_brush(key=_text, zorder=zorder, **self._text_params)
+            self.apply_to_brush(
+                'set_path',
+                key=_text,
+                path=self.path_from_string(
+                    s=_text[:-5],
+                    xy=(
+                        (variables['xy1'][0] + variables['xy2'][0])/2,
+                        (variables['xy1'][1] + variables['xy2'][1])/2,
+                    ),
+                    height=self._text_height_ratio*(
+                        variables['radius1'] + variables['radius2']
+                    )/2,
+                )
+            )
+        else:
             side_angle1 = self.angle_from_xy(
                 xy1=variables['xy1'],
                 xy2=variables['shade_xy1'],
@@ -113,7 +131,7 @@ class _VolumeTube(_VolumeSphere):
                 270 - around_angle + angle - side_angle
             )
             dark_index = 1 + int(self.normalize_angle(theta2 - theta1) > 0)
-            for key, ratio in zip(side, self.round_sides):
+            for key, ratio in zip(_side, self._round_sides):
                 crescents = []
                 if is_sphere or (abs(theta1) >= 90 and abs(theta2) >= 90):
                     crescents.append({
@@ -154,23 +172,23 @@ class _VolumeTube(_VolumeSphere):
                     index = crescent.pop('index')
                     for s in ['xy', 'radius']:
                         crescent[s] = variables[f'{s}{index}']
-                    paths.append(self.crescent_paths(
+                    paths.append(self._crescent_paths(
                         ratio=ratio,
                         angle=side_angle,
                         **crescent
                     ))
                 inners, outers = zip(*paths)
-                path = self.merge_curves(*(inners[::-1] + outers))
-                self.apply_to_shape('set_path', key=key, path=path)
-                self.set_shape(
+                path = self._merge_curves(*(inners[::-1] + outers))
+                self.apply_to_brush('set_path', key=key, path=path)
+                self.set_brush(
                     key=key,
                     clip_path=clipper,
                     zorder=zorder,
-                    alpha=alpha*self.round_sides[ratio],
+                    alpha=opacity*self._round_sides[ratio],
                 )
             if shade_colour is None:
                 shade_colour = self._get_shade_colour(clipper.get_fc())
-            self.set_shape(key=shade, color=shade_colour, alpha=alpha)
+            self.set_brush(key=_shade, color=shade_colour, alpha=opacity)
             distance = self.distance_from_xy(
                 variables['shade_xy1'],
                 variables['shade_xy2'],
@@ -181,7 +199,7 @@ class _VolumeTube(_VolumeSphere):
             )
             if np.abs(delta_radius) >= distance:
                 index = 1 + int(delta_radius > 0)
-                path = self.curve_path(
+                path = self._curve_path(
                     xy=variables[f'shade_pos{index}'],
                     a=variables[f'shade_radius{index}'],
                 )
@@ -193,7 +211,7 @@ class _VolumeTube(_VolumeSphere):
                 shade_around_angle = (
                     np.arcsin(delta_radius/distance)*180/np.pi
                 )
-                path = self.merge_curves(*[self.curve_path(
+                path = self._merge_curves(*[self._curve_path(
                     xy=variables[f'shade_pos{index}'],
                     a=variables[f'shade_radius{index}'],
                     theta1=(
@@ -208,7 +226,7 @@ class _VolumeTube(_VolumeSphere):
             path.vertices = np.array([
                 self._pos_to_xy(pos) for pos in path.vertices
             ])
-            self.apply_to_shape('set_path', key=shade, path=path)
+            self.apply_to_brush('set_path', key=_shade, path=path)
 
     def _update_tube(
             self: Self,

@@ -1,6 +1,7 @@
 import argparse
 import os
 import os.path as osp
+import inspect
 import numpy as np
 import numpy.random as npr
 import matplotlib.figure as figure
@@ -207,6 +208,19 @@ class Canvas(object):
             return f'{minutes}m{seconds}s'
         else:
             return f'{seconds}s'
+
+    @staticmethod
+    def to_bean(
+            file: str = None,
+        ) -> str:
+        # returns the directory of the PyBean library
+        bean_dir = osp.dirname(osp.abspath(
+            inspect.getfile(inspect.currentframe())
+        ))
+        if file is None:
+            return bean_dir
+        else:
+            return osp.join(bean_dir, file)
 
     '''
     general methods

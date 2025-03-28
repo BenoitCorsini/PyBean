@@ -25,34 +25,28 @@ class _Volume(Brush):
     view_angle = -45
     screen_dist = 1.5
     sun_direction = (0.5, 0.25, -1)
-    altitude_to_shade = 0.2
-    side_cmap_ratio = 0.7
-    shade_darkness_ratio = 0.5
-    shade_background_ratio = 0.1
-    round_sides = {
+    _side_cmap_ratio = 0.7
+    _shade_darkness_ratio = 0.5
+    _shade_background_ratio = 0.1
+    _round_sides = {
         0.49 : 0.05,
         0.25 : 0.07,
         0.09 : 0.12,
         0.02 : 0.25,
-    },
-    polyhedron_lw = 1
+    }
+    _polyhedron_lw = 1
+    _text_height_ratio = 0.5
+    _text_params = {
+        'lw' : 1,
+        'fc' : 'white',
+        'ec' : 'black',
+        'joinstyle' : 'round',
+        'capstyle' : 'round',
+        'visible' : True,
+    }
 
     _volume_params = {
         'draft' : bool,
-        'scale' : float,
-        'view_pos' : float,
-        'view_angle' : float,
-        'screen_dist' : float,
-        'sun_direction' : float,
-        'side_cmap_ratio' : float,
-        'shade_darkness_ratio' : float,
-        'shade_background_ratio' : float,
-        'polyhedron_lw' : float,
-    }
-
-    _canvas_nargs = {
-        'view_pos' : 3,
-        'sun_direction' : 3,
     }
 
     def _new_volume(
@@ -61,23 +55,23 @@ class _Volume(Brush):
         # new volume instance
         self._volumes = {}
         self._volume_index = 0
-        self.view_pos = np.array(self.view_pos)
-        self.screen_xdir = np.array([1, 0, 0]),
-        self.screen_ydir = np.array([
+        self._view_pos = np.array(self.view_pos)
+        self._screen_xdir = np.array([1, 0, 0]),
+        self._screen_ydir = np.array([
             0,
             -np.sin(self.view_angle*np.pi/180),
             np.cos(self.view_angle*np.pi/180),
         ])
-        self.screen_zdir = np.array([
+        self._screen_zdir = np.array([
             0,
             np.cos(self.view_angle*np.pi/180),
             np.sin(self.view_angle*np.pi/180),
         ])
-        self.sun_direction = np.array(self.sun_direction)
-        norm = np.sum(self.sun_direction**2)
+        self._sun_dir = np.array(self.sun_direction)
+        norm = np.sum(self._sun_dir**2)
         if not norm:
             norm = 1
-        self.sun_direction = self.sun_direction/norm**0.5
+        self._sun_dir = self._sun_dir/norm**0.5
         return self
 
     '''
@@ -105,7 +99,7 @@ class _Volume(Brush):
         ) -> float:
         # transforms a position into the corresponding scale
         pos = self._normalize_pos(pos, height)*self.scale
-        return 1/np.sum((pos - self.view_pos)**2)**0.5
+        return 1/np.sum((pos - self._view_pos)**2)**0.5
 
     def _project_on_screen(
             self: Self,
@@ -114,11 +108,11 @@ class _Volume(Brush):
         ) -> np.array:
         # project a position relative to the viewer and the screen
         relative_pos = self._normalize_pos(pos, height)
-        relative_pos = relative_pos*self.scale - self.view_pos
+        relative_pos = relative_pos*self.scale - self._view_pos
         return (
-            float(np.sum(relative_pos*self.screen_xdir)),
-            float(np.sum(relative_pos*self.screen_ydir)),
-            float(np.sum(relative_pos*self.screen_zdir)),
+            float(np.sum(relative_pos*self._screen_xdir)),
+            float(np.sum(relative_pos*self._screen_ydir)),
+            float(np.sum(relative_pos*self._screen_zdir)),
         )
 
     def _normalize_xy(
@@ -128,8 +122,8 @@ class _Volume(Brush):
         ) -> np.array:
         # normalize an xy coordinate into the frame
         return (
-            self.xmin + (self.xmax - self.xmin)*(0.5 + x),
-            (self.ymin + self.ymax)/2 + (self.xmax - self.xmin)*y,
+            self._get_bound('xmin') + (self._get_bound('xmax') - self._get_bound('xmin'))*(0.5 + x),
+            (self._get_bound('ymin') + self._get_bound('ymax'))/2 + (self._get_bound('xmax') - self._get_bound('xmin'))*y,
         )
 
     def _pos_to_xy(
@@ -154,11 +148,11 @@ class _Volume(Brush):
             height: float = 0,
         ) -> (float, float):
         # transforms a 3D position into a 2D coordinate
-        if self.sun_direction[2] >= 0:
+        if self._sun_dir[2] >= 0:
             return 0, 0
         pos = self._normalize_pos(pos, height)
-        ground_dist = pos[2]/self.sun_direction[2]
-        pos = pos - ground_dist*self.sun_direction
+        ground_dist = pos[2]/self._sun_dir[2]
+        pos = pos - ground_dist*self._sun_dir
         return float(pos[0]), float(pos[1])
 
     def _round_volume(
@@ -168,12 +162,13 @@ class _Volume(Brush):
         # creates the volume dictionary for a rounded object
         volume = {
             'key' : available_key,
-            'main' : f'{available_key}_main',
-            'side' : [
+            '_main' : f'{available_key}_main',
+            '_side' : [
                 f'{available_key}_side{index}'
-                for index in range(len(self.round_sides))
+                for index in range(len(self._round_sides))
             ],
-            'shade' : f'{available_key}_shade',
+            '_shade' : f'{available_key}_shade',
+            '_text' : f'{available_key}_text'
         }
         for shape_key in volume.values():
             if isinstance(shape_key, str):
@@ -181,7 +176,7 @@ class _Volume(Brush):
                 alphas = [1]
             else:
                 shape_keys = shape_key
-                alphas = self.round_sides.values()
+                alphas = self._round_sides.values()
             for shape_key, alpha in zip(shape_keys, alphas):
                 patch = self.add_raw_path(
                     key=shape_key,
@@ -206,7 +201,7 @@ class _Volume(Brush):
             **kwargs,
         ) -> Self:
         # creates the basis for a new volume
-        key, available = self.key_checker(key=key, category='volume')
+        key, available = self._key_checker(key=key, category='volume')
         if available:
             volume = {
                 'name' : name,
@@ -222,6 +217,7 @@ class _Volume(Brush):
             self._volumes[key] = volume
         else:
             volume = self._volumes[key]
+        self._update_volume(**volume)
         return self
 
     def _update_volume(
@@ -277,9 +273,9 @@ class _Volume(Brush):
         ) -> Any:
         # obtains the shade colour of a volume on a given background
         shade_colour = self.get_cmap([colour, darkness])
-        shade_colour = shade_colour(self.shade_darkness_ratio)
+        shade_colour = shade_colour(self._shade_darkness_ratio)
         shade_colour = self.get_cmap([background, shade_colour])
-        shade_colour = shade_colour(self.shade_background_ratio)
+        shade_colour = shade_colour(self._shade_background_ratio)
         return shade_colour
 
 

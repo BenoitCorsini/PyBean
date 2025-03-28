@@ -1,4 +1,3 @@
-import inspect
 import os.path as osp
 import numpy as np
 import matplotlib.patches as patches
@@ -26,16 +25,7 @@ class Brush(Canvas):
     cpr_shift = 0.02
     cpr_anchor = 'south west'
     cpr_font_properties = {
-        'fname' : osp.join(
-            osp.dirname(
-                osp.abspath(
-                    inspect.getfile(
-                        inspect.currentframe()
-                    )
-                )
-            ),
-            'copyright.otf'
-        ),
+        'fname' : Canvas.to_bean('copyright.otf'),
     }
     cpr_params = {
         'lw' : 1.2,
@@ -503,7 +493,7 @@ class Brush(Canvas):
 
     def add_raw_path(
             self: Self,
-            vertices: list,
+            vertices: list = [(0, 0)],
             codes: list = None,
             closed: bool = False,
             key: Any = None,
