@@ -18,10 +18,10 @@ class Canvas(object):
 
     figsize = (16, 9)
     dpi = 100
-    xmin = 0
-    xmax = 1
-    ymin = 0
-    ymax = None
+    left = 0.
+    right = 1.
+    bottom = 0.
+    top = None
     seed = None
 
     _canvas_params = {
@@ -42,22 +42,12 @@ class Canvas(object):
             self: Self,
         ) -> Self:
         # new canvas instance
-        self.xmin = self.left
-        self.xmax = self.right
-        self.ymin = self.bottom
-        if self.top is None:
-            width = self.xmax - self.xmin
-            ratio = self.figsize[1]/self.figsize[0]
-            self.ymax = self.left + width*ratio
-        else:
-            self.ymax = self.top
         npr.seed(self.seed)
         self.fig = figure.Figure(figsize=self.figsize, dpi=self.dpi)
         self.fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
         self.ax = self.fig.add_subplot()
-        self.ax.set_xlim(self.xmin, self.xmax)
-        self.ax.set_ylim(self.ymin, self.ymax)
         self.ax.set_axis_off()
+        self.reframe()
         return self
 
     '''
@@ -69,7 +59,7 @@ class Canvas(object):
             **kwargs,
         ) -> None:
         # initiate class
-        self._start_time = time()
+        self._start = time()
         self._parser = argparse.ArgumentParser()
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -78,7 +68,7 @@ class Canvas(object):
     def __repr__(
             self: Self,
         ) -> str:
-        # string representation of self
+        # representation of self
         s = f'{self.__class__.__name__}'
         s += f' (figsize=({self.figsize[0]}, {self.figsize[1]}),'
         s += f' dpi={self.dpi})'
@@ -99,6 +89,21 @@ class Canvas(object):
     hidden methods
     '''
 
+    @staticmethod
+    def _time_to_string(
+            time: float,
+        ) -> str:
+        # transforms a time in (hours, minutes, seconds) string format
+        hours = int(time/3600)
+        minutes = int((time - 3600*hours)/60)
+        seconds = int(time - 3600*hours - 60*minutes)
+        if hours:
+            return f'{hours}h{minutes}m{seconds}s'
+        elif minutes:
+            return f'{minutes}m{seconds}s'
+        else:
+            return f'{seconds}s'
+
     def _get_classes(
             self: Self,
         ) -> list:
@@ -114,7 +119,7 @@ class Canvas(object):
     def _get_init_methods(
             self: Self,
         ) -> list[str]:
-        # get _new methods in order of depth
+        # get _init  methods in order of depth
         init_methods = []
         for current_class in self._get_classes():
             for method in sorted(current_class.__dict__):
@@ -148,29 +153,41 @@ class Canvas(object):
                 return key, False
         return key, True
 
+    def _set_bounds(
+            self: Self,
+            left: float = None,
+            right: float = None,
+            bottom: float = None,
+            top: float = None,
+        ) -> Self:
+        # sets the bounds of the figure
+        for key in ['left', 'right', 'bottom', 'top']:
+            value = locals()[key]
+            if value is not None:
+                setattr(self, key, value)
+        self.xmin = self.left
+        self.xmax = self.right
+        self.ymin = self.bottom
+        if self.top is None:
+            height = (self.right - self.left)*self.figsize[1]/self.figsize[0]
+            self.ymax = self.bottom + height
+        else:
+            self.ymax = self.top
+        return self
+
     '''
     static methods
     '''
 
     @staticmethod
-    def double(
-            double: Any,
-        ) -> (Any, Any):
-        # transforms an input into two values (if not already so)
-        if isinstance(double, tuple):
-            return double[0], double[1]
-        else:
-            return double, double
-
-    @staticmethod
-    def get_cmap(
+    def cmap(
             colour_list: list,
         ) -> LSC:
         # creates a cmap using the list of colours
         return LSC.from_list('pybean cmap', colour_list)
 
     @staticmethod
-    def get_cscale(
+    def cscale(
             colour: str = 'grey',
             start_with: str = 'white',
             end_with: str = 'black',
@@ -186,10 +203,20 @@ class Canvas(object):
         return LSC.from_list('pybean cscale', colour_list)
 
     @staticmethod
-    def get_greyscale(
+    def double(
+            double: Any,
+        ) -> (Any, Any):
+        # transforms an input into two values
+        if isinstance(double, tuple):
+            return double[0], double[1]
+        else:
+            return double, double
+
+    @staticmethod
+    def greyscale(
             start_with_white: bool = True,
         ) -> LSC:
-        # creates a grayscale from white to black
+        # creates a grayscale from white to black or the other way around
         if start_with_white:
             colour_list = ['white', 'black']
         else:
@@ -197,10 +224,10 @@ class Canvas(object):
         return LSC.from_list('pybean greyscale', colour_list)
 
     @staticmethod
-    def path_to_bean(
+    def path(
             file: str = None,
         ) -> str:
-        # returns the directory of the PyBean library
+        # returns the absolute path to the file
         bean_dir = osp.dirname(osp.abspath(
             inspect.getfile(inspect.currentframe())
         ))
@@ -208,21 +235,6 @@ class Canvas(object):
             return bean_dir
         else:
             return osp.join(bean_dir, file)
-
-    @staticmethod
-    def time_to_string(
-            time: float,
-        ) -> str:
-        # transforms a time in (hours, minutes, seconds) string format
-        hours = int(time/3600)
-        minutes = int((time - 3600*hours)/60)
-        seconds = int(time - 3600*hours - 60*minutes)
-        if hours:
-            return f'{hours}h{minutes}m{seconds}s'
-        elif minutes:
-            return f'{minutes}m{seconds}s'
-        else:
-            return f'{seconds}s'
 
     '''
     general methods
@@ -242,12 +254,6 @@ class Canvas(object):
         ) -> (float, float, float, float):
         # returns the extent of the figure
         return (self.xmin, self.xmax, self.ymin, self.ymax)
-
-    def height(
-            self: Self,
-        ) -> float:
-        # returns the height of the figure
-        return self.ymax - self.ymin
 
     def figx(
             self: Self,
@@ -274,11 +280,17 @@ class Canvas(object):
         # returns the vertical position corresponding to the given ratio
         return self.ymin + ratio*self.height()
 
+    def height(
+            self: Self,
+        ) -> float:
+        # returns the height of the figure
+        return self.ymax - self.ymin
+
     def help(
             self: Self,
         ) -> None:
         # prints helpful tips
-        doc_page = 'NOT READY YET'
+        doc_page = 'https://www.benoitcorsini.com/files/pybean.pdf'
         github_page = 'https://github.com/BenoitCorsini/PyBean'
         symbol_page = 'https://www.rapidtables.com'
         symbol_page += '/code/text/unicode-characters.html'
@@ -287,10 +299,21 @@ class Canvas(object):
         print(f'\u279E Take a look at the Github page: {github_page}')
         print(f'\u279E Take a look at common symbols: {symbol_page}')
 
+    def reframe(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # reframes the figure
+        self._set_bounds(*args, **kwargs)
+        self.ax.set_xlim(self.xmin, self.xmax)
+        self.ax.set_ylim(self.ymin, self.ymax)
+        return self
+
     def reset(
             self: Self,
         ) -> Self:
-        # resets self using _new methods in order of depth
+        # resets self using _init_ methods in order of depth
         for method in self._get_init_methods():
             getattr(self, method)()
         return self
@@ -334,9 +357,15 @@ class Canvas(object):
 
     def time(
             self: Self,
+            start: float = None,
+            end: float = None,
         ) -> str:
-        # computes the current time duration of the algorithm
-        return self.time_to_string(time() - self._start_time)
+        # computes the current time, compared to the given start
+        if start is None:
+            start = self._start
+        if end is None:
+            end = time()
+        return self._time_to_string(end - start)
 
     def width(
             self: Self,
