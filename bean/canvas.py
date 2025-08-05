@@ -27,10 +27,10 @@ class Canvas(object):
     _canvas_params = {
         'figsize' : int,
         'dpi' : int,
-        'xmin' : float,
-        'xmax' : float,
-        'ymin' : float,
-        'ymax' : float,
+        'left' : float,
+        'right' : float,
+        'bottom' : float,
+        'top' : float,
         'seed' : int,
     }
 
@@ -38,22 +38,25 @@ class Canvas(object):
         'figsize' : 2,
     }
 
-    def _new_canvas(
+    def _init_canvas(
             self: Self,
         ) -> Self:
         # new canvas instance
+        self.xmin = self.left
+        self.xmax = self.right
+        self.ymin = self.bottom
+        if self.top is None:
+            width = self.xmax - self.xmin
+            ratio = self.figsize[1]/self.figsize[0]
+            self.ymax = self.left + width*ratio
+        else:
+            self.ymax = self.top
         npr.seed(self.seed)
         self.fig = figure.Figure(figsize=self.figsize, dpi=self.dpi)
         self.fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
         self.ax = self.fig.add_subplot()
-        self.ax.set_xlim(
-            self._get_bound('xmin'),
-            self._get_bound('xmax'),
-        )
-        self.ax.set_ylim(
-            self._get_bound('ymin'),
-            self._get_bound('ymax'),
-        )
+        self.ax.set_xlim(self.xmin, self.xmax)
+        self.ax.set_ylim(self.ymin, self.ymax)
         self.ax.set_axis_off()
         return self
 
@@ -67,7 +70,6 @@ class Canvas(object):
         ) -> None:
         # initiate class
         self._start_time = time()
-        self._ymax_default = False
         self._parser = argparse.ArgumentParser()
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -109,16 +111,16 @@ class Canvas(object):
             classes_to_explore += list(current_class.__bases__)
         return classes[::-1]
 
-    def _get_new_methods(
+    def _get_init_methods(
             self: Self,
         ) -> list[str]:
         # get _new methods in order of depth
-        new_methods = []
+        init_methods = []
         for current_class in self._get_classes():
             for method in sorted(current_class.__dict__):
-                if method.startswith('_new'):
-                    new_methods.append(method)
-        return new_methods
+                if method.startswith('_init'):
+                    init_methods.append(method)
+        return init_methods
 
     def _get_kwargs(
             self: Self,
@@ -146,19 +148,19 @@ class Canvas(object):
                 return key, False
         return key, True
 
-    def _get_bound(
-            self: Self,
-            bound_name: str,
-        ) -> float:
-        # returns the value of the bound on the given axis
-        if bound_name == 'ymax' and self.ymax is None:
-            return self.figsize[1]/self.figsize[0]
-        else:
-            return getattr(self, bound_name)
-
     '''
     static methods
     '''
+
+    @staticmethod
+    def double(
+            double: Any,
+        ) -> (Any, Any):
+        # transforms an input into two values (if not already so)
+        if isinstance(double, tuple):
+            return double[0], double[1]
+        else:
+            return double, double
 
     @staticmethod
     def get_cmap(
@@ -166,17 +168,6 @@ class Canvas(object):
         ) -> LSC:
         # creates a cmap using the list of colours
         return LSC.from_list('pybean cmap', colour_list)
-
-    @staticmethod
-    def get_greyscale(
-            start_with_white: bool = True,
-        ) -> LSC:
-        # creates a grayscale from white to black
-        if start_with_white:
-            colour_list = ['white', 'black']
-        else:
-            colour_list = ['black', 'white']
-        return LSC.from_list('pybean greyscale', colour_list)
 
     @staticmethod
     def get_cscale(
@@ -195,6 +186,30 @@ class Canvas(object):
         return LSC.from_list('pybean cscale', colour_list)
 
     @staticmethod
+    def get_greyscale(
+            start_with_white: bool = True,
+        ) -> LSC:
+        # creates a grayscale from white to black
+        if start_with_white:
+            colour_list = ['white', 'black']
+        else:
+            colour_list = ['black', 'white']
+        return LSC.from_list('pybean greyscale', colour_list)
+
+    @staticmethod
+    def path_to_bean(
+            file: str = None,
+        ) -> str:
+        # returns the directory of the PyBean library
+        bean_dir = osp.dirname(osp.abspath(
+            inspect.getfile(inspect.currentframe())
+        ))
+        if file is None:
+            return bean_dir
+        else:
+            return osp.join(bean_dir, file)
+
+    @staticmethod
     def time_to_string(
             time: float,
         ) -> str:
@@ -209,30 +224,9 @@ class Canvas(object):
         else:
             return f'{seconds}s'
 
-    @staticmethod
-    def to_bean(
-            file: str = None,
-        ) -> str:
-        # returns the directory of the PyBean library
-        bean_dir = osp.dirname(osp.abspath(
-            inspect.getfile(inspect.currentframe())
-        ))
-        if file is None:
-            return bean_dir
-        else:
-            return osp.join(bean_dir, file)
-
     '''
     general methods
     '''
-
-    def reset(
-            self: Self,
-        ) -> Self:
-        # resets self using _new methods in order of depth
-        for method in self._get_new_methods():
-            getattr(self, method)()
-        return self
 
     def add_arg(
             self: Self,
@@ -242,6 +236,78 @@ class Canvas(object):
         # adds a parameter to the parser
         self._parser.add_argument(*args, **kwargs)
         return self
+
+    def extent(
+            self: Self,
+        ) -> (float, float, float, float):
+        # returns the extent of the figure
+        return (self.xmin, self.xmax, self.ymin, self.ymax)
+
+    def height(
+            self: Self,
+        ) -> float:
+        # returns the height of the figure
+        return self.ymax - self.ymin
+
+    def figx(
+            self: Self,
+            ratio: float = 0.5,
+        ) -> float:
+        # returns the horizontal position corresponding to the given ratio
+        return self.xmin + ratio*self.width()
+
+    def figxy(
+            self: Self,
+            ratio: Any = 0.5,
+        ) -> np.array:
+        # returns the figure position corresponding to the given ratio
+        ratiox, ratioy = self.double(ratio)
+        return np.array([
+            self.figx(ratiox),
+            self.figy(ratioy),
+        ])
+
+    def figy(
+            self: Self,
+            ratio: float = 0.5,
+        ) -> float:
+        # returns the vertical position corresponding to the given ratio
+        return self.ymin + ratio*self.height()
+
+    def help(
+            self: Self,
+        ) -> None:
+        # prints helpful tips
+        doc_page = 'NOT READY YET'
+        github_page = 'https://github.com/BenoitCorsini/PyBean'
+        symbol_page = 'https://www.rapidtables.com'
+        symbol_page += '/code/text/unicode-characters.html'
+        print('Using the PyBean library \u2714')
+        print(f'\u279E Take a look at the documentation: {doc_page}')
+        print(f'\u279E Take a look at the Github page: {github_page}')
+        print(f'\u279E Take a look at common symbols: {symbol_page}')
+
+    def reset(
+            self: Self,
+        ) -> Self:
+        # resets self using _new methods in order of depth
+        for method in self._get_init_methods():
+            getattr(self, method)()
+        return self
+
+    def save(
+            self: Self,
+            name: Any = 'image',
+            image_dir: str = '.',
+            transparent: bool = False,
+        ) -> None:
+        # saves the current state of the figure
+        if not osp.exists(image_dir):
+            os.makedirs(image_dir)
+        self.fig.savefig(
+            osp.join(image_dir, f'{name}.png'),
+            transparent=transparent
+        )
 
     def set_args(
             self: Self,
@@ -266,35 +332,15 @@ class Canvas(object):
             setattr(self, key, value)
         return self.reset()
 
-    def save(
-            self: Self,
-            name: Any = 'image',
-            image_dir: str = '.',
-            transparent: bool = False,
-        ) -> None:
-        # saves the current state of the figure
-        if not osp.exists(image_dir):
-            os.makedirs(image_dir)
-        self.fig.savefig(
-            osp.join(image_dir, f'{name}.png'),
-            transparent=transparent
-        )
-
     def time(
             self: Self,
         ) -> str:
         # computes the current time duration of the algorithm
         return self.time_to_string(time() - self._start_time)
 
-    def help(
+    def width(
             self: Self,
-        ) -> None:
-        # prints helpful tips
-        doc_page = 'NOT READY YET'
-        github_page = 'https://github.com/BenoitCorsini/PyBean'
-        symbol_page = 'https://www.rapidtables.com'
-        symbol_page += '/code/text/unicode-characters.html'
-        print('Using the PyBean library \u2714')
-        print(f'\u279E Take a look at the documentation: {doc_page}')
-        print(f'\u279E Take a look at the Github page: {github_page}')
-        print(f'\u279E Take a look at common symbols: {symbol_page}')
+        ) -> float:
+        # returns the width of the figure
+        return self.xmax - self.xmin
+
