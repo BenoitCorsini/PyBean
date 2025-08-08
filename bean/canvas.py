@@ -5,7 +5,8 @@ import inspect
 import numpy as np
 import numpy.random as npr
 import matplotlib.figure as figure
-from matplotlib.colors import LinearSegmentedColormap as LSC
+from matplotlib.colors import LinearSegmentedColormap, Colormap
+from matplotlib import colormaps
 from time import time
 from typing_extensions import Any, Self
 
@@ -188,17 +189,20 @@ class Canvas(object):
 
     @staticmethod
     def cmap(
-            colour_list: list,
-        ) -> LSC:
-        # creates a cmap using the list of colours
-        return LSC.from_list('pybean cmap', colour_list)
+            colour: Any,
+        ) -> Colormap:
+        # creates a cmap using based on the colour
+        if isinstance(colour, str):
+            return colormaps[colour]
+        else:
+            return LinearSegmentedColormap.from_list('pybean cmap', colour)
 
     @staticmethod
     def cscale(
             colour: str = 'grey',
             start_with: str = 'white',
             end_with: str = 'black',
-        ) -> LSC:
+        ) -> Colormap:
         # creates a cmap scaling around a given colour
         colour_list = [colour]
         if not isinstance(start_with, str) or start_with != 'same':
@@ -224,7 +228,7 @@ class Canvas(object):
     @staticmethod
     def greyscale(
             start_with_white: bool = True,
-        ) -> LSC:
+        ) -> Colormap:
         # creates a grayscale from white to black or the other way around
         if start_with_white:
             colour_list = ['white', 'black']
