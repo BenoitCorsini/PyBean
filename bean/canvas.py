@@ -207,10 +207,12 @@ class Canvas(object):
             double: Any,
         ) -> (Any, Any):
         # transforms an input into two values
-        if isinstance(double, tuple):
-            return double[0], double[1]
-        else:
+        if not hasattr(double, '__len__'):
             return double, double
+        elif len(double) == 1:
+            return double[0], double[0]
+        else:
+            return double[0], double[1]
 
     @staticmethod
     def greyscale(
