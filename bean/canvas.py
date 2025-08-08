@@ -7,6 +7,7 @@ import numpy.random as npr
 import matplotlib.figure as figure
 from matplotlib.colors import LinearSegmentedColormap, Colormap
 from matplotlib import colormaps
+from colorsys import hls_to_rgb
 from time import time
 from typing_extensions import Any, Self
 
@@ -191,11 +192,14 @@ class Canvas(object):
     def cmap(
             colour: Any,
         ) -> Colormap:
-        # creates a cmap using based on the colour
+        # creates a cmap based on the colour
         if isinstance(colour, str):
             return colormaps[colour]
         else:
-            return LinearSegmentedColormap.from_list('pybean cmap', colour)
+            return LinearSegmentedColormap.from_list(
+                'pybean cmap',
+                colour,
+            )
 
     @staticmethod
     def cscale(
@@ -211,7 +215,10 @@ class Canvas(object):
             colour_list = colour_list + [end_with]
         if len(colour_list) == 1:
             colour_list = colour_list*2
-        return LSC.from_list('pybean cscale', colour_list)
+        return LinearSegmentedColormap.from_list(
+            'pybean cscale',
+            colour_list,
+        )
 
     @staticmethod
     def double(
@@ -234,7 +241,19 @@ class Canvas(object):
             colour_list = ['white', 'black']
         else:
             colour_list = ['black', 'white']
-        return LSC.from_list('pybean greyscale', colour_list)
+        return LinearSegmentedColormap.from_list(
+            'pybean greyscale',
+            colour_list,
+        )
+
+    @staticmethod
+    def hsl(
+            hue: float = 127/360,
+            saturation: float = 1,
+            lightness: float = 1/2,
+        ) -> (float, float, float):
+        # creates a rgb colour from HSV values
+        return hls_to_rgb(hue, lightness, saturation)
 
     @staticmethod
     def path(
