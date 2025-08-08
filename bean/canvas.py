@@ -91,21 +91,6 @@ class Canvas(object):
     hidden methods
     '''
 
-    @staticmethod
-    def _time_to_string(
-            time: float,
-        ) -> str:
-        # transforms a time in (hours, minutes, seconds) string format
-        hours = int(time/3600)
-        minutes = int((time - 3600*hours)/60)
-        seconds = int(time - 3600*hours - 60*minutes)
-        if hours:
-            return f'{hours}h{minutes}m{seconds}s'
-        elif minutes:
-            return f'{minutes}m{seconds}s'
-        else:
-            return f'{seconds}s'
-
     def _get_classes(
             self: Self,
         ) -> list:
@@ -189,6 +174,21 @@ class Canvas(object):
     '''
 
     @staticmethod
+    def _time_to_string(
+            time: float,
+        ) -> str:
+        # transforms a time in (hours, minutes, seconds) string format
+        hours = int(time/3600)
+        minutes = int((time - 3600*hours)/60)
+        seconds = int(time - 3600*hours - 60*minutes)
+        if hours:
+            return f'{hours}h{minutes}m{seconds}s'
+        elif minutes:
+            return f'{minutes}m{seconds}s'
+        else:
+            return f'{seconds}s'
+
+    @staticmethod
     def cmap(
             colour: Any,
         ) -> Colormap:
@@ -225,7 +225,9 @@ class Canvas(object):
             double: Any,
         ) -> (Any, Any):
         # transforms an input into two values
-        if not hasattr(double, '__len__'):
+        if double is None:
+            return (None, None)
+        elif not hasattr(double, '__len__'):
             return double, double
         elif len(double) == 1:
             return double[0], double[0]

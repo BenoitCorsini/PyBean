@@ -17,17 +17,17 @@ class Brush(Canvas):
     '''
 
     copyright = '@pybean'
-    cpr_on = None
+    copyright_on = None
     axis_on = None
     info_on = None
 
-    cpr_height = 0.07
-    cpr_shift = 0.02
-    cpr_anchor = 'south west'
-    cpr_font_properties = {
-        'fname' : Canvas.to_bean('copyright.otf'),
+    copyright_height = 0.07
+    copyright_shift = 0.02
+    copyright_anchor = 'south west'
+    copyright_fp = {
+        'fname' : Canvas.path('copyright.otf'),
     }
-    cpr_params = {
+    copyright_params = {
         'lw' : 1.2,
         'ec' : 'darkgrey',
         'fc' : 'lightgrey',
@@ -59,7 +59,7 @@ class Brush(Canvas):
 
     _brush_params = {
         'copyright' : str,
-        'cpr_on' : bool,
+        'copyright_on' : bool,
         'axis_on' : bool,
         'info_on' : bool,
     }
@@ -70,41 +70,46 @@ class Brush(Canvas):
         # new brush instance
         self._brushs = {}
         self._brush_index = 0
-        self._add_copyright()
-        self._add_axis()
-        self._add_info()
+        self._new_copyright()
+        self._new_axis()
+        self._new_info()
         return self
 
     '''
     hidden methods
     '''
 
-    def _copyright_path(
+    def _new_axis(
             self: Self,
-        ) -> Path:
-        # gets the path of the copyright
-        if hasattr(self.cpr_shift, '__len__'):
-            xshift = self.cpr_shift[0]
-            yshift = self.cpr_shift[1]
-        else:
-            xshift = self.cpr_shift
-            yshift = self.cpr_shift
-        xscale = (
-            self._get_bound('xmax') - self._get_bound('xmin')
-        )*self.figsize[1]/self.figsize[0]
-        yscale = self._get_bound('ymax') - self._get_bound('ymin')
-        xy = (
-            self._get_bound('xmin') + xshift*xscale,
-            self._get_bound('ymin') + yshift*yscale,
+        ) -> None:
+        # represents the axis along with the coordinates
+        step = max(self.height(), self.width())/max(self.figsize)
+        self._axis_grid(step)
+        self._axis_ticks(step)
+
+    def _new_copyright(
+            self: Self,
+        ) -> None:
+        # adds a copyright stamp to the canvas
+        self.new_brush(
+            brush_name='PathPatch',
+            key='_copyright',
+            path=self._copyright_path(),
+            visible=self.copyright_on,
+            **self.copyright_params
         )
-        height = yscale*self.cpr_height
-        return self.path_from_string(
-            s=self.copyright,
-            xy=xy,
-            font_properties=self.cpr_font_properties,
-            anchor=self.cpr_anchor,
-            height=height,
-        )
+
+    def _new_info(
+            self: Self,
+        ) -> None:
+        # represents the desired info
+        for corner in self._corners():
+            self.new_path(
+                path=Path([(0, 0)]),
+                key=f'_{corner}_info',
+                visible=self.info_on,
+                **self.info_params
+            )
 
     def _axis_grid(
             self: Self,
@@ -124,19 +129,6 @@ class Brush(Canvas):
             **getattr(self, 'axis_params', {})
         )
 
-    def _decimal_precision(
-            self: Self,
-            step: float,
-        ) -> (bool, bool):
-        # returns whether the ticks are integers, with one decimal, or more
-        is_integer = step == int(step)
-        is_integer = is_integer and self._get_bound('xmin') == int(self._get_bound('xmin'))
-        is_integer = is_integer and self._get_bound('ymin') == int(self._get_bound('ymin'))
-        single_decimal = 10*step == int(10*step)
-        single_decimal = single_decimal and 10*self._get_bound('xmin') == int(10*self._get_bound('xmin'))
-        single_decimal = single_decimal and 10*self._get_bound('ymin') == int(10*self._get_bound('ymin'))
-        return is_integer, single_decimal
-
     def _axis_ticks(
             self: Self,
             step: float,
@@ -149,70 +141,25 @@ class Brush(Canvas):
         yticks = self._get_ticks(axis='y', step=step)
         is_integer, single_decimal = self._decimal_precision(step)
         for tick in xticks[1:]:
-            paths.append(self.path_from_string(
+            paths.append(self.string_path(
                 s=self._num_to_string(tick, is_integer, single_decimal),
-                xy=(tick - margin, self._get_bound('ymin') + margin),
+                xy=(tick - margin, self.ymin + margin),
                 anchor='south east',
                 height=height,
             ))
         for tick in yticks[1:]:
-            paths.append(self.path_from_string(
+            paths.append(self.string_path(
                 s=self._num_to_string(tick, is_integer, single_decimal),
-                xy=(self._get_bound('xmin') + margin, tick - margin),
+                xy=(self.xmin + margin, tick - margin),
                 anchor='north west',
                 height=height,
             ))
-        self.add_paths(
+        self.new_paths(
             paths=paths,
             key='_ticks',
             visible=self.axis_on,
             **getattr(self, 'axis_params', {})
         )
-
-    def _scale_transform(
-            self: Self,
-            transform: Affine2D,
-            bbox: Bbox,
-            height: float = 1,
-        ) -> Affine2D:
-        # scales the transform to give the bbox a given height
-        xy_ratio = (self._get_bound('xmax') - self._get_bound('xmin'))/(self._get_bound('ymax') - self._get_bound('ymin'))
-        figsize_ratio = self.figsize[0]/self.figsize[1]
-        transform.scale(height/bbox.size[1])
-        transform.scale(xy_ratio/figsize_ratio, 1)
-        return transform
-
-    def _add_copyright(
-            self: Self,
-        ) -> None:
-        # adds a copyright stamp to the canvas
-        path = self._copyright_path()
-        self.add_brush(
-            brush_name='PathPatch',
-            key='_copyright',
-            path=path,
-            visible=self.cpr_on,
-            **self.cpr_params
-        )
-
-    def _copyright_visible(
-            self: Self,
-            visible: bool,
-        ) -> None:
-        # makes the copyright visible or not
-        if hasattr(self, 'copyright') and self.cpr_on is None:
-            self.set_brush(key='_copyright', visible=visible)
-
-    def _add_axis(
-            self: Self,
-        ) -> None:
-        # represents the axis along with the coordinates
-        step = max(
-            (self._get_bound('xmax') - self._get_bound('xmin')),
-            (self._get_bound('ymax') - self._get_bound('ymin')),
-        )/max(self.figsize)
-        self._axis_grid(step)
-        self._axis_ticks(step)
 
     def _axis_visible(
             self: Self,
@@ -223,56 +170,40 @@ class Brush(Canvas):
             for key in ['_axis', '_subaxis', '_ticks']:
                 self.set_brush(key=key, visible=visible)
 
-    def _add_info(
+    def _copyright_path(
             self: Self,
-        ) -> None:
-        # represents the desired info
-        for corner in self._corners():
-            self.add_path(
-                path=Path([(0, 0)]),
-                key=f'_{corner}_info',
-                visible=self.info_on,
-                **self.info_params
-            )
+        ) -> Path:
+        # gets the path of the copyright
+        xy = self.double(self.copyright_shift)
+        xy = self.figxy(xy*np.array([1, self.figsize[1]/self.figsize[0]]))
+        return self.string_path(
+            s=self.copyright,
+            xy=xy,
+            font_properties=self.copyright_fp,
+            anchor=self.copyright_anchor,
+            height=self.height()*self.copyright_height,
+        )
 
-    def _info_visible(
+    def _copyright_visible(
             self: Self,
             visible: bool,
         ) -> None:
-        # makes the info visible or not
-        if self.info_on is None:
-            for corner in self._corners():
-                self.set_brush(key=f'_{corner}_info', visible=visible)
+        # makes the copyright visible or not
+        if hasattr(self, 'copyright') and self.copyright_on is None:
+            self.set_brush(key='_copyright', visible=visible)
 
-    def _info_text(
+    def _decimal_precision(
             self: Self,
-            info: str,
-            corner: str = 'top_right',
-        ) -> None:
-        # modifies the text of the info
-        anchor = ''
-        if 'top' in corner:
-            y = self._get_bound('ymax') - self.info_margin
-            anchor += 'north '
-        else:
-            y = self._get_bound('ymin') + self.info_margin
-            anchor += 'south '
-        if 'right' in corner:
-            x = self._get_bound('xmax') - self.info_margin
-            anchor += 'east'
-        else:
-            x = self._get_bound('xmin') + self.info_margin
-            anchor += 'west'
-        self.apply_to_brush(
-            key=f'_{corner}_info',
-            method='set_path',
-            path=self.path_from_string(
-                s=info,
-                xy=(x, y),
-                height=self.info_height,
-                anchor=anchor,
-            )
-        )
+            step: float,
+        ) -> (bool, bool):
+        # returns whether the ticks are integers, with one decimal, or more
+        is_integer = step == int(step)
+        is_integer = is_integer and self.xmin == int(self.xmin)
+        is_integer = is_integer and self.ymin == int(self.ymin)
+        single_decimal = 10*step == int(10*step)
+        single_decimal = single_decimal and 10*self.xmin == int(10*self.xmin)
+        single_decimal = single_decimal and 10*self.ymin == int(10*self.ymin)
+        return is_integer, single_decimal
 
     def _get_ticks(
             self: Self,
@@ -284,102 +215,68 @@ class Brush(Canvas):
         ) -> list[float]:
         # returns the ticks given an axis
         if start is None:
-            start = self._get_bound(axis + 'min')
+            start = getattr(self, axis + 'min')
         if end is None:
-            end = self._get_bound(axis + 'max')
+            end = getattr(self, axis + 'max')
         if step is None:
             step = (end - start)/n_line
         return np.arange(start, end + step, step)
 
+    def _info_text(
+            self: Self,
+            info: str,
+            corner: str = 'top_right',
+        ) -> None:
+        # modifies the text of the info
+        anchor = ''
+        if 'top' in corner:
+            y = self.ymax - self.info_margin
+            anchor += 'north '
+        else:
+            y = self.ymin + self.info_margin
+            anchor += 'south '
+        if 'right' in corner:
+            x = self.xmax - self.info_margin
+            anchor += 'east'
+        else:
+            x = self.xmin + self.info_margin
+            anchor += 'west'
+        self.apply(
+            key=f'_{corner}_info',
+            method='set_path',
+            path=self.string_path(
+                s=info,
+                xy=(x, y),
+                height=self.info_height,
+                anchor=anchor,
+            )
+        )
+
+    def _info_visible(
+            self: Self,
+            visible: bool,
+        ) -> None:
+        # makes the info visible or not
+        if self.info_on is None:
+            for corner in self._corners():
+                self.set_brush(key=f'_{corner}_info', visible=visible)
+
+    def _scale_transform(
+            self: Self,
+            transform: Affine2D,
+            bbox: Bbox,
+            height: float = 1,
+        ) -> Affine2D:
+        # scales the transform to give the bbox a given height
+        xy_ratio = self.width()/self.height()
+        figsize_ratio = self.figsize[0]/self.figsize[1]
+        transform.scale(height/bbox.size[1])
+        transform.scale(xy_ratio/figsize_ratio, 1)
+        return transform
+
     '''
     static methods
     '''
-
-    @staticmethod
-    def _ticks_to_grid_path(
-            xticks: np.array,
-            yticks: np.array,
-        ) -> dict:
-        # transforms x and y ticks into a grid path
-        xmin, xmax = np.min(xticks), np.max(xticks)
-        ymin, ymax = np.min(yticks), np.max(yticks)
-        vertices = []
-        codes = []
-        for xtick in xticks:
-            vertices.append((xtick, ymin))
-            codes.append(1)
-            vertices.append((xtick, ymax))
-            codes.append(2)
-        for ytick in yticks:
-            vertices.append((xmin, ytick))
-            codes.append(1)
-            vertices.append((xmax, ytick))
-            codes.append(2)
-        return Path(vertices=vertices, codes=codes, closed=False)
-
-    @staticmethod
-    def _num_to_string(
-            tick: float,
-            is_integer: bool,
-            single_decimal: bool,
-        ) -> str:
-        # transforms a tick into a string
-        if is_integer:
-            return f'{tick:0.0f}'
-        elif single_decimal:
-            return f'{tick:0.1f}'
-        else:
-            return f'{tick:0.2f}'
-
-    @staticmethod
-    def _shift_transform(
-            transform: Affine2D,
-            bbox: Bbox,
-            anchor: str = None,
-        ) -> Affine2D:
-        # shifts the transform to move the bbox according to the anchor
-        transform.translate(*(-(bbox.size/2 + bbox.p0)))
-        transform.translate(*Brush._shift_from_anchor(
-            bbox=bbox,
-            anchor=anchor
-        ))
-        return transform
-
-    @staticmethod
-    def _corners(
-        ) -> list[str]:
-        # returns a list of corners in inverse order of importance
-        return [
-            'bottom_right',
-            'bottom_left',
-            'top_right',
-            'top_left',
-        ]
-
-    @staticmethod
-    def _shift_from_anchor(
-            bbox: Bbox,
-            anchor: str = None,
-        ) -> np.array:
-        # returns a shifting vector moving the bbox according to the anchor
-        if anchor is None:
-            return np.array([0, 0])
-        elif anchor == 'north':
-            return np.array([0, - bbox.size[1]/2])
-        elif anchor == 'south':
-            return np.array([0, bbox.size[1]/2])
-        elif anchor == 'east':
-            return np.array([- bbox.size[0]/2, 0])
-        elif anchor == 'west':
-            return np.array([bbox.size[0]/2, 0])
-        elif ' ' in anchor:
-            anchors = anchor.strip().split(' ')
-            shifts = [
-                Brush._shift_from_anchor(bbox, anchor) for anchor in anchors
-            ]
-            return np.sum(shifts, axis=0)
-        else:
-            return np.array([0, 0])
 
     @staticmethod
     def _arc_path(
@@ -410,8 +307,18 @@ class Brush(Canvas):
         transform.scale(a, b)
         transform.rotate(np.pi*angle/180)
         transform.translate(*xy)
-        path = path.transformed(transform)
-        return path
+        return path.transformed(transform)
+
+    @staticmethod
+    def _corners(
+        ) -> list[str]:
+        # returns a list of corners in inverse order of importance
+        return [
+            'bottom_right',
+            'bottom_left',
+            'top_right',
+            'top_left',
+        ]
 
     @staticmethod
     def _crescent_paths(
@@ -436,14 +343,14 @@ class Brush(Canvas):
             b=radius,
             theta1=theta1,
             theta2=theta2,
-            reverse=True,
             angle=angle,
+            reverse=True,
         )
         return inner, outer
 
     @staticmethod
     def _merge_curves(
-            *curves
+            *curves,
         ) -> Path:
         # combines multiple curves
         vertices = [curve.vertices for curve in curves]
@@ -453,11 +360,86 @@ class Brush(Canvas):
         codes[0] = 1
         return Path(vertices=vertices, codes=codes, closed=True)
 
+    @staticmethod
+    def _num_to_string(
+            tick: float,
+            is_integer: bool,
+            single_decimal: bool,
+        ) -> str:
+        # transforms a tick into a string
+        if is_integer:
+            return f'{tick:0.0f}'
+        elif single_decimal:
+            return f'{tick:0.1f}'
+        else:
+            return f'{tick:0.2f}'
+
+    @staticmethod
+    def _shift_from_anchor(
+            bbox: Bbox,
+            anchor: str = None,
+        ) -> np.array:
+        # returns a shifting vector moving the bbox according to the anchor
+        if anchor is None:
+            return np.array([0, 0])
+        elif anchor == 'north':
+            return np.array([0, - bbox.size[1]/2])
+        elif anchor == 'south':
+            return np.array([0, bbox.size[1]/2])
+        elif anchor == 'east':
+            return np.array([- bbox.size[0]/2, 0])
+        elif anchor == 'west':
+            return np.array([bbox.size[0]/2, 0])
+        elif ' ' in anchor:
+            anchors = anchor.strip().split(' ')
+            shifts = [
+                Brush._shift_from_anchor(bbox, anchor) for anchor in anchors
+            ]
+            return np.sum(shifts, axis=0)
+        else:
+            return np.array([0, 0])
+
+    @staticmethod
+    def _shift_transform(
+            transform: Affine2D,
+            bbox: Bbox,
+            anchor: str = None,
+        ) -> Affine2D:
+        # shifts the transform to move the bbox according to the anchor
+        transform.translate(*(-(bbox.size/2 + bbox.p0)))
+        transform.translate(*Brush._shift_from_anchor(
+            bbox=bbox,
+            anchor=anchor,
+        ))
+        return transform
+
+    @staticmethod
+    def _ticks_to_grid_path(
+            xticks: np.array,
+            yticks: np.array,
+        ) -> Path:
+        # transforms x and y ticks into a grid path
+        xmin, xmax = np.min(xticks), np.max(xticks)
+        ymin, ymax = np.min(yticks), np.max(yticks)
+        vertices = []
+        codes = []
+        for xtick in xticks:
+            vertices.append((xtick, ymin))
+            codes.append(1)
+            vertices.append((xtick, ymax))
+            codes.append(2)
+        for ytick in yticks:
+            vertices.append((xmin, ytick))
+            codes.append(1)
+            vertices.append((xmax, ytick))
+            codes.append(2)
+        return Path(vertices=vertices, codes=codes, closed=False)
+
     '''
     general methods
     '''
 
-    def add_brush(
+    def new_brush(
             self: Self,
             brush_name: str,
             key: Any = None,
@@ -467,7 +449,7 @@ class Brush(Canvas):
         # adds a patch to the class
         key, available = self._key_checker(key=key, category='brush')
         if available:
-            brush = self.ax.add_patch(
+            brush = self.ax.new_patch(
                 getattr(patches, brush_name)(*args, **kwargs)
             )
             self._brushs[key] = brush
@@ -475,7 +457,7 @@ class Brush(Canvas):
             brush = self._brushs[key]
         return brush
 
-    def add_path(
+    def new_path(
             self: Self,
             path: Path,
             key: Any = None,
@@ -483,15 +465,30 @@ class Brush(Canvas):
             **kwargs,
         ) -> patches.PathPatch:
         # adds a path patch to the class
-        return self.add_brush(
+        return self.new_brush(
             brush_name='PathPatch',
             key=key,
             path=path,
             *args,
-            **kwargs
+            **kwargs,
         )
 
-    def add_raw_path(
+    def new_paths(
+            self: Self,
+            paths: list[Path],
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.PathPatch:
+        # adds a path patch from a list of paths to the class
+        return self.new_path(
+            key=key,
+            path=Path.make_compound_path(*paths),
+            *args,
+            **kwargs,
+        )
+
+    def new_raw_path(
             self: Self,
             vertices: list = [(0, 0)],
             codes: list = None,
@@ -501,7 +498,7 @@ class Brush(Canvas):
             **kwargs,
         ) -> patches.PathPatch:
         # adds a path patch from raw path parameters to the class
-        return self.add_path(
+        return self.new_path(
             key=key,
             path=Path(
                 vertices=vertices,
@@ -509,25 +506,10 @@ class Brush(Canvas):
                 closed=closed,
             ),
             *args,
-            **kwargs
-        )
-
-    def add_paths(
-            self: Self,
-            paths: list[Path],
-            key: Any = None,
-            *args,
             **kwargs,
-        ) -> patches.PathPatch:
-        # adds a path patch from a list of paths to the class
-        return self.add_path(
-            key=key,
-            path=Path.make_compound_path(*paths),
-            *args,
-            **kwargs
         )
 
-    def apply_to_brush(
+    def apply(
             self: Self,
             method: str,
             key: Any = None,
@@ -536,66 +518,26 @@ class Brush(Canvas):
         ) -> patches.Patch:
         # applies a given method to a patch
         if key is None:
-            key = f'brush{self._key_index - 1}'
+            key = f'brush{self._brush_index - 1}'
         brush = self._brushs[key]
         getattr(brush, method)(*args, **kwargs)
         return brush
-
-    def set_brush(
-            self: Self,
-            key: Any = None,
-            *args,
-            **kwargs,
-        ) -> patches.Patch:
-        # sets parameters to a patch
-        return self.apply_to_brush('set', key, *args, **kwargs)
-
-    def path_from_string(
-            self: Self,
-            s: str,
-            xy: (float, float) = (0, 0),
-            size: float = None,
-            font_properties: dict = {},
-            anchor: str = None,
-            height: float = None,
-        ) -> Path:
-        # gets the path from a string
-        path = TextPath(
-            xy=xy,
-            s=s,
-            size=size,
-            prop=FontProperties(**font_properties)
-        )
-        if height is not None:
-            bbox = path.get_extents()
-            transform = Affine2D()
-            self._shift_transform(transform, bbox, anchor)
-            self._scale_transform(transform, bbox, height)
-            transform.translate(*xy)
-            path = path.transformed(transform)
-        return path
 
     def grid(
             self: Self,
             key: Any = None,
             left: float = None,
             right: float = None,
-            top: float = None,
             bottom: float = None,
+            top: float = None,
             steps: tuple[float] = None,
             blocks: tuple[int] = 1,
             *args,
             **kwargs,
         ) -> patches.PathPatch:
         # creates a grid
-        if steps is None:
-            steps = (None, None)
-        elif isinstance(steps, float) or isinstance(steps, int):
-            steps = (steps, steps)
-        if blocks is None:
-            blocks = (None, None)
-        elif isinstance(blocks, int):
-            blocks = (blocks, blocks)
+        steps = self.double(steps)
+        blocks = self.double(blocks)
         xticks = self._get_ticks(
             axis='x',
             start=left,
@@ -610,18 +552,18 @@ class Brush(Canvas):
             step=steps[1],
             n_line=blocks[1],
         )
-        return self.add_path(
+        return self.new_path(
             key=key,
             path=self._ticks_to_grid_path(xticks, yticks),
             *args,
-            **kwargs
+            **kwargs,
         )
 
-    def show_copyright(
+    def hide_axis(
             self: Self,
         ) -> None:
-        # makes the copyright visible
-        self._copyright_visible(True)
+        # makes the axis invisible
+        self._axis_visible(False)
 
     def hide_copyright(
             self: Self,
@@ -629,17 +571,57 @@ class Brush(Canvas):
         # makes the copyright invisible
         self._copyright_visible(False)
 
+    def hide_info(
+            self: Self,
+        ) -> None:
+        # makes the info visible
+        self._info_visible(False)
+
+    def string_to_path(
+            self: Self,
+            s: str,
+            xy: (float, float) = (0, 0),
+            size: float = None,
+            font_properties: dict = {},
+            anchor: str = None,
+            height: float = None,
+        ) -> Path:
+        # gets the path from a string
+        path = TextPath(
+            xy=(0, 0),
+            s=s,
+            size=size,
+            prop=FontProperties(**font_properties),
+        )
+        bbox = path.get_extents()
+        transform = Affine2D()
+        self._shift_transform(transform, bbox, anchor)
+        if height is not None:
+            self._scale_transform(transform, bbox, height)
+        transform.translate(*xy)
+        path = path.transformed(transform)
+        return path
+
+    def set(
+            self: Self,
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.Patch:
+        # sets parameters to a patch
+        return self.apply('set', key, *args, **kwargs)
+
     def show_axis(
             self: Self,
         ) -> None:
         # makes the axis visible
         self._axis_visible(True)
 
-    def hide_axis(
+    def show_copyright(
             self: Self,
         ) -> None:
-        # makes the axis invisible
-        self._axis_visible(False)
+        # makes the copyright visible
+        self._copyright_visible(True)
 
     def show_info(
             self: Self,
@@ -656,8 +638,3 @@ class Brush(Canvas):
                 if info is not None:
                     self._info_text(info, corner)
 
-    def hide_info(
-            self: Self,
-        ) -> None:
-        # makes the info visible
-        self._info_visible(False)
