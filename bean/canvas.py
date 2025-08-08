@@ -248,9 +248,9 @@ class Canvas(object):
 
     @staticmethod
     def hsl(
-            hue: float = 127/360,
-            saturation: float = 1,
-            lightness: float = 1/2,
+            hue: float = 0.3528,
+            saturation: float = 0.5,
+            lightness: float = 0.5,
         ) -> (float, float, float):
         # creates a rgb colour from HSV values
         return hls_to_rgb(hue, lightness, saturation)
