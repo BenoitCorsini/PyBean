@@ -18,9 +18,9 @@ class Canvas(object):
 
     figsize = (16, 9)
     dpi = 100
-    left = 0.
-    right = 1.
-    bottom = 0.
+    left = 0
+    right = None
+    bottom = 0
     top = None
     seed = None
 
@@ -166,12 +166,19 @@ class Canvas(object):
             if value is not None:
                 setattr(self, key, value)
         self.xmin = self.left
-        self.xmax = self.right
         self.ymin = self.bottom
-        if self.top is None:
-            height = (self.right - self.left)*self.figsize[1]/self.figsize[0]
-            self.ymax = self.bottom + height
+        figratio = self.figsize[1]/self.figsize[0]
+        if self.top is None and self.right is None:
+            self.xmax = self.xmin + 1
+            self.ymax = self.ymin + figratio
+        elif self.top is None:
+            self.xmax = self.right
+            self.ymax = self.ymin + (self.xmax - self.xmin)*figratio
+        elif self.right is None:
+            self.ymax = self.top
+            self.xmax = self.xmin + (self.ymax - self.ymin)/figratio
         else:
+            self.xmax = self.right
             self.ymax = self.top
         return self
 
