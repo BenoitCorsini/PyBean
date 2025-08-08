@@ -8,7 +8,7 @@ CV.add_arg('--cscale_colour')
 CV.set_args(True)
 
 # sets up the default variables
-cmap = Canvas.get_cscale(colour=CV.cscale_colour)
+cmap = Canvas.cscale(colour=CV.cscale_colour)
 step = 0.02
 linewidth = 10
 
