@@ -1,3 +1,4 @@
+import itertools
 import numpy as np
 from matplotlib.path import Path
 from typing_extensions import Any, Self
@@ -21,12 +22,13 @@ class Volume(Brush):
     view_screen = 2
     sun_direction = (0.5, 0.25, -1)
     shade_colour = Brush.hsl(saturation=0, lightness=0)
-    shade_opacity = 0.1
+    shade_opacity = 1e-1
+    overlay_colour = Brush.hsl(saturation=0, lightness=0)
+    overlay_opacity = 5e-2
     _sun_colour = Brush.hsl(hue=0.17, saturation=1, lightness=0.8)
     _sun_lightness = 0.3
     _sun_darkness = 0.9
     _screen_thr = 2
-    _face_visible_threshold = 1e-9
 
     _volume_params = {
         'draft' : bool,
@@ -61,7 +63,6 @@ class Volume(Brush):
         return self
 
     def __set_view__(self):
-        self.above_ground = 2*(self.view_height >= 0) - 1
         rotation = np.pi*self.view_rotation/180
         self.view_pos = np.array([[
             -self.view_dist*np.sin(rotation),
@@ -149,6 +150,27 @@ class Volume(Brush):
         ground_dist = pos[:,2:]/self.sun_direction[:,2]
         return pos - ground_dist*self.sun_direction
 
+    def _face_brush(self, key):
+        self.new_brush(
+            brush_name='Polygon',
+            key=key,
+            xy=[(0, 0)],
+            lw=1,
+            capstyle='round',
+            joinstyle='round',
+        )
+
+    def _shade_brush(self, key):
+        self.new_path_from_raw(
+            key=key,
+            vertices=[(0, 0)],
+            lw=0,
+            capstyle='round',
+            joinstyle='round',
+            zorder=0,
+        )
+
+
     '''
     general methods
     '''
@@ -171,6 +193,10 @@ class Volume(Brush):
                 for index in range(len(polyhedron))
             ]
             shade = f'{key}_shade'
+            overlay = [{
+                volume_key : f'{key}_overlay{index}_{volume_key}'
+                for volume_key in self._volumes
+            } for index in range(len(polyhedron))]
             volume = {
                 'key' : key,
                 'polyhedron' : polyhedron.modify(
@@ -181,31 +207,30 @@ class Volume(Brush):
                 ),
                 'main' : main,
                 'shade' : shade,
+                'overlay' : overlay
             }
             for brush_key in main:
-                self.new_brush(
-                    brush_name='Polygon',
-                    key=brush_key,
-                    xy=[(0, 0)],
-                    lw=1,
-                    capstyle='round',
-                    joinstyle='round',
-                )
-            self.new_path_from_raw(
-                key=shade,
-                vertices=[(0, 0)],
-                lw=0,
-                capstyle='round',
-                joinstyle='round',
-                zorder=0,
-            )
-            kwargs['shade_colour'] = kwargs.get('shade_colour', self.shade_colour)
-            kwargs['shade_opacity'] = kwargs.get('shade_opacity', self.shade_opacity)
+                self._face_brush(brush_key)
+            self._shade_brush(shade)
+            for face_info in overlay:
+                for brush_key in face_info.values():
+                    self._shade_brush(brush_key)
+            for param in itertools.product(['shade', 'overlay'], ['colour', 'opacity']):
+                param = f'{param[0]}_{param[1]}'
+                kwargs[param] = kwargs.get(param, getattr(self, param))
             volume.update(**kwargs)
+            for other_key, other_volume in self._volumes.items():
+                for index in range(len(other_volume['polyhedron'])):
+                    overlay_key = f'{other_key}_overlay{index}_{key}'
+                    other_volume['overlay'][index].update({
+                        key : overlay_key
+                    })
+                    self._shade_brush(overlay_key)
             self._volumes[key] = volume
         else:
             volume = self._volumes[key]
         self._update_volume(**volume)
+        self._overlay([volume['key']])
         return self
 
     def _ortho_to_colour(self, ortho, colour):
@@ -217,52 +242,63 @@ class Volume(Brush):
 
     def _update_volume(
             self: Self,
-            name: str = None,
-            key: Any = None,
-            polyhedron: Polyhedron = None,
-            main: list[Any] = [],
-            shade: list[Any] = [],
+            name: str,
+            key: Any,
+            polyhedron: Polyhedron,
+            main: list[Any],
+            shade: Any,
+            overlay: list[Any],
             colour: Any = Brush.hsl(),
-            shade_colour: Any = None,
+            shade_colour: Any = 'black',
+            overlay_colour: Any = 'black',
             opacity: float = 1,
             shade_opacity: float = 1,
+            overlay_opacity: float = 1,
             visible: bool = True,
-            *args,
-            **kwargs,
         ) -> Self:
         # updates a given volume
-        polyhedron.modify(*args, **kwargs)
         points = self.scale*polyhedron.get_points()
         centres = self.scale*polyhedron.get_centres()
         orthos = polyhedron.get_orthos()
         xy = self._xy(points)
         shade_xy = self._xy(self._to_shade(points))
-        zorders = self.above_ground*(self.view_screen + self._project(centres)[:,2])**(1 - self.above_ground)
+        if self.view_height >= 0:
+            zorders = 1/(self.view_screen + self._project(centres)[:,2])
+        else:
+            zorders = -(self.view_screen + self._project(centres)[:,2])
         colours = self._ortho_to_colour(orthos, colour)
-        visibles = np.sum(orthos*(centres - self.view_pos), axis=1) <= self._face_visible_threshold
+        visibles = np.sum(orthos*(centres - self.view_pos), axis=1) <= 0
         positive_sun = np.sum(orthos*self.sun_direction, axis=1) <= 0
         shade_vertices = []
         shade_codes = []
         for brush_key, (index, face) in zip(main, enumerate(polyhedron)):
             self.set(
-                xy=xy[face],
                 key=brush_key,
+                xy=xy[face],
                 zorder=zorders[index],
                 color=colours[index],
                 alpha=opacity,
                 visible=visible and visibles[index],
             )
+            for overlay_volume, overlay_key in overlay[index].items():
+                self.set(
+                    key=overlay_key,
+                    zorder=zorders[index],
+                    color=self._volumes[overlay_volume]['overlay_colour'],
+                    alpha=self._volumes[overlay_volume].get('opacity', 1)*self._volumes[overlay_volume]['overlay_opacity'],
+                    visible=self._volumes[overlay_volume].get('opacity', True) and visibles[index],
+                )
             if not positive_sun[index]:
                 face = face[::-1]
             shade_vertices.append(shade_xy[face + [0]])
             shade_codes += [1] + [2]*(len(face) - 1) + [79]
         self.set(
+            key=shade,
             path=Path(
                 vertices=np.concatenate(shade_vertices),
                 codes=shade_codes,
             ),
-            key=shade,
-            color=self.shade_colour if shade_colour is None else shade_colour,
+            color=shade_colour,
             alpha=opacity*shade_opacity,
             visible=visible,
         )
@@ -320,7 +356,7 @@ class Volume(Brush):
             raise ValueError(message)
         return only_avoid
 
-    def _get_volumes(
+    def volumes(
             self: Self,
             only: Any = None,
             avoid: Any = [],
@@ -341,7 +377,7 @@ class Volume(Brush):
             **kwargs,
         ) -> list:
         # returns the list of all volumes satifying the conditions
-        volumes = self._get_volumes(only, avoid)
+        volumes = self.volumes(only, avoid)
         for volume in volumes:
             self._volumes[volume]['polyhedron'].modify(
                 pos=pos,
@@ -351,4 +387,62 @@ class Volume(Brush):
             )
             self._volumes[volume].update(**kwargs)
             self._update_volume(**self._volumes[volume])
+        self._overlay(volumes)
+
+    def _overlay(self, volumes):
+        if not volumes:
+            return None
+        for vol1 in self._volumes.values():
+            key1 = vol1['key']
+            poly1 = vol1['polyhedron']
+            pts1 = self.scale*poly1.get_points()
+            xy1 = self._xy(pts1)
+            centres = self.scale*poly1.get_centres()
+            orthos = poly1.get_orthos()
+            for vol2 in self._volumes.values():
+                key2 = vol2['key']
+                poly2 = vol2['polyhedron']
+                pts2 = self.scale*poly2.get_points()
+                if key1 == key2:
+                    continue
+                if key1 not in volumes and key2 not in volumes:
+                    continue
+                for index, face in enumerate(poly1):
+                    centre = centres[index].reshape((1, 3))
+                    ortho = orthos[index].reshape((1, 3))
+                    sun_ortho = np.sum(self.sun_direction*ortho)
+                    if sun_ortho >= 0:
+                        continue
+                    positive = np.sum(ortho*poly2.orthos, axis=1) >= 0
+                    overlay_vertices = []
+                    overlay_codes = []
+                    overlay_key = f'{key1}_overlay{index}_{key2}'
+                    for over_index, over_face in enumerate(poly2):
+                        if positive[over_index]:
+                            over_face = over_face[::-1]
+                        over_pts = pts2[over_face]
+                        projs = centre - over_pts
+                        projs = np.sum(projs*ortho, axis=1, keepdims=True)
+                        projs /= sun_ortho
+                        not_ignore = projs[:,0] >= 0
+                        projs = over_pts + projs*self.sun_direction
+                        projs = projs[not_ignore,:]
+                        if not np.size(projs):
+                            continue
+                        overlay_vertices.append(self._xy(projs))
+                        overlay_vertices.append(np.zeros((1, 2)))
+                        overlay_codes += [1] + [2]*(len(projs) - 1) + [79]
+                    if not overlay_codes:
+                        continue
+                    self.set(
+                        key=f'{key1}_overlay{index}_{key2}',
+                        path=Path(
+                            vertices=np.concatenate(overlay_vertices),
+                            codes=overlay_codes,
+                        ),
+                        clip_path=self._brushs[f'{key1}_main{index}'],
+                    )
+
+
+
 

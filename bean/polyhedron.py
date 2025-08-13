@@ -92,17 +92,17 @@ class Polyhedron(object):
         return transform
 
     @classmethod
-    def cube(cls):
+    def brick(cls, x=1, y=1, z=1):
         return cls(
             points=[
-                (-0.5, -0.5, 0),
-                (+0.5, -0.5, 0),
-                (+0.5, +0.5, 0),
-                (-0.5, +0.5, 0),
-                (-0.5, -0.5, 1),
-                (+0.5, -0.5, 1),
-                (+0.5, +0.5, 1),
-                (-0.5, +0.5, 1),
+                (-x/2, -y/2, 0),
+                (+x/2, -y/2, 0),
+                (+x/2, +y/2, 0),
+                (-x/2, +y/2, 0),
+                (-x/2, -y/2, z),
+                (+x/2, -y/2, z),
+                (+x/2, +y/2, z),
+                (-x/2, +y/2, z),
             ],
             faces=[
                 [3, 2, 1, 0],
@@ -113,6 +113,10 @@ class Polyhedron(object):
                 [1, 2, 6, 5],
             ],
         )
+
+    @classmethod
+    def cube(cls):
+        return cls.brick()
 
     @classmethod
     def pyramid(cls, height=1, base=None):

@@ -29,10 +29,6 @@ class Canvas(object):
     _canvas_params = {
         'figsize' : int,
         'dpi' : int,
-        'left' : float,
-        'right' : float,
-        'bottom' : float,
-        'top' : float,
         'seed' : int,
     }
 
