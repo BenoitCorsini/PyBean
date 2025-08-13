@@ -1,6 +1,6 @@
 from typing_extensions import Any, Self
 
-from ._motion3_movement import _MotionMovement
+from ._motion4_movement import _MotionMovement
 
 
 class Motion(_MotionMovement):
@@ -25,9 +25,16 @@ class Motion(_MotionMovement):
             kwargs['key'] = waiter
         return self._params_to_number_of_frames(**kwargs)
 
+    def clear_motions(
+            self: Self,
+        ) -> Self:
+        # removes all current motions
+        self._motions = {}
+        return self
+
     def frame_time(
             self: Self,
-        ):
+        ) -> str:
         # returns time information related to the current frame
         frame_time = self._frame_index/self.fps
         s = self.time_to_string(frame_time)
@@ -68,6 +75,19 @@ class Motion(_MotionMovement):
         # waits before next motion
         for _ in range(self.get_number_of_frames(*args, **kwargs)):
             self.new_frame()
+        return self
+
+    def wait_to(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # waits until the desired time
+        target_index = self.get_number_of_frames(*args, **kwargs)
+        if self._frame_index <= target_index:
+            self.wait(target_index - self._frame_index)
+        elif self.draft:
+            print(f'Waiting an already past time stamp: target is {target_index} and current is {self._frame_index - 1}')
         return self
 
     def video(
@@ -151,6 +171,14 @@ class Motion(_MotionMovement):
         kwargs['start_with'] = 1
         kwargs['end_with'] = 0
         return self.change_opacity(*args, **kwargs)
+
+    def change_colour(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # changes a volume radius
+        return self._create_motion('change_colour', *args, **kwargs)
 
     def change_radius(
             self: Self,

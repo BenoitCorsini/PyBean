@@ -37,9 +37,9 @@ class _Motion(Volume):
     movement_frequency = 2
     movement_damping = 0.4
     movement_response = 12
-    movement_batch_size = 10
-    movement_position_threshold = 3e-3
-    movement_speed_threshold = 5e-3
+    movement_batch = 10
+    movement_pos_thr = 3e-3
+    movement_speed_thr = 5e-3
 
     _motion_params = {
         'fps' : int,
@@ -263,7 +263,9 @@ class _Motion(Volume):
             step = duration - 1
             finished = True
         self._motions[motion_index]['step'] = step + 1
-        if step >= 0:
+        if step < 0:
+            getattr(self, method)(step=0, duration=duration, **kwargs)
+        else:
             getattr(self, method)(step=step + 1, duration=duration, **kwargs)
         if early_stops is not None and not finished:
             if step >= early_stops[0] - 1:

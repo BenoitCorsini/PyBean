@@ -197,4 +197,4 @@ class _VolumePolyhedron(_VolumeTube):
         else:
             for key, shade_xy in zip(_shade, shades_xy):
                 self.apply_to_brush('set_xy', key=key, xy=shade_xy)
-                self.set_brush(key=key, color=shade_colour, alpha=opacity)
+                self.set_brush(key=key, color=shade_colour, alpha=opacity*self._shade_opacity)

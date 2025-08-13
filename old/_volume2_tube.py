@@ -188,7 +188,7 @@ class _VolumeTube(_VolumeSphere):
                 )
             if shade_colour is None:
                 shade_colour = self._get_shade_colour(clipper.get_fc())
-            self.set_brush(key=_shade, color=shade_colour, alpha=opacity)
+            self.set_brush(key=_shade, color=shade_colour, alpha=opacity*self._shade_opacity)
             distance = self.distance_from_xy(
                 variables['shade_xy1'],
                 variables['shade_xy2'],

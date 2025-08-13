@@ -1,5 +1,6 @@
 import os.path as osp
 import numpy as np
+import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.path import Path
 from matplotlib.font_manager import FontProperties
@@ -64,7 +65,7 @@ class Brush(Canvas):
         'info_on' : bool,
     }
 
-    def _new_brush(
+    def _init_brush(
             self: Self,
         ) -> Self:
         # new brush instance
@@ -141,20 +142,20 @@ class Brush(Canvas):
         yticks = self._get_ticks(axis='y', step=step)
         is_integer, single_decimal = self._decimal_precision(step)
         for tick in xticks[1:]:
-            paths.append(self.string_path(
+            paths.append(self.string_to_path(
                 s=self._num_to_string(tick, is_integer, single_decimal),
                 xy=(tick - margin, self.ymin + margin),
                 anchor='south east',
                 height=height,
             ))
         for tick in yticks[1:]:
-            paths.append(self.string_path(
+            paths.append(self.string_to_path(
                 s=self._num_to_string(tick, is_integer, single_decimal),
                 xy=(self.xmin + margin, tick - margin),
                 anchor='north west',
                 height=height,
             ))
-        self.new_paths(
+        self.new_path_from_list(
             paths=paths,
             key='_ticks',
             visible=self.axis_on,
@@ -168,7 +169,7 @@ class Brush(Canvas):
         # makes the axis visible or not
         if self.axis_on is None:
             for key in ['_axis', '_subaxis', '_ticks']:
-                self.set_brush(key=key, visible=visible)
+                self.set(key=key, visible=visible)
 
     def _copyright_path(
             self: Self,
@@ -176,7 +177,7 @@ class Brush(Canvas):
         # gets the path of the copyright
         xy = self.double(self.copyright_shift)
         xy = self.figxy(xy*np.array([1, self.figsize[1]/self.figsize[0]]))
-        return self.string_path(
+        return self.string_to_path(
             s=self.copyright,
             xy=xy,
             font_properties=self.copyright_fp,
@@ -190,7 +191,7 @@ class Brush(Canvas):
         ) -> None:
         # makes the copyright visible or not
         if hasattr(self, 'copyright') and self.copyright_on is None:
-            self.set_brush(key='_copyright', visible=visible)
+            self.set(key='_copyright', visible=visible)
 
     def _decimal_precision(
             self: Self,
@@ -244,7 +245,7 @@ class Brush(Canvas):
         self.apply(
             key=f'_{corner}_info',
             method='set_path',
-            path=self.string_path(
+            path=self.string_to_path(
                 s=info,
                 xy=(x, y),
                 height=self.info_height,
@@ -259,7 +260,7 @@ class Brush(Canvas):
         # makes the info visible or not
         if self.info_on is None:
             for corner in self._corners():
-                self.set_brush(key=f'_{corner}_info', visible=visible)
+                self.set(key=f'_{corner}_info', visible=visible)
 
     def _scale_transform(
             self: Self,
@@ -278,36 +279,36 @@ class Brush(Canvas):
     static methods
     '''
 
-    @staticmethod
-    def _arc_path(
-            theta1: float = 0,
-            theta2: float = 360,
-        ) -> Path:
-        # creates an arc path
-        return Path.arc(theta1, theta2)
+    # @staticmethod
+    # def _arc_path(
+    #         theta1: float = 0,
+    #         theta2: float = 360,
+    #     ) -> Path:
+    #     # creates an arc path
+    #     return Path.arc(theta1, theta2)
 
-    @staticmethod
-    def _curve_path(
-            xy: (float, float) = (0, 0),
-            a: float = 1,
-            b: float = None,
-            theta1: float = 0,
-            theta2: float = 360,
-            reverse: bool = False,
-            angle: float = 0,
-        ) -> Path:
-        # creates a partial ellipse
-        if b is None:
-            b = a
-        if reverse:
-            theta1, theta2 = 180 - theta2, 180 - theta1
-            a *= -1
-        path = Brush._arc_path(theta1, theta2)
-        transform = Affine2D()
-        transform.scale(a, b)
-        transform.rotate(np.pi*angle/180)
-        transform.translate(*xy)
-        return path.transformed(transform)
+    # @staticmethod
+    # def _curve_path(
+    #         xy: (float, float) = (0, 0),
+    #         a: float = 1,
+    #         b: float = None,
+    #         theta1: float = 0,
+    #         theta2: float = 360,
+    #         reverse: bool = False,
+    #         angle: float = 0,
+    #     ) -> Path:
+    #     # creates a partial ellipse
+    #     if b is None:
+    #         b = a
+    #     if reverse:
+    #         theta1, theta2 = 180 - theta2, 180 - theta1
+    #         a *= -1
+    #     path = Brush._arc_path(theta1, theta2)
+    #     transform = Affine2D()
+    #     transform.scale(a, b)
+    #     transform.rotate(np.pi*angle/180)
+    #     transform.translate(*xy)
+    #     return path.transformed(transform)
 
     @staticmethod
     def _corners(
@@ -320,45 +321,45 @@ class Brush(Canvas):
             'top_left',
         ]
 
-    @staticmethod
-    def _crescent_paths(
-            xy: (float, float) = (0, 0),
-            radius: float = 1,
-            ratio: float = 1,
-            theta1: float = 0,
-            theta2: float = 360,
-            angle: float = 0,
-        ) -> Path:
-        # creates the two parts of a crescent
-        outer = Brush._curve_path(
-            xy=xy,
-            a=radius,
-            theta1=theta1,
-            theta2=theta2,
-            angle=angle,
-        )
-        inner = Brush._curve_path(
-            xy=xy,
-            a=radius*(1 - ratio),
-            b=radius,
-            theta1=theta1,
-            theta2=theta2,
-            angle=angle,
-            reverse=True,
-        )
-        return inner, outer
+    # @staticmethod
+    # def _crescent_paths(
+    #         xy: (float, float) = (0, 0),
+    #         radius: float = 1,
+    #         ratio: float = 1,
+    #         theta1: float = 0,
+    #         theta2: float = 360,
+    #         angle: float = 0,
+    #     ) -> Path:
+    #     # creates the two parts of a crescent
+    #     outer = Brush._curve_path(
+    #         xy=xy,
+    #         a=radius,
+    #         theta1=theta1,
+    #         theta2=theta2,
+    #         angle=angle,
+    #     )
+    #     inner = Brush._curve_path(
+    #         xy=xy,
+    #         a=radius*(1 - ratio),
+    #         b=radius,
+    #         theta1=theta1,
+    #         theta2=theta2,
+    #         angle=angle,
+    #         reverse=True,
+    #     )
+    #     return inner, outer
 
-    @staticmethod
-    def _merge_curves(
-            *curves,
-        ) -> Path:
-        # combines multiple curves
-        vertices = [curve.vertices for curve in curves]
-        vertices = np.concatenate(vertices)
-        codes = [curve.codes + (curve.codes == 1) for curve in curves]
-        codes = np.concatenate(codes)
-        codes[0] = 1
-        return Path(vertices=vertices, codes=codes, closed=True)
+    # @staticmethod
+    # def _merge_curves(
+    #         *curves,
+    #     ) -> Path:
+    #     # combines multiple curves
+    #     vertices = [curve.vertices for curve in curves]
+    #     vertices = np.concatenate(vertices)
+    #     codes = [curve.codes + (curve.codes == 1) for curve in curves]
+    #     codes = np.concatenate(codes)
+    #     codes[0] = 1
+    #     return Path(vertices=vertices, codes=codes, closed=True)
 
     @staticmethod
     def _num_to_string(
@@ -435,79 +436,16 @@ class Brush(Canvas):
             codes.append(2)
         return Path(vertices=vertices, codes=codes, closed=False)
 
+    @staticmethod
+    def image_to_matrix(
+            file: str,
+        ) -> np.array:
+        # loads an image as a matrix
+        return plt.imread(file)
+
     '''
     general methods
     '''
-
-    def new_brush(
-            self: Self,
-            brush_name: str,
-            key: Any = None,
-            *args,
-            **kwargs,
-        ) -> patches.Patch:
-        # adds a patch to the class
-        key, available = self._key_checker(key=key, category='brush')
-        if available:
-            brush = self.ax.new_patch(
-                getattr(patches, brush_name)(*args, **kwargs)
-            )
-            self._brushs[key] = brush
-        else:
-            brush = self._brushs[key]
-        return brush
-
-    def new_path(
-            self: Self,
-            path: Path,
-            key: Any = None,
-            *args,
-            **kwargs,
-        ) -> patches.PathPatch:
-        # adds a path patch to the class
-        return self.new_brush(
-            brush_name='PathPatch',
-            key=key,
-            path=path,
-            *args,
-            **kwargs,
-        )
-
-    def new_paths(
-            self: Self,
-            paths: list[Path],
-            key: Any = None,
-            *args,
-            **kwargs,
-        ) -> patches.PathPatch:
-        # adds a path patch from a list of paths to the class
-        return self.new_path(
-            key=key,
-            path=Path.make_compound_path(*paths),
-            *args,
-            **kwargs,
-        )
-
-    def new_raw_path(
-            self: Self,
-            vertices: list = [(0, 0)],
-            codes: list = None,
-            closed: bool = False,
-            key: Any = None,
-            *args,
-            **kwargs,
-        ) -> patches.PathPatch:
-        # adds a path patch from raw path parameters to the class
-        return self.new_path(
-            key=key,
-            path=Path(
-                vertices=vertices,
-                codes=codes,
-                closed=closed,
-            ),
-            *args,
-            **kwargs,
-        )
 
     def apply(
             self: Self,
@@ -577,30 +515,100 @@ class Brush(Canvas):
         # makes the info visible
         self._info_visible(False)
 
-    def string_to_path(
+    def new_brush(
             self: Self,
-            s: str,
-            xy: (float, float) = (0, 0),
-            size: float = None,
-            font_properties: dict = {},
-            anchor: str = None,
-            height: float = None,
-        ) -> Path:
-        # gets the path from a string
-        path = TextPath(
-            xy=(0, 0),
-            s=s,
-            size=size,
-            prop=FontProperties(**font_properties),
+            brush_name: str,
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.Patch:
+        # adds a patch to the class
+        key, available = self.check_key(key)
+        if available:
+            brush = self.ax.add_patch(
+                getattr(patches, brush_name)(*args, **kwargs)
+            )
+            self._brushs[key] = brush
+        else:
+            brush = self._brushs[key]
+        return brush
+
+    def new_image(
+            self: Self,
+            file: str,
+            *args,
+            **kwargs,
+        ) -> patches.Patch:
+        # adds an image to the class
+        return self.new_image_from_matrix(
+            self.image_to_matrix(file),
+            *args,
+            **kwargs,
         )
-        bbox = path.get_extents()
-        transform = Affine2D()
-        self._shift_transform(transform, bbox, anchor)
-        if height is not None:
-            self._scale_transform(transform, bbox, height)
-        transform.translate(*xy)
-        path = path.transformed(transform)
-        return path
+
+    def new_image_from_matrix(
+            self: Self,
+            matrix: np.array,
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.Patch:
+        # adds an image from a matrix to the class
+        key, available = self.check_key(key)
+        if available:
+            brush = self.ax.imshow(matrix, *args, **kwargs)
+            self._brushs[key] = brush
+        else:
+            brush = self._brushs[key]
+        return brush
+
+    def new_path(
+            self: Self,
+            path: Path,
+            key: Any = None,
+            *args,
+            **kwargs,
+        ) -> patches.PathPatch:
+        # adds a path patch to the class
+        return self.new_brush(
+            brush_name='PathPatch',
+            key=key,
+            path=path,
+            *args,
+            **kwargs,
+        )
+
+    def new_path_from_list(
+            self: Self,
+            paths: list[Path],
+            *args,
+            **kwargs,
+        ) -> patches.PathPatch:
+        # adds a path patch from a list of paths to the class
+        return self.new_path(
+            path=Path.make_compound_path(*paths),
+            *args,
+            **kwargs,
+        )
+
+    def new_path_from_raw(
+            self: Self,
+            vertices: list = [(0, 0)],
+            codes: list = None,
+            closed: bool = False,
+            *args,
+            **kwargs,
+        ) -> patches.PathPatch:
+        # adds a path patch from raw path parameters to the class
+        return self.new_path(
+            path=Path(
+                vertices=vertices,
+                codes=codes,
+                closed=closed,
+            ),
+            *args,
+            **kwargs,
+        )
 
     def set(
             self: Self,
@@ -637,4 +645,29 @@ class Brush(Canvas):
                 info = locals()[f'{corner}_info']
                 if info is not None:
                     self._info_text(info, corner)
+
+    def string_to_path(
+            self: Self,
+            s: str,
+            xy: (float, float) = (0, 0),
+            size: float = None,
+            font_properties: dict = {},
+            anchor: str = None,
+            height: float = None,
+        ) -> Path:
+        # gets the path from a string
+        path = TextPath(
+            xy=(0, 0),
+            s=s,
+            size=size,
+            prop=FontProperties(**font_properties),
+        )
+        bbox = path.get_extents()
+        transform = Affine2D()
+        self._shift_transform(transform, bbox, anchor)
+        if height is not None:
+            self._scale_transform(transform, bbox, height)
+        transform.translate(*xy)
+        path = path.transformed(transform)
+        return path
 

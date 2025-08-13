@@ -222,17 +222,17 @@ class Canvas(object):
 
     @staticmethod
     def double(
-            double: Any,
+            double: Any = None,
         ) -> (Any, Any):
         # transforms an input into two values
         if double is None:
-            return (None, None)
+            return None, None
         elif not hasattr(double, '__len__'):
             return double, double
-        elif len(double) == 1:
-            return double[0], double[0]
+        elif len(double) < 2:
+            return double, double
         else:
-            return double[0], double[1]
+            return double[:2]
 
     @staticmethod
     def greyscale(
@@ -283,6 +283,16 @@ class Canvas(object):
         self._parser.add_argument(*args, **kwargs)
         return self
 
+    def check_key(
+            self: Self,
+            key: Any = None,
+        ) -> (Any, bool):
+        # checks whether the key is available from the current class
+        return self._key_checker(
+            key=key,
+            category=self.__class__.__name__.lower(),
+        )
+
     def extent(
             self: Self,
         ) -> (float, float, float, float):
@@ -291,26 +301,34 @@ class Canvas(object):
 
     def figx(
             self: Self,
-            ratio: float = 0.5,
-        ) -> float:
+            ratio: np.array = 0.5,
+        ) -> np.array:
         # returns the horizontal position corresponding to the given ratio
         return self.xmin + ratio*self.width()
 
     def figxy(
             self: Self,
-            ratio: Any = 0.5,
+            ratio: np.array = np.array([0.5, 0.5]),
         ) -> np.array:
         # returns the figure position corresponding to the given ratio
-        ratiox, ratioy = self.double(ratio)
-        return np.array([
-            self.figx(ratiox),
-            self.figy(ratioy),
-        ])
+        ratio = np.array(ratio)
+        if len(ratio.shape) > 1:
+            ratiox, ratioy = ratio.T
+            return np.stack([
+                self.figx(ratiox),
+                self.figy(ratioy),
+            ], axis=1)
+        else:
+            ratiox, ratioy = ratio
+            return np.array([
+                self.figx(ratiox),
+                self.figy(ratioy),
+            ])
 
     def figy(
             self: Self,
-            ratio: float = 0.5,
-        ) -> float:
+            ratio: np.array = 0.5,
+        ) -> np.array:
         # returns the vertical position corresponding to the given ratio
         return self.ymin + ratio*self.height()
 

@@ -1,7 +1,7 @@
 import numpy as np
 from typing_extensions import Any, Self
 
-from ._motion2_change_radius import _MotionChangeRadius
+from ._motion3_change_radius import _MotionChangeRadius
 
 
 class _MotionMovement(_MotionChangeRadius):
@@ -62,9 +62,9 @@ class _MotionMovement(_MotionChangeRadius):
             frequency: float = None,
             damping: float = None,
             response: float = None,
-            batch_size: int = None,
-            position_threshold: float = None,
-            speed_threshold: float = None,
+            batch: int = None,
+            pos_thr: float = None,
+            speed_thr: float = None,
             rigid: bool = False,
             **kwargs
         ) -> dict:
@@ -75,14 +75,14 @@ class _MotionMovement(_MotionChangeRadius):
             damping = self.movement_damping
         if response is None:
             response = self.movement_response
-        if batch_size is None:
-            batch_size = self.movement_batch_size
-        if position_threshold is None:
-            position_threshold = self.movement_position_threshold
-        position_threshold = position_threshold**2
-        if speed_threshold is None:
-            speed_threshold = self.movement_speed_threshold
-        speed_threshold = speed_threshold**2
+        if batch is None:
+            batch = self.movement_batch
+        if pos_thr is None:
+            pos_thr = self.movement_pos_thr
+        pos_thr = pos_thr**2
+        if speed_thr is None:
+            speed_thr = self.movement_speed_thr
+        speed_thr = speed_thr**2
         k1 = damping/np.pi/frequency
         k2 = 1/(2*np.pi*frequency)**2
         k3 = response*damping/2/np.pi/frequency
@@ -91,9 +91,9 @@ class _MotionMovement(_MotionChangeRadius):
         current_speed = np.array(initial_speed).astype(float)
         current_puller = path[0]
         for index in range(duration + 1):
-            for batch_index in range(batch_size):
+            for batch_index in range(batch):
                 next_puller = np.array(self._normed_path_to_pos(
-                    ratio=(index + batch_index/batch_size)/duration,
+                    ratio=(index + batch_index/batch)/duration,
                     path=path,
                     norm=norm,
                 ))
@@ -101,23 +101,23 @@ class _MotionMovement(_MotionChangeRadius):
                     current_pos = next_puller
                     current_speed = np.zeros(3)
                 else:
-                    current_pos += current_speed/self.fps/batch_size
+                    current_pos += current_speed/self.fps/batch
                     current_speed += k3*(next_puller - current_puller) + (
                         next_puller - current_pos - k1*current_speed
-                    )/self.fps/batch_size/k2
+                    )/self.fps/batch/k2
                 current_puller = next_puller.copy()
             positions.append(current_pos.copy())
         end_pos = path[-1]
         while (
-                np.sum((current_pos - end_pos)**2) > position_threshold
+                np.sum((current_pos - end_pos)**2) > pos_thr
                 or
-                np.sum(current_speed**2) > speed_threshold
+                np.sum(current_speed**2) > speed_thr
             ) and not rigid:
-            for batch_index in range(batch_size):
-                current_pos += current_speed/self.fps/batch_size
+            for batch_index in range(batch):
+                current_pos += current_speed/self.fps/batch
                 current_speed += (
                     end_pos - current_pos - k1*current_speed
-                )/self.fps/batch_size/k2
+                )/self.fps/batch/k2
             positions.append(current_pos.copy())
         positions.append(end_pos.copy())
         kwargs['duration'] = len(positions) - 1

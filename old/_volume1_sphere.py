@@ -97,4 +97,4 @@ class _VolumeSphere(_Volume):
             self.apply_to_brush('set_path', key=_shade, path=path)
             if shade_colour is None:
                 shade_colour = self._get_shade_colour(clipper.get_fc())
-            self.set_brush(key=_shade, color=shade_colour, alpha=opacity)
+            self.set_brush(key=_shade, color=shade_colour, alpha=opacity*self._shade_opacity)

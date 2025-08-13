@@ -19,12 +19,12 @@ ARGS = {
         'canvas' : [
             ' --cscale_colour royalblue --dpi 50',
             ' --cscale_colour gold --figsize 10 10',
-            ' --cscale_colour crimson --ymax 1',
+            ' --cscale_colour crimson --right 1 --top 1',
         ],
         'brush' : [
             '',
             ' --axis_on True',
-            ' --cpr_on True --info_on \'\'',
+            ' --copyright_on True --info_on \'\'',
         ],
         'volume' : [
             '',

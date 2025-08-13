@@ -21,13 +21,15 @@ class _Volume(Brush):
 
     draft = False
     scale = 1
-    view_pos = (0.5, -1.5, 2)
+    view_pos = (0, -1.5, 2)
     view_angle = -45
     screen_dist = 1.5
     sun_direction = (0.5, 0.25, -1)
+    _screen_thr = 2
     _side_cmap_ratio = 0.7
     _shade_darkness_ratio = 0.5
     _shade_background_ratio = 0.1
+    _shade_opacity = 1
     _round_sides = {
         0.49 : 0.05,
         0.25 : 0.07,
@@ -78,7 +80,7 @@ class _Volume(Brush):
     hidden methods
     '''
 
-    def _normalize_pos(
+    def _normalize(
             self: Self,
             pos: tuple[float],
             height: float = 0,
@@ -92,65 +94,56 @@ class _Volume(Brush):
             raise ValueError(f'Position with a wrong length: {pos}')
         return np.array(pos) + np.array([0, 0, height])
 
-    def _pos_to_scale(
+    def _scale(
             self: Self,
-            pos: tuple[float],
-            height: float = 0,
+            *args,
+            **kwargs,
         ) -> float:
         # transforms a position into the corresponding scale
-        pos = self._normalize_pos(pos, height)*self.scale
-        return 1/np.sum((pos - self._view_pos)**2)**0.5
+        pos = self._normalize(*args, **kwargs)*self.scale
+        if np.all(pos == self._view_pos):
+            return np.inf
+        else:
+            return 1/np.sum((pos - self._view_pos)**2)**0.5
 
-    def _project_on_screen(
+    def _project(
             self: Self,
-            pos: tuple[float],
-            height: float = 0,
+            *args,
+            **kwargs,
         ) -> np.array:
         # project a position relative to the viewer and the screen
-        relative_pos = self._normalize_pos(pos, height)
-        relative_pos = relative_pos*self.scale - self._view_pos
-        return (
-            float(np.sum(relative_pos*self._screen_xdir)),
-            float(np.sum(relative_pos*self._screen_ydir)),
-            float(np.sum(relative_pos*self._screen_zdir)),
-        )
+        pos = self._normalize(*args, **kwargs)
+        pos = pos*self.scale - self._view_pos
+        return np.arrray([
+            np.sum(pos*self._screen_xdir),
+            np.sum(pos*self._screen_ydir),
+            np.sum(pos*self._screen_zdir),
+        ])
 
-    def _normalize_xy(
+    def _xy(
             self: Self,
-            x: float,
-            y: float,
+            *args,
+            **kwargs,
         ) -> np.array:
-        # normalize an xy coordinate into the frame
-        return (
-            self._get_bound('xmin') + (self._get_bound('xmax') - self._get_bound('xmin'))*(0.5 + x),
-            (self._get_bound('ymin') + self._get_bound('ymax'))/2 + (self._get_bound('xmax') - self._get_bound('xmin'))*y,
-        )
-
-    def _pos_to_xy(
-            self: Self,
-            pos: tuple[float],
-            height: float = 0,
-            screen_thr: float = 2,
-        ) -> (float, float):
         # transforms a 3D position into a 2D coordinate
-        x, y, z = self._project_on_screen(pos, height)
-        if z < self.screen_dist/screen_thr:
-            mult = screen_thr*np.exp(self.screen_dist/screen_thr - z)
+        x, y, z = self._project(*args, **kwargs)
+        if z < self.screen_dist/self._screen_thr:
+            mult = screen_thr*np.exp(self.screen_dist/self._screen_thr - z)
             if not x and not y:
                 y = 1 
         else:
            mult = self.screen_dist/z
-        return self._normalize_xy(mult*x, mult*y)
+        return self.figxy(mult*x, mult*y)
 
-    def _pos_to_shade_pos(
+    def _shade_pos(
             self: Self,
-            pos: tuple[float],
-            height: float = 0,
+            *args,
+            **kwargs,
         ) -> (float, float):
         # transforms a 3D position into a 2D coordinate
         if self._sun_dir[2] >= 0:
             return 0, 0
-        pos = self._normalize_pos(pos, height)
+        pos = self._normalize(*args, **kwargs)
         ground_dist = pos[2]/self._sun_dir[2]
         pos = pos - ground_dist*self._sun_dir
         return float(pos[0]), float(pos[1])
@@ -333,4 +326,149 @@ class _Volume(Brush):
         while angle > lower_bound + 360:
             angle -= 360
         return angle
+
+    '''
+    general methods
+    '''
+
+    def _get_volume_list(
+            self: Self,
+            only: Any = None,
+            avoid: Any = [],
+        ) -> list:
+        # returns the list of all volumes satifying the conditions
+        only = self._only_avoid_to_list(only) 
+        avoid = self._only_avoid_to_list(avoid) 
+        return [volume for volume in only if volume not in avoid]
+
+    def new_sphere(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # creates the basis for a new sphere
+        return self._create_volume('sphere', *args, **kwargs)
+
+    def new_tube(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # creates the basis for a new sphere
+        return self._create_volume('tube', *args, **kwargs)
+
+    def new_polyhedron(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # creates the basis for a new polyhedron
+        return self._create_volume('polyhedron', *args, **kwargs)
+
+    def new_pylon(
+            self: Self,
+            *args,
+            basic_face: list[float, float] = [(0, 0)],
+            pylon_height: float = 1,
+            **kwargs,
+        ) -> Self:
+        # creates the basis for a new pylone
+        n_points = len(basic_face)
+        kwargs['points'] = [
+            (x, y, pylon_height) for (x, y) in basic_face
+        ]
+        kwargs['points'] += [
+            (x, y, 0) for (x, y) in basic_face
+        ]
+        kwargs['faces'] = [
+            list(range(n_points)),
+            list(range(n_points, 2*n_points))[::-1],
+        ]
+        for index in range(n_points):
+            next_index = (index + 1) % n_points
+            kwargs['faces'].append([
+                next_index,
+                index,
+                index + n_points,
+                next_index + n_points,
+            ])
+        return self._create_volume('polyhedron', *args, **kwargs)
+
+    def new_cube(
+            self: Self,
+            *args,
+            **kwargs,
+        ) -> Self:
+        # creates the basis for a new cube
+        kwargs['points'] = [
+            (0, 0, 0),
+            (1, 0, 0),
+            (1, 1, 0),
+            (0, 1, 0),
+            (0, 0, 1),
+            (1, 0, 1),
+            (1, 1, 1),
+            (0, 1, 1),
+        ]
+        kwargs['faces'] = [
+            [3, 2, 1, 0],
+            [4, 5, 6, 7],
+            [0, 1, 5, 4],
+            [2, 3, 7, 6],
+            [3, 0, 4, 7],
+            [1, 2, 6, 5],
+        ]
+        kwargs['centre'] = (0.5, 0.5, 0.5)
+        return self._create_volume('polyhedron', *args, **kwargs)
+
+    def new_pyramid(
+            self: Self,
+            *args,
+            pyramid_height: float = 1,
+            **kwargs,
+        ) -> Self:
+        # creates the basis for a new pyramid
+        kwargs['points'] = [
+            (0, 0, 0),
+            (1, 0, 0),
+            (1, 1, 0),
+            (0, 1, 0),
+            (0.5, 0.5, pyramid_height),
+        ]
+        kwargs['faces'] = [
+            [3, 2, 1, 0],
+            [0, 1, 4],
+            [1, 2, 4],
+            [2, 3, 4],
+            [3, 0, 4],
+        ]
+        kwargs['centre'] = (0.5, 0.5, pyramid_height/2)
+        return self._create_volume('polyhedron', *args, **kwargs)
+
+    def new_polysphere(
+            self: Self,
+            *args,
+            precision: int = 0,
+            **kwargs,
+        ) -> Self:
+        # creates the basis for a new pyramid
+        points, faces = self._polyhedron_sphere(precision)
+        kwargs['points'] = 0.5 + points/2
+        kwargs['faces'] = faces
+        kwargs['centre'] = (0.5, 0.5, 0.5)
+        return self._create_volume('polyhedron', *args, **kwargs)
+
+    def update(
+            self: Self,
+            only: Any = None,
+            avoid: Any = [],
+            **kwargs,
+        ) -> Self:
+        # updates the state of the image
+        volume_list = self._get_volume_list(only, avoid)
+        for volume in volume_list:
+            volume_kwargs = self._volumes[volume]
+            volume_kwargs.update(kwargs)
+            self._update_volume(**volume_kwargs)
+        return self
 
