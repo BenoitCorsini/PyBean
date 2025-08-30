@@ -5,7 +5,7 @@ import inspect
 import numpy as np
 import numpy.random as npr
 import matplotlib.figure as figure
-from matplotlib.colors import LinearSegmentedColormap, Colormap
+from matplotlib.colors import LinearSegmentedColormap, Colormap, to_rgb
 from matplotlib import colormaps
 from colorsys import hls_to_rgb
 from time import time
@@ -265,6 +265,19 @@ class Canvas(object):
             return bean_dir
         else:
             return osp.join(bean_dir, file)
+
+    @staticmethod
+    def rgb(
+            colour: Any = None,
+        ) -> (float, float, float):
+        # creates a rgb colour from HSV values
+        return to_rgb(colour)
+
+    @staticmethod
+    def unitary(vect):
+        vect = np.array(vect)
+        norm = np.sum(vect**2, axis=-1)**0.5
+        return vect/(norm + (norm == 0))
 
     '''
     general methods
