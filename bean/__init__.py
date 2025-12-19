@@ -1,4 +1,4 @@
 # from .motion import Motion
-from .mold import Mold
+from .sculpt import Sculpt
 from .brush import Brush
 from .canvas import Canvas

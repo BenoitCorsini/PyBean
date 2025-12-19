@@ -15,10 +15,13 @@ if __name__ == '__main__':
     # B.update('cube', colour=B.hsl(0))
     # B.update('polysphere', scale=0.7, colour=B.hsl(0.7))
     # B.save()
-    B = bean.Volume(scale=0.5, view_rotation=90, view_height=10, view_angle=None)
+    B = bean.Sculpt(view_scale=0.5, draft=0)
     scale = 0.9
-    B.new_pyramid(pos=(-0.5, -0.5), scale=scale, colour=B.hsl(0/4), height=2)
-    B.new_cube(pos=(+0.5, -0.5), scale=scale, colour=B.hsl(3/4))
-    B.new_cube(pos=(-0.5, +0.5), scale=scale, colour=B.hsl(2/4))
-    B.new_pyramid(pos=(+0.5, +0.5), scale=scale, colour=B.hsl(1/4), height=2)
+    opacity = 1
+    orientation = None
+    B.cube(pos=(+0.5, +0.5), scale=scale, colour='forestgreen', opacity=opacity, orientation=orientation)
+    B.sphere(pos=(-0.5, +0.5), scale=scale, colour='royalblue', opacity=opacity)
+    B.sphere(pos=(+0.5, -0.5), scale=scale, colour='crimson', opacity=opacity, overground=False)
+    B.sphere(pos=(-0.5, -0.5, 2), scale=scale, colour='gold', opacity=opacity)
+    B.mold()
     B.save()
